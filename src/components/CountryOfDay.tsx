@@ -11,7 +11,7 @@ export function CountryOfDay({ c }: { c: Country }) {
   const [photo, setPhoto] = useState<Photo | null>(null);
   useEffect(() => {
     loadProfile(c.id).then(setP);
-    loadPhotos().then((x) => setPhoto(x[c.id]?.[0] ?? null));
+    loadPhotos(c.id).then((x) => setPhoto(x[0] ?? null));
   }, [c.id]);
   const pop = rank(c.id, 'population'), area = rank(c.id, 'area');
   const facts = trivia(c, p).slice(0, 3);

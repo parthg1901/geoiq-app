@@ -55,8 +55,10 @@ export const flagUrl = (id: string) => `/flags/${id}.svg`;
 
 let shapesP: Promise<Record<string, string>> | null = null;
 export const loadShapes = () => (shapesP ??= fetch('/data/shapes.json').then((r) => r.json()));
-let photosP: Promise<Record<string, Photo[]>> | null = null;
-export const loadPhotos = () => (photosP ??= fetch('/data/images.json').then((r) => r.json()));
+const photosP: Record<string, Promise<Photo[]>> = {};
+/** Photos for one country (small per-country file, cached). */
+export const loadPhotos = (id: string) =>
+  (photosP[id] ??= fetch(`/data/photos/${id}.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []));
 let worldP: Promise<unknown> | null = null;
 export const loadWorld50 = () => (worldP ??= fetch('/data/world-50m.json').then((r) => r.json()));
 let world110P: Promise<unknown> | null = null;

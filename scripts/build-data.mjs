@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import { geoAzimuthalEqualArea, geoPath, geoCentroid, geoArea, geoDistance } from 'd3-geo';
 import * as topojson from 'topojson-client';
+import { presimplify, simplify } from 'topojson-simplify';
 import countries from 'world-countries';
 
 const { pop, wiki } = JSON.parse(fs.readFileSync('scripts/.cache/combined.json', 'utf8'));
@@ -128,7 +129,11 @@ for (const g of topo.objects.countries.geometries) {
   g.properties = { n: g.properties.name };
   g.id = id || `X-${g.properties.n}`;
 }
-fs.writeFileSync('public/data/world-50m.json', JSON.stringify(topo));
+// Drop most low-importance 50m vertices (Visvalingam): crisp at game zoom levels, far cheaper to draw on phones.
+const pre = presimplify(topo);
+const simple = simplify(pre, 0.008); // min triangle area (sq. degrees) a vertex must carry to be kept
+for (const a of simple.arcs) for (const pt of a) pt.length = 2; // drop the weight coordinate
+fs.writeFileSync('public/data/world-50m.json', JSON.stringify(topojson.quantize(simple, 1e5)));
 const t110 = JSON.parse(fs.readFileSync('node_modules/world-atlas/countries-110m.json', 'utf8'));
 for (const g of t110.objects.countries.geometries) {
   g.id = byNum[g.id] || (g.properties.name === 'Kosovo' ? 'UNK' : `X-${g.properties.name}`);
@@ -151,7 +156,11 @@ for (const c of sel) {
     u: i.url.replace(/\?.*$/, ''), c: tidyCaption(i.caption), a: i.artist, l: i.license, p: i.page,
   }));
 }
-fs.writeFileSync('public/data/images.json', JSON.stringify(images));
+// One small file per country so the app never parses the whole photo index at once.
+fs.rmSync('public/data/photos', { recursive: true, force: true });
+fs.mkdirSync('public/data/photos', { recursive: true });
+for (const [id, list] of Object.entries(images)) fs.writeFileSync(`public/data/photos/${id}.json`, JSON.stringify(list));
+fs.rmSync('public/data/images.json', { force: true });
 
 // ---- flags (copy SVGs)
 fs.mkdirSync('public/flags', { recursive: true });

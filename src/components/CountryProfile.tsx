@@ -37,7 +37,6 @@ const SECTION_META: Record<string, { icon: string; title: string }> = {
 const ORDER = Object.keys(SECTION_META);
 const PRACTICE: Variant[] = ['shape', 'flag', 'map-find', 'capital'];
 
-let photosCache: Record<string, Photo[]> | null = null;
 
 /** A full country profile. Rendered as a page (route) or as a full-screen overlay (onClose given). */
 export function CountryProfile({ id, onClose }: { id: string; onClose?: () => void }) {
@@ -46,7 +45,7 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
   const stamp = useGame((s) => s.stamps[id]);
   const [p, setP] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [photos, setPhotos] = useState<Photo[]>(photosCache?.[id] ?? []);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [practice, setPractice] = useState<ReturnType<typeof makeQuestion>[] | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -54,7 +53,7 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
   useEffect(() => {
     setLoading(true); setP(null);
     loadProfile(id).then((x) => { setP(x); setLoading(false); });
-    loadPhotos().then((x) => { photosCache = x; setPhotos(x[id] ?? []); });
+    setPhotos([]); loadPhotos(id).then(setPhotos);
     (onClose ? scroller.current : window)?.scrollTo({ top: 0 });
   }, [id, onClose]);
 
@@ -90,7 +89,7 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
   const body = (
     <div className="mx-auto max-w-3xl px-4 pb-32">
       {/* Top bar */}
-      <div style={{ top: onClose ? 0 : 'env(safe-area-inset-top)' }} className="sticky z-20 -mx-4 px-4 py-3 bg-ink/80 backdrop-blur-xl flex items-center gap-3 border-b border-line/40">
+      <div style={{ top: onClose ? 0 : 'var(--sat)' }} className="sticky z-20 -mx-4 px-4 py-3 bg-ink flex items-center gap-3 border-b border-line/40">
         <button aria-label="Close" onClick={onClose ?? (() => (history.length > 1 ? history.back() : go('/atlas')))}
           className="w-10 h-10 shrink-0 rounded-full grid place-items-center bg-white/5 hover:bg-white/10 border border-line">{onClose ? '✕' : '←'}</button>
         <Flag id={id} className="w-9 h-6 !rounded-sm" />
@@ -100,7 +99,7 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
 
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card relative overflow-hidden mt-4 p-5">
-        <img src={`/flags/${id}.svg`} alt="" className="absolute inset-0 w-full h-full object-cover opacity-[.10] blur-xl scale-110" />
+        <img src={`/flags/${id}.svg`} alt="" className="absolute inset-0 w-full h-full object-cover opacity-[.07] scale-110" />
         <div className="relative flex flex-col sm:flex-row gap-5 sm:items-center">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-bold uppercase tracking-wider" style={{ color }}>{meta?.emoji} {c.subregion}</div>

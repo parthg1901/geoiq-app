@@ -24,7 +24,15 @@
   --color-violet: #b48cff;
 }
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  /* Safe areas (notch / camera cutout / gesture bar). Capacitor's SystemBars injects --safe-area-inset-*
+     on Android; browsers provide env(). Use whichever is larger. */
+  --sat: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --sab: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+  --sal: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+  --sar: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
+}
 html, body, #root { height: 100%; }
 body {
   margin: 0;
@@ -33,10 +41,15 @@ body {
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
-  /* Android 15+ draws the app edge-to-edge under the status bar */
-  padding-top: env(safe-area-inset-top);
+  /* Android 15+ draws the app edge-to-edge under the status bar and camera cutout */
+  padding: var(--sat) var(--sar) 0 var(--sal);
 }
-/* Atmosphere: soft aurora + topographic contours + grain */
+/* Solid strip behind the status bar so scrolled content never shows through around the notch */
+body::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: var(--sat);
+  background: var(--color-ink); z-index: 80; pointer-events: none;
+}
+/* Atmosphere: soft aurora + topographic contours */
 .atlas-bg {
   background:
     radial-gradient(1200px 600px at 85% -10%, rgba(255, 181, 71, 0.10), transparent 60%),
@@ -49,17 +62,12 @@ body {
   position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .5;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cg fill='none' stroke='%2353b8ff' stroke-opacity='.07' stroke-width='1'%3E%3Cpath d='M-50 120c90-60 180 40 270-10s170-90 260-20 140 60 170 30'/%3E%3Cpath d='M-50 160c90-60 180 40 270-10s170-90 260-20 140 60 170 30'/%3E%3Cpath d='M-50 200c90-60 180 40 270-10s170-90 260-20 140 60 170 30'/%3E%3Cpath d='M-50 380c70 50 160-30 250 20s190 70 270 0 110-40 180-10'/%3E%3Cpath d='M-50 420c70 50 160-30 250 20s190 70 270 0 110-40 180-10'/%3E%3Cpath d='M-50 460c70 50 160-30 250 20s190 70 270 0 110-40 180-10'/%3E%3Ccircle cx='470' cy='280' r='40'/%3E%3Ccircle cx='470' cy='280' r='70'/%3E%3Ccircle cx='470' cy='280' r='100'/%3E%3Ccircle cx='120' cy='300' r='30'/%3E%3Ccircle cx='120' cy='300' r='55'/%3E%3C/g%3E%3C/svg%3E");
 }
-.grain::after {
-  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 60; opacity: .06; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
 
 .card {
-  background: linear-gradient(180deg, rgba(26, 42, 80, .75), rgba(18, 31, 61, .85));
+  background: linear-gradient(180deg, rgba(26, 42, 80, .92), rgba(18, 31, 61, .96));
   border: 1px solid rgba(83, 120, 200, .22);
   border-radius: 22px;
   box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 20px 40px -24px rgba(0,0,0,.6);
-  backdrop-filter: blur(8px);
 }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
@@ -83,11 +91,14 @@ body {
 @keyframes floatUp { from { opacity: 1; transform: translateY(0) } to { opacity: 0; transform: translateY(-40px) } }
 .float-up { animation: floatUp 1s ease-out forwards; }
 @keyframes pulseGlow { 0%,100% { filter: drop-shadow(0 0 0 rgba(255,181,71,0)) } 50% { filter: drop-shadow(0 0 14px rgba(255,181,71,.7)) } }
-.glow-pulse { animation: pulseGlow 2.4s ease-in-out infinite; }
+.glow-pulse { animation: pulseGlow 1.6s ease-in-out 3; }
 @keyframes flicker { 0%,100% { transform: scale(1) rotate(-2deg) } 50% { transform: scale(1.08) rotate(2deg) } }
 .flame { animation: flicker 1.2s ease-in-out infinite; transform-origin: 50% 90%; display: inline-block; }
 
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { scrollbar-width: none; }
-.safe-top { padding-top: env(safe-area-inset-top); }
-.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), .5rem); }
+.safe-top { padding-top: var(--sat); }
+.safe-bottom { padding-bottom: max(var(--sab), .5rem); }
+
+/* Full-height screens exclude the notch area the body already pads for */
+.min-h-dvh { min-height: calc(100dvh - var(--sat)); }

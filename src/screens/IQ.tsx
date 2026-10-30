@@ -48,7 +48,7 @@ export default function IQ() {
 
       {/* Hero score */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card relative overflow-hidden mt-2 p-6 text-center">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 w-80 h-80 rounded-full blur-3xl opacity-25 -translate-y-1/3" style={{ background: tier.color }} />
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 w-80 h-80 rounded-full opacity-25 -translate-y-1/3" style={{ background: `radial-gradient(circle, ${tier.color} 0%, transparent 68%)` }} />
         <div className="relative">
           <div className="text-xs uppercase tracking-[.25em] text-mist font-bold">GeoIQ</div>
           <div className="display font-extrabold leading-none tracking-tight mt-2" style={{ fontSize: 'clamp(5rem, 28vw, 8.5rem)', color: tier.color, textShadow: `0 0 60px ${tier.color}66` }}>

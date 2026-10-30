@@ -181,7 +181,7 @@ function Result({ steps, theta }: { steps: Step[]; theta: number }) {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
         <div className="text-xs uppercase tracking-[.25em] text-mist font-bold">Your GeoIQ</div>
         <div className="relative inline-block">
-          <div className="absolute inset-0 blur-3xl rounded-full opacity-40" style={{ background: tier.color }} />
+          <div className="absolute inset-0 rounded-full opacity-40" style={{ background: `radial-gradient(circle, ${tier.color} 0%, transparent 68%)` }} />
           <div className="relative display font-extrabold leading-none tracking-tight mt-2" style={{ fontSize: 'clamp(6rem, 34vw, 9rem)', color: tier.color, textShadow: `0 0 60px ${tier.color}88` }}>
             <CountUp from={60} to={iq} duration={1.6} />
           </div>

@@ -44,7 +44,7 @@ export function CountrySheet({ id, onClose }: { id: string; onClose: () => void 
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-ink/85 flex items-end sm:items-center justify-center" onClick={onClose}>
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 260, damping: 30 }}
         onClick={(e) => e.stopPropagation()}

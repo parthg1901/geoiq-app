@@ -58,7 +58,7 @@ function Intro({ onStart }: { onStart: () => void }) {
     <Page>
       <TopBar title="Daily Challenge" onClose={() => go('/')} />
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card p-6 mt-2 text-center relative overflow-hidden">
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-sky/20 blur-3xl" />
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full" style={{ background: 'radial-gradient(circle, rgba(83,184,255,.3) 0%, transparent 68%)' }} />
         <div className="relative text-6xl">☀️</div>
         <div className="relative display text-4xl font-extrabold mt-2">Daily #{dailyNumber()}</div>
         <p className="relative text-mist mt-2">Five questions of rising difficulty. Everyone on Earth gets the same five today. One shot — no retries.</p>

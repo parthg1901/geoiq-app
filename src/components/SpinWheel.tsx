@@ -45,7 +45,7 @@ export function SpinWheel({ onClose }: { onClose: () => void }) {
 
   const R = 140;
   return (
-    <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-md grid place-items-center p-4" onClick={() => !spinning && onClose()}>
+    <div className="fixed inset-0 z-50 bg-ink/90 grid place-items-center p-4" onClick={() => !spinning && onClose()}>
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="card p-6 w-full max-w-sm text-center" onClick={(e) => e.stopPropagation()}>
         <div className="display text-2xl font-extrabold">Daily Check-in</div>
         <div className="text-mist text-sm">Spin once a day for a free reward</div>

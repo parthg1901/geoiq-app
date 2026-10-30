@@ -64,7 +64,7 @@ export default function Home() {
 
       {/* Hero: GeoIQ + globe */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card relative overflow-hidden mt-2 p-5 pr-2 flex items-center gap-2">
-        <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full blur-3xl opacity-30" style={{ background: tier.color }} />
+        <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full opacity-30" style={{ background: `radial-gradient(circle, ${tier.color} 0%, transparent 68%)` }} />
         <div className="relative flex-1 min-w-0">
           <div className="text-xs uppercase tracking-[.22em] text-mist font-bold">Your GeoIQ</div>
           <button onClick={() => go('/iq')} className="flex items-baseline gap-2 mt-1">
@@ -171,7 +171,7 @@ export default function Home() {
           { to: '/play/photo', t: 'Street Eye', d: 'Guess from photos', e: '📸', c: '#53b8ff' },
         ].map((m) => (
           <button key={m.to} onClick={() => go(m.to)} className="card p-4 text-left relative overflow-hidden group">
-            <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-20 group-hover:opacity-35 transition-opacity blur-xl pointer-events-none" style={{ background: m.c }} />
+            <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-20 group-hover:opacity-35 transition-opacity pointer-events-none" style={{ background: `radial-gradient(circle, ${m.c} 0%, transparent 68%)` }} />
             <div className="relative text-2xl">{m.e}</div>
             <div className="relative display font-bold mt-1">{m.t}</div>
             <div className="relative text-sm text-mist leading-snug">{m.d}</div>

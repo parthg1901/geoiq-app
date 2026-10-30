@@ -64,7 +64,7 @@ export default function PlayHub() {
 function Special({ e, t, d, c, onClick }: { e: string; t: string; d: string; c: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="card p-4 text-left relative overflow-hidden group">
-      <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-xl" style={{ background: c }} />
+      <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full opacity-20 group-hover:opacity-40 transition-opacity" style={{ background: `radial-gradient(circle, ${c} 0%, transparent 68%)` }} />
       <div className="relative text-3xl">{e}</div>
       <div className="relative display font-bold mt-1">{t}</div>
       <div className="relative text-sm text-mist leading-snug">{d}</div>

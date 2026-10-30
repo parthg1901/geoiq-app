@@ -54,7 +54,7 @@ export default function App() {
   }
 
   return (
-    <div className="atlas-bg grain min-h-dvh">
+    <div className="atlas-bg min-h-dvh">
       <Toasts />
       <Suspense fallback={<div className="min-h-dvh grid place-items-center text-mist display">Unfolding the map…</div>}>{screen}</Suspense>
       {onboarded && !immersive && <NavBar active={top} />}

@@ -111,7 +111,7 @@ function Meet({ unit, color, onStart }: { unit: Unit; color: string; onStart: ()
 
             <div className="grid grid-cols-2 gap-3 mt-4 items-center">
               <div className="relative grid place-items-center">
-                <div className="absolute inset-0 rounded-full blur-2xl opacity-25" style={{ background: color }} />
+                <div className="absolute inset-0 rounded-full opacity-25" style={{ background: `radial-gradient(circle, ${color} 0%, transparent 68%)` }} />
                 <Shape id={c.id} size="min(38vw, 190px)" color={color} />
               </div>
               <div className="grid place-items-center">

@@ -53,6 +53,8 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
   const zRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const hRef = useRef(BASE_H);
   const [k, setK] = useState(1);
+  const kRef = useRef(1);
+  const kRaf = useRef(0);
   const [hover, setHover] = useState<string | null>(null);
   // The viewBox follows the container's aspect ratio so tall phone screens get a tall map, not letterboxing.
   const [box, setBox] = useState({ H: BASE_H, cw: W });
@@ -95,8 +97,13 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
       .translateExtent([[0, 0], [W, hRef.current]])
       .on('zoom', (e) => {
         gRef.current?.setAttribute('transform', e.transform.toString());
-        setK(e.transform.k);
-      });
+        // Only marker sizes/labels depend on k: re-render when it changes by >20%, at most once per frame.
+        const nk = e.transform.k;
+        if (Math.abs(Math.log(nk / kRef.current)) > 0.18 && !kRaf.current) {
+          kRaf.current = requestAnimationFrame(() => { kRaf.current = 0; kRef.current = nk; setK(nk); });
+        }
+      })
+      .on('end', (e) => { kRef.current = e.transform.k; setK(e.transform.k); });
     zRef.current = z;
     if (interactive) select(svg).call(z).on('dblclick.zoom', null);
     return () => { select(svg).on('.zoom', null); };
@@ -130,20 +137,9 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
   }, [focusKey, paths.length, H]);
 
   const canPick = (id: string) => !!onPick && !!BY_ID[id] && (!pickable || pickable(id));
-
-  return (
-    <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className={`w-full h-full touch-none select-none ${className}`} preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <radialGradient id="ocean" cx="50%" cy="40%" r="75%">
-          <stop offset="0%" stopColor="#10224a" />
-          <stop offset="100%" stopColor="#081230" />
-        </radialGradient>
-      </defs>
-      <rect width={W} height={H} fill="#081230" />
-      <g ref={gRef}>
-        <path d={sphere} fill="url(#ocean)" stroke="rgba(83,184,255,.25)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <path d={grat} fill="none" stroke="rgba(142,163,204,.08)" strokeWidth={0.6} vectorEffect="non-scaling-stroke" />
-        {paths.map(({ id, d }) => {
+  const pulseKey = pulse.join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const countryLayer = useMemo(() => paths.map(({ id, d }) => {
           const fill = fills[id] ?? (BY_ID[id] ? defaultFill : '#1a2848');
           const pick = canPick(id);
           return (
@@ -160,7 +156,21 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
               onClick={() => pick && onPick!(id)}
             />
           );
-        })}
+        }), [paths, fills, defaultFill, hover, highlight, pulseKey, onPick, pickable]);
+
+  return (
+    <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className={`w-full h-full touch-none select-none ${className}`} preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <radialGradient id="ocean" cx="50%" cy="40%" r="75%">
+          <stop offset="0%" stopColor="#10224a" />
+          <stop offset="100%" stopColor="#081230" />
+        </radialGradient>
+      </defs>
+      <rect width={W} height={H} fill="#081230" />
+      <g ref={gRef}>
+        <path d={sphere} fill="url(#ocean)" stroke="rgba(83,184,255,.25)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <path d={grat} fill="none" stroke="rgba(142,163,204,.08)" strokeWidth={0.6} vectorEffect="non-scaling-stroke" />
+        {countryLayer}
         {showTiny && tiny.map(({ id, x, y }) => {
           const fill = fills[id] ?? defaultFill;
           const pick = canPick(id);

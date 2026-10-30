@@ -62,7 +62,7 @@ export default function Profile() {
 
       {/* Identity */}
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="card p-5 mt-2 relative overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full blur-3xl opacity-25" style={{ background: tier.color }} />
+        <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full opacity-25" style={{ background: `radial-gradient(circle, ${tier.color} 0%, transparent 68%)` }} />
         <div className="relative flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl grid place-items-center text-3xl border-2" style={{ borderColor: tier.color, background: tier.color + '22' }}>{tier.emoji}</div>
           <div className="min-w-0 flex-1">
@@ -188,7 +188,7 @@ export default function Profile() {
 
       {createPortal(<AnimatePresence>
         {confirmReset && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-md grid place-items-center p-4" onClick={() => setConfirmReset(false)}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-ink/80 grid place-items-center p-4" onClick={() => setConfirmReset(false)}>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="card p-6 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
               <div className="text-4xl">⚠️</div>
               <div className="display text-xl font-extrabold mt-2">Reset everything?</div>

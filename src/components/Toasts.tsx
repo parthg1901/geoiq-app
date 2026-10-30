@@ -26,7 +26,7 @@ function Item({ t }: { t: Toast }) {
 export function Toasts() {
   const list = useToasts((s) => s.list);
   return (
-    <div style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }} className="fixed inset-x-0 z-[70] flex flex-col items-center gap-2 pointer-events-none px-4">
+    <div style={{ top: 'calc(var(--sat) + 0.75rem)' }} className="fixed inset-x-0 z-[70] flex flex-col items-center gap-2 pointer-events-none px-4">
       <AnimatePresence>{list.map((t) => <Item key={t.id} t={t} />)}</AnimatePresence>
     </div>
   );

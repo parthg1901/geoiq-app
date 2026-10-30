@@ -14,30 +14,30 @@ export function Shape({ id, size = 220, color = 'var(--color-amber)', rotate = 0
 }) {
   const shapes = useShapes();
   const d = shapes?.[id];
-  return (
-    <svg viewBox="0 0 200 200" width={size} height={size} className={className} style={{ overflow: 'visible' }}>
-      <defs>
-        <filter id="shape-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="6" result="b" />
-          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      {d ? (
-        <motion.g
-          key={id}
-          initial={{ opacity: 0, scale: 0.6, rotate: rotate - 25 }}
-          animate={{ opacity: 1, scale: 1, rotate }}
-          transition={{ type: 'spring', stiffness: 160, damping: 16 }}
-          style={{ transformOrigin: '100px 100px', filter: reveal < 1 ? `blur(${(1 - reveal) * 14}px)` : undefined }}
-        >
-          <path d={d} fill={color} fillRule="evenodd" filter={glow ? 'url(#shape-glow)' : undefined} stroke="rgba(255,255,255,.35)" strokeWidth={0.6} />
-        </motion.g>
-      ) : (
+  const glowCss = glow ? `drop-shadow(0 0 10px color-mix(in srgb, ${color} 75%, transparent))` : '';
+  const blurCss = reveal < 1 ? `blur(${(1 - reveal) * 14}px)` : '';
+  if (!d) {
+    return (
+      <svg viewBox="0 0 200 200" width={size} height={size} className={className}>
         <circle cx="100" cy="100" r="30" fill="none" stroke="var(--color-line)" strokeWidth="3" strokeDasharray="8 8">
           <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="2s" repeatCount="indefinite" />
         </circle>
-      )}
-    </svg>
+      </svg>
+    );
+  }
+  // Animate the whole <svg> box (GPU-composited) and glow with a CSS filter, rather than an SVG
+  // blur filter on the path that would have to be re-rasterised every animation frame.
+  return (
+    <motion.svg
+      key={id}
+      viewBox="0 0 200 200" width={size} height={size} className={className}
+      initial={{ opacity: 0, scale: 0.6, rotate: rotate - 25 }}
+      animate={{ opacity: 1, scale: 1, rotate }}
+      transition={{ type: 'spring', stiffness: 160, damping: 16 }}
+      style={{ overflow: 'visible', filter: [glowCss, blurCss].filter(Boolean).join(' ') || undefined }}
+    >
+      <path d={d} fill={color} fillRule="evenodd" stroke="rgba(255,255,255,.35)" strokeWidth={0.6} style={{ transition: 'fill .3s' }} />
+    </motion.svg>
   );
 }
 

@@ -38,10 +38,9 @@ export interface QuizConfig {
   onQuit?: () => void;
 }
 
-let photosCache: Record<string, Photo[]> | null = null;
-function usePhotos() {
-  const [p, setP] = useState(photosCache);
-  useEffect(() => { if (!p) loadPhotos().then((x) => { photosCache = x; setP(x); }); }, [p]);
+function usePhotos(id: string) {
+  const [p, setP] = useState<Photo[] | null>(null);
+  useEffect(() => { let live = true; loadPhotos(id).then((x) => live && setP(x)); return () => { live = false; }; }, [id]);
   return p;
 }
 
@@ -388,9 +387,9 @@ function HintLadder({ q, locked, onAnswer }: { q: Question; locked: boolean; onA
 function PhotoQ({ q, locked, onAnswer, answerArea, picked }: {
   q: Question; locked: boolean; onAnswer: (o: number, g?: string | null) => void; answerArea: (r?: 'name') => React.ReactNode; picked: string | null;
 }) {
-  const photos = usePhotos();
+  const photos = usePhotos(q.id);
   const list = useMemo(() => {
-    const l = photos?.[q.id] ?? [];
+    const l = photos ?? [];
     // deterministic-ish shuffle per question
     return [...l].sort((a, b) => ((a.u.length * 31 + (q.photo ?? 0)) % 7) - ((b.u.length * 31 + (q.photo ?? 0)) % 7));
   }, [photos, q.id, q.photo]);

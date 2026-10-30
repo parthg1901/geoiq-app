@@ -96,7 +96,7 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
       </div>
 
       <div className="relative mt-3 flex justify-center">
-        <div className="absolute inset-0 m-auto w-72 h-72 rounded-full blur-3xl opacity-30 pointer-events-none" style={{ background: closest ? heat(closest.km) : '#53b8ff' }} />
+        <div className="absolute inset-0 m-auto w-72 h-72 rounded-full opacity-30 pointer-events-none" style={{ background: `radial-gradient(circle, ${closest ? heat(closest.km) : '#53b8ff'} 0%, transparent 68%)` }} />
         <Globe size={Math.min(320, typeof window !== 'undefined' ? window.innerWidth - 48 : 320)} focus={last} fills={fills} spin={!guesses.length} />
         {closest && status === 'play' && (
           <motion.div key={closest.km} initial={{ scale: 1.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
