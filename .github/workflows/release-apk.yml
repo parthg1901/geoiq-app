@@ -1,0 +1,67 @@
+# Builds a signed release APK and publishes it as a GitHub Release when a version tag is pushed.
+# Obtainium tracks these releases. Tag format: v1.2.3  ->  versionName 1.2.3, versionCode 10203.
+name: Release APK
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Version from tag
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          IFS=. read -r MA MI PA <<< "$V"
+          CODE=$(( ${MA:-0} * 10000 + ${MI:-0} * 100 + ${PA:-0} ))
+          echo "GEOIQ_VERSION_NAME=$V" >> "$GITHUB_ENV"
+          echo "GEOIQ_VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+          echo "Building $V ($CODE)"
+
+      - name: Restore signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.GEOIQ_KEYSTORE_B64 }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "GEOIQ_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed APK
+        working-directory: android
+        env:
+          GEOIQ_KEYSTORE_PASSWORD: ${{ secrets.GEOIQ_KEYSTORE_PASSWORD }}
+          GEOIQ_KEY_ALIAS: ${{ secrets.GEOIQ_KEY_ALIAS }}
+          GEOIQ_KEY_PASSWORD: ${{ secrets.GEOIQ_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/GeoIQ-${GITHUB_REF_NAME}.apk"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/GeoIQ-${GITHUB_REF_NAME}.apk" --title "GeoIQ $GITHUB_REF_NAME" --generate-notes

@@ -1,0 +1,75 @@
+apply plugin: 'com.android.application'
+
+// Release signing: env vars in CI (GitHub secrets), or ~/android/geoiq-release.properties locally.
+def signingProps = new Properties()
+def localSigning = new File(System.getProperty('user.home'), 'android/geoiq-release.properties')
+if (localSigning.exists()) localSigning.withInputStream { signingProps.load(it) }
+def signing = { String k -> System.getenv(k) ?: signingProps.getProperty(k) }
+
+// Version: from the git tag in CI (v1.2.3 -> 1.2.3), with a monotonically increasing code.
+def appVersionName = System.getenv('GEOIQ_VERSION_NAME') ?: '1.0'
+def appVersionCode = (System.getenv('GEOIQ_VERSION_CODE') ?: '1') as Integer
+
+android {
+    namespace = "com.geoiq.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.geoiq.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode appVersionCode
+        versionName appVersionName
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        release {
+            if (signing('GEOIQ_KEYSTORE_FILE')) {
+                storeFile file(signing('GEOIQ_KEYSTORE_FILE'))
+                storePassword signing('GEOIQ_KEYSTORE_PASSWORD')
+                keyAlias signing('GEOIQ_KEY_ALIAS')
+                keyPassword signing('GEOIQ_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signing('GEOIQ_KEYSTORE_FILE') ? signingConfigs.release : null
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
