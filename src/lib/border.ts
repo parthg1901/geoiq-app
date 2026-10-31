@@ -1,7 +1,7 @@
 import { geoDistance, geoCentroid } from 'd3-geo';
 import type { Feature, Geometry, Position } from 'geojson';
 import { BY_ID, COUNTRIES, fame } from '../data';
-import { shuffle } from './rng';
+import { shuffle, pick } from './rng';
 
 /* ---------------- Borderline: land-border graph ---------------- */
 
@@ -59,6 +59,15 @@ export function shortestPath(rt: Route): string[] {
     path.push(cur);
   }
   return path;
+}
+
+/* ---------------- Hot & Cold ---------------- */
+
+/** Fame-weighted mystery country: mostly countries people have a fighting chance with. */
+export function mysteryCountry(r: () => number = Math.random): string {
+  const pool = COUNTRIES.filter((c) => fame(c) >= 0.25);
+  const weighted = pool.flatMap((c) => Array(1 + Math.round(fame(c) * 3)).fill(c.id) as string[]);
+  return pick(weighted, r);
 }
 
 /* ---------------- Hot & Cold: geometry distances ---------------- */

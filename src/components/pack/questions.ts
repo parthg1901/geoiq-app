@@ -37,7 +37,7 @@ export function eligible(pack: PackData, it: PackItem, mode: PackMode, geomIds: 
 const cent = itemCentroids;
 
 /** Distractors: mostly geographic neighbours (genuinely confusable), plus a same-kind wildcard. */
-export function distractors(pack: PackData, id: string, n: number, pool: PackItem[]): string[] {
+export function distractors(pack: PackData, id: string, n: number, pool: PackItem[], r: () => number = Math.random): string[] {
   const c = cent(pack);
   const me = c[id];
   const kind = pack.items.find((x) => x.id === id)?.kind;
@@ -45,9 +45,9 @@ export function distractors(pack: PackData, id: string, n: number, pool: PackIte
   const near = me
     ? [...others].filter((x) => c[x.id]).sort((a, b) => dist(c[a.id], me) - dist(c[b.id], me)).slice(0, Math.max(6, n * 2))
     : [];
-  const sameKind = shuffle(others.filter((x) => x.kind === kind));
+  const sameKind = shuffle(others.filter((x) => x.kind === kind), r);
   const out: string[] = [];
-  for (const x of [...shuffle(near).slice(0, n - 1), ...sameKind, ...shuffle(others)]) {
+  for (const x of [...shuffle(near, r).slice(0, n - 1), ...sameKind, ...shuffle(others, r)]) {
     if (out.length >= n) break;
     if (!out.includes(x.id)) out.push(x.id);
   }

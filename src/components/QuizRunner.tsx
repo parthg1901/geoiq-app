@@ -192,7 +192,7 @@ export function QuizRunner(cfg: QuizConfig) {
 
 /* ------------------------------------------------------------------ */
 
-function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
+export function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
   q: Question; locked: boolean; onAnswer: (outcome: number, given?: string | null, ladder?: Ladder) => void; regionFocus?: string[] | null; rush: boolean;
 }) {
   const c = BY_ID[q.id];

@@ -137,7 +137,7 @@ export function PackQuiz({ pack, mode, typed = false, onExit }: { pack: PackData
 
 /* ------------------------------------------------------------------ */
 
-function Ask({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: PackQuestion; locked: boolean; onAnswer: (o: number) => void; byId: Record<string, PackData['items'][number]> }) {
+export function Ask({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: PackQuestion; locked: boolean; onAnswer: (o: number) => void; byId: Record<string, PackData['items'][number]> }) {
   const it = byId[q.id];
   const [picked, setPicked] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string[]>([]);

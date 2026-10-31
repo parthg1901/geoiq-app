@@ -29,3 +29,7 @@ dist-apk
 *.jks
 *.keystore
 *release.properties
+
+# multiplayer server
+server/node_modules
+server/.wrangler

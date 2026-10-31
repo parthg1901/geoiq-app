@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useGame, type SavedCrossword } from '../../lib/store';
-import { wordCells, type PlacedWord } from '../../lib/crossword';
+import { wordCells, type Crossword, type PlacedWord } from '../../lib/crossword';
+import type { RaceReport } from '../../lib/mp/protocol';
 import { sfx, buzz } from '../../lib/sound';
 import { onBack } from '../../lib/native';
 import { checkAchievements } from '../../lib/achievements';
@@ -17,8 +18,28 @@ type Scope = 'letter' | 'word' | 'puzzle';
 
 export const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () => void; onNew: () => void }) {
-  const saved0 = useGame.getState().crossword[slot]!;
+/**
+ * Race mode (multiplayer): the puzzle comes from the room, nothing is saved, check/reveal are off,
+ * no single-player XP/achievements, and progress is reported via `onReport` on every change.
+ */
+export interface CrosswordRace {
+  cw: Crossword;
+  title: string;
+  onReport: (r: RaceReport) => void;
+  /** Live strip (leaderboard + countdown) shown under the header. */
+  header?: React.ReactNode;
+  /** Time is up: stop accepting input. */
+  locked?: boolean;
+}
+
+const raceSaved = (cw: Crossword, title: string): SavedCrossword => {
+  const flat = cw.grid.flat();
+  return { key: 'race', title, size: 'mini', cw, fill: flat.map((c) => (c ? ' ' : '#')).join(''), revealed: '0'.repeat(flat.length), checks: 0, reveals: 0, elapsed: 0, done: false };
+};
+
+export function CrosswordPlay({ slot, onExit, onNew, race }: { slot?: Slot; onExit: () => void; onNew?: () => void; race?: CrosswordRace }) {
+  const [raceSave] = useState(() => (race ? raceSaved(race.cw, race.title) : null));
+  const saved0 = raceSave ?? useGame.getState().crossword[slot!]!;
   const { cw } = saved0;
   const W = cw.w, H = cw.h, N = W * H;
   const solution = useMemo(() => cw.grid.flat(), [cw]);
@@ -50,11 +71,12 @@ export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () 
 
   /* ---------------- persistence ---------------- */
   const persist = useCallback((patch: Partial<SavedCrossword>) => {
+    if (raceSave || !slot) return; // races aren't saved
     const g = useGame.getState();
     const cur = g.crossword[slot];
     if (!cur) return;
     g.set({ crossword: { ...g.crossword, [slot]: { ...cur, ...patch } } });
-  }, [slot]);
+  }, [slot, raceSave]);
   useEffect(() => { persist({ fill: fill.join(''), revealed: revealed.map((b) => (b ? '1' : '0')).join(''), checks, reveals }); }, [fill, revealed, checks, reveals, persist]);
 
   /* ---------------- timer (pauses while the app is hidden) ---------------- */
@@ -69,9 +91,20 @@ export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () 
 
   /* ---------------- completion ---------------- */
   const complete = useMemo(() => solution.every((ch, i) => !ch || fill[i] === ch), [solution, fill]);
+
+  // Race: report solved words (a) of total (b) whenever the grid changes.
+  const reportRef = useRef(race?.onReport);
+  useEffect(() => { reportRef.current = race?.onReport; }, [race?.onReport]);
+  const solvedWords = useMemo(() => cellsOf.filter((cells) => cells.every((i) => fill[i] === solution[i])).length, [cellsOf, fill, solution]);
+  useEffect(() => {
+    if (!raceSave) return;
+    reportRef.current?.({ a: solvedWords, b: words.length, c: 0, done: solvedWords === words.length });
+  }, [raceSave, solvedWords, words.length]);
+
   useEffect(() => {
     if (!complete || done) return;
     setDone(true);
+    if (raceSave) { sfx.win(); confetti({ particleCount: 100, spread: 90, origin: { y: 0.35 } }); return; }
     const g = useGame.getState();
     const nWords = words.length;
     const xp = 4 * nWords + (reveals === 0 ? 20 : 0);
@@ -89,7 +122,7 @@ export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () 
     sfx.win();
     confetti({ particleCount: 160, spread: 100, origin: { y: 0.35 } });
     for (const a of checkAchievements()) toast({ icon: a.icon, title: `Achievement: ${a.name}`, body: a.desc });
-  }, [complete, done, words.length, reveals, saved0.size, saved0.key, slot, persist]);
+  }, [complete, done, words.length, reveals, saved0.size, saved0.key, slot, persist, raceSave]);
 
   /* ---------------- navigation helpers ---------------- */
   const isEmpty = (i: number, f = fill) => f[i] === ' ';
@@ -114,8 +147,9 @@ export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () 
   };
   const toggleDir = () => { const other: Dir = curDir === 'across' ? 'down' : 'across'; if (cellWord[sel.i][other] != null) setSel({ i: sel.i, dir: other }); };
 
+  const locked = !!race?.locked;
   const type = (L: string) => {
-    if (done) return;
+    if (done || locked) return;
     const i = sel.i;
     const f = [...fill];
     if (!revealed[i]) {
@@ -137,7 +171,7 @@ export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () 
   };
 
   const back = () => {
-    if (done) return;
+    if (done || locked) return;
     const i = sel.i;
     const cells = cellsOf[curWord];
     const f = [...fill];
@@ -214,11 +248,26 @@ export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () 
     window.addEventListener('resize', on);
     return () => window.removeEventListener('resize', on);
   }, []);
-  // header + clue bar + keyboard ≈ 330px; the grid gets the rest
-  const cell = Math.max(18, Math.floor(Math.min((Math.min(vp.w, 640) - 16) / W, (vp.h - 330) / H, 46)));
+  // header + clue bar + keyboard ≈ 330px (+ the race strip); the grid gets the rest
+  const cell = Math.max(18, Math.floor(Math.min((Math.min(vp.w, 640) - 16) / W, (vp.h - (race ? 400 : 330)) / H, 46)));
 
+  if (done && race) {
+    return (
+      <div className="min-h-dvh flex flex-col mx-auto w-full max-w-3xl px-3 pt-3">
+        <div className="flex items-center gap-2">
+          <button aria-label="Close" onClick={onExit} className="w-10 h-10 shrink-0 rounded-full grid place-items-center bg-white/5 border border-line">✕</button>
+          <div className="flex-1 display font-bold leading-tight">{race.title}</div>
+        </div>
+        {race.header}
+        <div className="card p-5 mt-4 text-center">
+          <div className="display text-2xl font-extrabold text-mint">🧩 Solved!</div>
+          <div className="text-mist mt-1">{words.length} words in {fmtTime(elapsed)}. Finished! Waiting for the others…</div>
+        </div>
+      </div>
+    );
+  }
   if (done) {
-    return <CrosswordDone saved={{ ...saved0, done: true, elapsed, reveals, checks }} reward={reward} onExit={onExit} onNew={onNew} />;
+    return <CrosswordDone saved={{ ...saved0, done: true, elapsed, reveals, checks }} reward={reward} onExit={onExit} onNew={onNew ?? onExit} />;
   }
 
   const w = words[curWord];
@@ -229,11 +278,13 @@ export function CrosswordPlay({ slot, onExit, onNew }: { slot: Slot; onExit: () 
         <button aria-label="Close" onClick={onExit} className="w-10 h-10 shrink-0 rounded-full grid place-items-center bg-white/5 border border-line">✕</button>
         <div className="flex-1 min-w-0">
           <div className="display font-bold leading-tight truncate">{saved0.title.replace('Daily crossword', 'Daily')}</div>
-          <div className="text-xs text-mist mono">{fmtTime(elapsed)} · {words.length} words</div>
+          <div className="text-xs text-mist mono">{race ? `${solvedWords}/${words.length} words` : `${fmtTime(elapsed)} · ${words.length} words`}</div>
         </div>
         <button onClick={() => setSheet('clues')} className="chip !text-sm !py-2 !px-3">☰ Clues</button>
-        <button onClick={() => setSheet('help')} className="chip !text-sm !py-2 !px-3">💡 Help</button>
+        {!race && <button onClick={() => setSheet('help')} className="chip !text-sm !py-2 !px-3">💡 Help</button>}
       </div>
+      {race?.header && <div className="px-3">{race.header}</div>}
+      {locked && <div className="mx-3 mt-2 rounded-xl border border-amber/50 bg-amber/10 text-amber text-sm text-center py-2">⏱️ Time’s up — waiting for results…</div>}
 
       {/* grid */}
       <div className="flex-1 grid place-items-center py-2">

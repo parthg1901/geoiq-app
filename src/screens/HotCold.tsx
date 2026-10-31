@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { BY_ID, COUNTRIES, fame } from '../data';
+import { BY_ID } from '../data';
 import { useGame } from '../lib/store';
-import { rng, hash, todayKey, pick } from '../lib/rng';
-import { borderDistance, bearing, centre, heat, heatLabel } from '../lib/border';
+import { rng, hash, todayKey } from '../lib/rng';
+import { borderDistance, bearing, centre, heat, heatLabel, mysteryCountry } from '../lib/border';
 import { checkAchievements } from '../lib/achievements';
 import { sfx, buzz } from '../lib/sound';
 import { toast } from '../components/Toasts';
@@ -14,16 +14,13 @@ import { useWorld } from '../components/WorldMap';
 import { TypeAnswer } from '../components/Answer';
 import { Flag, Shape } from '../components/Shape';
 import { go } from '../lib/router';
+import type { RaceReport } from '../lib/mp/protocol';
 
 type Kind = 'daily' | 'random';
 interface Guess { id: string; km: number; dir: number }
 
 function mystery(kind: Kind) {
-  const r = kind === 'daily' ? rng(hash('hotcold:' + todayKey())) : Math.random;
-  // fame-weighted: mostly countries people have a fighting chance with
-  const pool = COUNTRIES.filter((c) => fame(c) >= 0.25);
-  const weighted = pool.flatMap((c) => Array(1 + Math.round(fame(c) * 3)).fill(c.id) as string[]);
-  return pick(weighted, r);
+  return mysteryCountry(kind === 'daily' ? rng(hash('hotcold:' + todayKey())) : Math.random);
 }
 
 export default function HotCold() {
@@ -35,7 +32,15 @@ export default function HotCold() {
     onMode={(k) => { setKind(k); setRound((r) => r + 1); }} />;
 }
 
-function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind; dailyDone: boolean; onMode: (k: Kind) => void }) {
+/** Race mode (multiplayer): no XP/achievements/give-up; progress goes to `onReport` instead. */
+export interface HotColdRace { onReport: (r: RaceReport) => void; locked?: boolean }
+
+/** Hot & Cold in multiplayer race mode — same mystery country for everyone. */
+export function HotColdRaceGame({ target, race }: { target: string; race: HotColdRace }) {
+  return <Game target={target} kind="random" dailyDone={false} onMode={() => {}} race={race} />;
+}
+
+function Game({ target, kind, dailyDone, onMode, race }: { target: string; kind: Kind; dailyDone: boolean; onMode: (k: Kind) => void; race?: HotColdRace }) {
   const world = useWorld('110');
   const [guesses, setGuesses] = useState<Guess[]>([]);
   const [status, setStatus] = useState<'play' | 'won' | 'lost'>('play');
@@ -50,6 +55,7 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
     const g = useGame.getState();
     setStatus(won ? 'won' : 'lost');
     setLast(target);
+    if (race) { if (won) { sfx.win(); confetti({ particleCount: 90, spread: 80, origin: { y: 0.35 } }); } return; }
     let xp = 5;
     if (won) {
       xp = Math.max(10, 75 - (n - 1) * 5);
@@ -64,7 +70,7 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
   };
 
   const guess = (id: string | null, raw: string) => {
-    if (status !== 'play' || !world) return;
+    if (status !== 'play' || !world || race?.locked) return;
     const flash = (m: string) => { setMsg(m); buzz(20); setTimeout(() => setMsg(null), 1800); };
     if (!id) return flash(`“${raw}” isn’t a country we know.`);
     if (guesses.some((g) => g.id === id)) return flash(`Already guessed ${BY_ID[id].name}.`);
@@ -73,6 +79,8 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
     const list = [...guesses, { id, km, dir }];
     setGuesses(list);
     setLast(id);
+    // RaceReport: a = guesses, b = closest distance in km (0 only when found), done = found
+    if (race) race.onReport({ a: list.length, b: id === target ? 0 : Math.max(1, Math.min(...list.map((g) => g.km))), c: 0, done: id === target });
     if (id === target) { finish(true, list.length); return; }
     if (!closest || km < closest.km) { sfx.right(Math.max(0, 8 - Math.floor(km / 1000))); } else sfx.tap();
   };
@@ -82,10 +90,10 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
   if (status !== 'play') fills[target] = status === 'won' ? '#3ddc97' : '#ff5d73';
 
   return (
-    <div className="relative z-10 mx-auto max-w-2xl px-4 pb-8 min-h-dvh flex flex-col">
-      <TopBar title="Hot & Cold" onClose={() => go('/play')} right={<span className="chip mono !text-sm">{guesses.length} 🎯</span>} />
+    <div className={`relative z-10 mx-auto max-w-2xl px-4 pb-8 flex flex-col ${race ? '' : 'min-h-dvh'}`}>
+      {!race && <TopBar title="Hot & Cold" onClose={() => go('/play')} right={<span className="chip mono !text-sm">{guesses.length} 🎯</span>} />}
 
-      <div className="flex gap-2">
+      {!race && <div className="flex gap-2">
         {(['daily', 'random'] as Kind[]).map((k) => (
           <button key={k} onClick={() => k !== kind && onMode(k)}
             className={`chip !py-1.5 !px-3 !text-sm ${kind === k ? '!bg-amber !text-ink !border-amber' : ''}`}>
@@ -93,7 +101,7 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
           </button>
         ))}
         <span className="text-sm text-mist self-center ml-auto hidden sm:inline">Guess any country — we’ll tell you how close you are.</span>
-      </div>
+      </div>}
 
       <div className="kb-hide relative mt-3 flex justify-center">
         <div className="absolute inset-0 m-auto w-72 h-72 rounded-full opacity-30 pointer-events-none" style={{ background: `radial-gradient(circle, ${closest ? heat(closest.km) : '#53b8ff'} 0%, transparent 68%)` }} />
@@ -117,11 +125,19 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
         <div className="flex justify-between text-xs uppercase tracking-wider text-mist font-bold mt-1"><span>Hot</span><span>Cold</span></div>
       </div>
 
-      {status === 'play' ? (
+      {status === 'play' && race?.locked ? (
+        <div className="card p-4 mt-3 text-center text-mist">⏱️ Time’s up — waiting for results…</div>
+      ) : status === 'play' ? (
         <div className="mt-3">
           <AnimatePresence>{msg && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-rose text-sm mb-2">{msg}</motion.div>}</AnimatePresence>
           <TypeAnswer onSubmit={guess} placeholder={world ? 'Guess a country…' : 'Loading world…'} disabled={!world} />
         </div>
+      ) : race ? (
+        <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="card p-5 mt-4 text-center">
+          <div className="display text-2xl font-extrabold text-mint">🎯 Found it in {guesses.length}!</div>
+          <div className="flex items-center justify-center gap-2 mt-2"><Flag id={target} className="w-9 h-6 !rounded" /><span className="display text-xl font-bold">{t.name}</span></div>
+          <div className="text-mist mt-2">Finished! Waiting for the others…</div>
+        </motion.div>
       ) : (
         <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="card p-5 mt-4">
           <div className="flex items-center gap-4">
@@ -164,7 +180,7 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
         </AnimatePresence>
       </div>
 
-      {status === 'play' && guesses.length >= 3 && (
+      {status === 'play' && !race && guesses.length >= 3 && (
         <button className="btn btn-ghost w-full mt-4 !py-2.5 text-sm" onClick={() => finish(false, guesses.length)}>Give up & reveal</button>
       )}
       {status === 'play' && !guesses.length && (

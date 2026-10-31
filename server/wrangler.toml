@@ -1,0 +1,18 @@
+# GeoIQ multiplayer server → https://play.geoiq.workers.dev
+name = "play"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[durable_objects.bindings]]
+name = "CHALLENGES"
+class_name = "ChallengeStore"
+
+# SQLite-backed Durable Objects (available on the Workers free plan)
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room", "ChallengeStore"]

@@ -41,6 +41,7 @@ export default function PlayHub() {
         <Special onClick={() => go('/hotcold')} e="🌡️" t="Hot & Cold" d={`Find the mystery country by distance${bests.hotcold ? ` · best ${bests.hotcold}` : ''}`} c="#ff6b5e" />
         <Special onClick={() => go('/borderline')} e="🛤️" t="Borderline" d="Cross borders from A to B" c="#3ddc97" />
         <Special onClick={() => go('/crossword')} e="🧩" t="Crosswords" d="Daily grid, or build your own from any topic" c="#b48cff" />
+        <Special onClick={() => go('/mp')} e="⚔️" t="Multiplayer" d="Live rooms with friends, or send a challenge" c="#ff5d73" />
       </div>
 
       <SectionTitle sub={<button className="text-sky" onClick={() => go('/packs')}>All packs →</button>}>Explore more</SectionTitle>

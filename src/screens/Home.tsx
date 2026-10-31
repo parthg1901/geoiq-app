@@ -177,6 +177,7 @@ export default function Home() {
       <SectionTitle sub={<button className="text-sky" onClick={() => go('/play')}>All games →</button>}>Quick play</SectionTitle>
       <div className="grid grid-cols-2 gap-3">
         {[
+          { to: '/mp', t: 'Multiplayer', d: 'Play friends live with a room code, or send a challenge', e: '⚔️', c: '#ff5d73', wide: true },
           { to: '/play/rush', t: 'Shape Rush', d: '60s time attack', e: '⚡', c: '#ffb547' },
           { to: '/hotcold', t: 'Hot & Cold', d: 'Find the mystery country', e: '🌡️', c: '#ff6b5e' },
           { to: '/borderline', t: 'Borderline', d: 'Walk across borders', e: '🛤️', c: '#3ddc97' },
@@ -184,7 +185,7 @@ export default function Home() {
           { to: '/crossword', t: 'Crosswords', d: 'Daily grid or your own topics', e: '🧩', c: '#b48cff' },
           { to: '/packs', t: 'Explore packs', d: 'States, rivers, history', e: '🗺️', c: '#3ddc97' },
         ].map((m) => (
-          <button key={m.to} onClick={() => go(m.to)} className="card p-4 text-left relative overflow-hidden group">
+          <button key={m.to} onClick={() => go(m.to)} className={`card p-4 text-left relative overflow-hidden group ${'wide' in m && m.wide ? 'col-span-2' : ''}`}>
             <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-20 group-hover:opacity-35 transition-opacity pointer-events-none" style={{ background: `radial-gradient(circle, ${m.c} 0%, transparent 68%)` }} />
             <div className="relative text-2xl">{m.e}</div>
             <div className="relative display font-bold mt-1">{m.t}</div>

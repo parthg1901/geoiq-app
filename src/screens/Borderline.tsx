@@ -13,6 +13,7 @@ import { WorldMap } from '../components/WorldMap';
 import { TypeAnswer } from '../components/Answer';
 import { Flag } from '../components/Shape';
 import { go } from '../lib/router';
+import type { RaceReport } from '../lib/mp/protocol';
 
 const COL = { start: '#53b8ff', end: '#b48cff', good: '#3ddc97', near: '#ffb547', bad: '#ff5d73' };
 
@@ -59,7 +60,15 @@ function Intro({ onPick }: { onPick: (k: Kind) => void }) {
   );
 }
 
-function Game({ route, kind, onAgain }: { route: Route; kind: Kind; onAgain: () => void }) {
+/** Race mode (multiplayer): no XP/achievements/give-up; progress goes to `onReport` instead. */
+export interface BorderlineRace { onReport: (r: RaceReport) => void; locked?: boolean }
+
+/** Borderline in multiplayer race mode — same start and end for everyone. */
+export function BorderlineRaceGame({ route, race }: { route: Route; race: BorderlineRace }) {
+  return <Game route={route} kind="random" onAgain={() => {}} race={race} />;
+}
+
+function Game({ route, kind, onAgain, race }: { route: Route; kind: Kind; onAgain: () => void; race?: BorderlineRace }) {
   const between = route.hops - 1; // countries strictly between start and end
   const maxGuesses = between + 4;
   const [guesses, setGuesses] = useState<string[]>([]);
@@ -78,6 +87,7 @@ function Game({ route, kind, onAgain }: { route: Route; kind: Kind; onAgain: () 
   const end = (won: boolean, list: string[]) => {
     const g = useGame.getState();
     setStatus(won ? 'won' : 'lost');
+    if (race) { if (won) { sfx.win(); confetti({ particleCount: 90, spread: 80, origin: { y: 0.4 } }); } else sfx.wrong(); void list; return; }
     let xp = 5;
     if (won) {
       const extra = list.length - between;
@@ -92,7 +102,7 @@ function Game({ route, kind, onAgain }: { route: Route; kind: Kind; onAgain: () 
   };
 
   const guess = (id: string | null, raw: string) => {
-    if (status !== 'play') return;
+    if (status !== 'play' || race?.locked) return;
     const flash = (m: string) => { setMsg(m); setShake((x) => x + 1); buzz(20); setTimeout(() => setMsg(null), 1800); };
     if (!id) return flash(`Hmm, “${raw}” isn’t a country we know.`);
     if (id === route.start || id === route.end) return flash(`${BY_ID[id].name} is already on the board.`);
@@ -105,21 +115,29 @@ function Game({ route, kind, onAgain }: { route: Route; kind: Kind; onAgain: () 
       sfx.right(list.length);
     } else if (detour(route, id) <= 2) sfx.hint();
     else { sfx.wrong(); buzz([20, 30, 20]); }
-    if (connected(route, list)) end(true, list);
+    const won = connected(route, list);
+    // RaceReport: a = guesses, b = countries placed on a shortest route, c = countries the shortest route needs
+    if (race) race.onReport({ a: list.length, b: list.filter((g) => onShortest(route, g)).length, c: between, done: won });
+    if (won) end(true, list);
     else if (list.length >= maxGuesses) end(false, list);
   };
 
   const fills: Record<string, string> = { [route.start]: COL.start, [route.end]: COL.end };
   for (const g of guesses) fills[g] = colorOf(g);
-  if (status === 'lost') for (const b of best.slice(1, -1)) if (!fills[b]) fills[b] = 'rgba(61,220,151,.45)';
+  const showRoute = status === 'lost' && !race;
+  if (showRoute) for (const b of best.slice(1, -1)) if (!fills[b]) fills[b] = 'rgba(61,220,151,.45)';
   const labels: Record<string, string> = { [route.start]: s.name, [route.end]: e.name };
   for (const g of guesses) labels[g] = BY_ID[g].name;
-  if (status === 'lost') for (const b of best) labels[b] = BY_ID[b].name;
+  if (showRoute) for (const b of best) labels[b] = BY_ID[b].name;
 
   return (
-    <div className="relative z-10 mx-auto max-w-3xl px-4 pb-8 min-h-dvh flex flex-col">
-      <TopBar title={<span>Borderline <span className="text-mist text-sm font-semibold">· {kind === 'daily' ? 'Daily' : 'Random'}</span></span>} onClose={() => go('/play')}
-        right={<span className="chip mono !text-sm">{guesses.length}/{maxGuesses}</span>} />
+    <div className={`relative z-10 mx-auto max-w-3xl px-4 pb-8 flex flex-col ${race ? '' : 'min-h-dvh'}`}>
+      {race ? (
+        <div className="flex justify-end mb-2"><span className="chip mono !text-sm">{guesses.length}/{maxGuesses} guesses</span></div>
+      ) : (
+        <TopBar title={<span>Borderline <span className="text-mist text-sm font-semibold">· {kind === 'daily' ? 'Daily' : 'Random'}</span></span>} onClose={() => go('/play')}
+          right={<span className="chip mono !text-sm">{guesses.length}/{maxGuesses}</span>} />
+      )}
 
       {/* start → end header */}
       <div className="card p-3 flex items-center gap-2">
@@ -152,12 +170,21 @@ function Game({ route, kind, onAgain }: { route: Route; kind: Kind; onAgain: () 
         </AnimatePresence>
       </div>
 
-      {status === 'play' ? (
+      {status === 'play' && race?.locked ? (
+        <div className="card p-4 mt-3 text-center text-mist">⏱️ Time’s up — waiting for results…</div>
+      ) : status === 'play' ? (
         <div key={shake} className={`mt-auto pt-3 ${shake ? 'shake' : ''}`}>
           <AnimatePresence>{msg && <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-rose text-sm mb-2">{msg}</motion.div>}</AnimatePresence>
           <TypeAnswer onSubmit={guess} placeholder="Next country on the route…" />
-          <button className="btn btn-ghost w-full mt-2 !py-2.5 text-sm" onClick={() => end(false, guesses)}>Give up & show route</button>
+          {!race && <button className="btn btn-ghost w-full mt-2 !py-2.5 text-sm" onClick={() => end(false, guesses)}>Give up & show route</button>}
         </div>
+      ) : race ? (
+        <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="card p-5 mt-4 text-center">
+          <div className="display text-2xl font-extrabold" style={{ color: status === 'won' ? COL.good : COL.bad }}>
+            {status === 'won' ? (guesses.length <= between ? '💎 Perfect route!' : '🎉 Route complete!') : 'Out of guesses'}
+          </div>
+          <div className="text-mist mt-1">{status === 'won' ? `${guesses.length} guesses (shortest possible: ${between}). ` : ''}Finished! Waiting for the others…</div>
+        </motion.div>
       ) : (
         <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="card p-5 mt-4">
           <div className="display text-2xl font-extrabold" style={{ color: status === 'won' ? COL.good : COL.bad }}>

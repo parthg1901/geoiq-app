@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { useRoute, go } from './lib/router';
 import { useGame } from './lib/store';
 import { Toasts, toast } from './components/Toasts';
+import { ConfirmHost } from './components/Confirm';
 import { NavBar } from './components/NavBar';
 import Home from './screens/Home';
 import PlayHub from './screens/PlayHub';
@@ -21,6 +22,9 @@ const Atlas = lazy(() => import('./screens/Atlas'));
 const Packs = lazy(() => import('./screens/Packs'));
 const Pack = lazy(() => import('./screens/Pack'));
 const Crossword = lazy(() => import('./screens/Crossword'));
+const Multiplayer = lazy(() => import('./screens/Multiplayer'));
+const MpRoom = lazy(() => import('./screens/MpRoom'));
+const MpChallenge = lazy(() => import('./screens/MpChallenge'));
 const Onboarding = lazy(() => import('./screens/Onboarding'));
 
 export default function App() {
@@ -37,7 +41,8 @@ export default function App() {
   const top = parts[0] ?? '';
   const immersive = (['play', 'lesson', 'test', 'daily', 'borderline', 'hotcold', 'country'].includes(top) && parts.length > (top === 'play' ? 1 : 0))
     || (top === 'pack' && parts.length > 2)
-    || (top === 'crossword' && parts.length > 1);
+    || (top === 'crossword' && parts.length > 1)
+    || (top === 'mp' && parts.length > 1);
 
   let screen: React.ReactNode;
   if (!onboarded) screen = <Onboarding />;
@@ -58,12 +63,18 @@ export default function App() {
     case 'packs': screen = <Packs />; break;
     case 'pack': screen = <Pack key={parts[1]} id={parts[1]} />; break;
     case 'crossword': screen = <Crossword key={parts[1] ?? 'setup'} slot={parts[1]} />; break;
+    case 'mp':
+      screen = parts[1] === 'room' ? <MpRoom key={parts[2]} code={parts[2]} />
+        : parts[1] === 'challenge' ? <MpChallenge key={parts[2]} id={parts[2]} />
+        : <Multiplayer />;
+      break;
     default: go('/');
   }
 
   return (
     <div className="atlas-bg min-h-dvh">
       <Toasts />
+      <ConfirmHost />
       <Suspense fallback={<div className="min-h-dvh grid place-items-center text-mist display">Unfolding the map…</div>}>{screen}</Suspense>
       {onboarded && !immersive && <NavBar active={top} />}
     </div>

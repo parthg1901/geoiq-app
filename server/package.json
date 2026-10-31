@@ -1,0 +1,18 @@
+{
+  "name": "geoiq-server",
+  "private": true,
+  "version": "0.1.0",
+  "description": "GeoIQ multiplayer server: live rooms and async challenges on Cloudflare Workers + Durable Objects",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261031.1",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.156.0"
+  }
+}

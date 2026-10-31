@@ -63,6 +63,10 @@ interface State {
   crossword: { daily?: SavedCrossword; custom?: SavedCrossword };
   cwDaily: Record<string, { time: number; reveals: number }>;
   cwPrefs: { sources: string[]; size: string };
+  mp: MpState;
+  mpUpdate: (p: Partial<MpState>) => void;
+  /** Record a finished live game once (keyed by room+seed): duel rating, win count and XP. Repeat calls return the stored outcome. */
+  mpFinish: (g: MpGameResult) => MpGameOutcome | null;
   // actions
   packAnswer: (a: PackAnswerInput) => { xp: number; levelUp: boolean };
   packUpdate: (pack: string, fn: (p: PackState) => PackState) => void;
@@ -75,6 +79,34 @@ interface State {
   best: (key: string, v: number, lowerIsBetter?: boolean) => boolean;
   unlock: (id: string) => boolean;
   reset: () => void;
+}
+
+/** Multiplayer identity and duel record (separate from GeoIQ). */
+export interface MpChallengeRef { code: string; topic: string; createdAt: number; role: 'creator' | 'player' }
+export interface MpGameOutcome { key: string; delta: number; won: boolean; xp: number }
+export interface MpState { deviceId: string; name: string; rating: number; matches: number; wins: number; challenges: MpChallengeRef[]; lastGame: string | null; lastResult?: MpGameOutcome }
+/** `xp`: base XP for this game when it isn't 8 per correct answer (race games). */
+export interface MpGameResult { key: string; you: string; players: { id: string; score: number; rating: number; correct: number }[]; xp?: number }
+
+const newDeviceId = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+/**
+ * Multi-player Elo: every pair of players is a mini-match decided by final score (ties = draw),
+ * with K = 32 / (n − 1) so a big room doesn't swing ratings more than a 1v1.
+ */
+export function eloDelta(players: MpGameResult['players'], you: string): number {
+  const me = players.find((p) => p.id === you);
+  if (!me || players.length < 2) return 0;
+  const k = 32 / (players.length - 1);
+  let d = 0;
+  for (const o of players) {
+    if (o.id === you) continue;
+    const s = me.score > o.score ? 1 : me.score === o.score ? 0.5 : 0;
+    const e = 1 / (1 + 10 ** ((o.rating - me.rating) / 400));
+    d += k * (s - e);
+  }
+  return Math.round(d);
 }
 
 export const levelFor = (xp: number) => {
@@ -114,6 +146,7 @@ const initial = () => ({
   crossword: {} as { daily?: SavedCrossword; custom?: SavedCrossword },
   cwDaily: {} as Record<string, { time: number; reveals: number }>,
   cwPrefs: { sources: [] as string[], size: 'standard' },
+  mp: { deviceId: newDeviceId(), name: '', rating: 1000, matches: 0, wins: 0, challenges: [] as MpChallengeRef[], lastGame: null as string | null },
 });
 
 export const emptyPack = (): PackState => ({ cards: {}, best: {}, plays: 0 });
@@ -155,6 +188,23 @@ export const useGame = create<State>()(
       ...initial(),
       set: (p) => set(p),
       reset: () => set(initial()),
+      mpUpdate: (p) => set((s) => ({ mp: { ...s.mp, ...p } })),
+      mpFinish: (g) => {
+        const s = get();
+        if (s.mp.lastGame === g.key) return s.mp.lastResult?.key === g.key ? s.mp.lastResult : null; // already recorded
+        const me = g.players.find((p) => p.id === g.you);
+        if (!me) return null;
+        const top = Math.max(...g.players.map((p) => p.score));
+        const won = g.players.length >= 2 && me.score === top && me.score > 0;
+        const delta = eloDelta(g.players, g.you);
+        const xp = (g.xp ?? me.correct * 8) + (won ? 25 : 0);
+        const lastResult = { key: g.key, delta, won, xp };
+        set({ mp: { ...s.mp, rating: s.mp.rating + delta, matches: s.mp.matches + 1, wins: s.mp.wins + (won ? 1 : 0), lastGame: g.key, lastResult } });
+        if (xp) get().addXP(xp, won ? 10 : 2);
+        get().bump('mpGames');
+        if (won) get().bump('mpWins');
+        return lastResult;
+      },
       bump: (key, n = 1) => set((s) => ({ counters: { ...s.counters, [key]: (s.counters[key] ?? 0) + n } })),
       best: (key, v, lower = false) => {
         const cur = get().bests[key];

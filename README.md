@@ -35,6 +35,7 @@ Android app (Capacitor) and installable web app (PWA). Fully offline apart from 
 - **Deduction:** the Clue Ladder (fewer clues, more points) and Street Eye (guess from real photos).
 - **Harder variants:** Twisted Shapes (rotated) and Shape Rush (60-second time attack).
 - **Specials:** a Daily Challenge (the same 5 questions for everyone, with a shareable emoji grid), Hot & Cold (find the mystery country by distance) and Borderline (walk from A to B across land borders).
+- **Multiplayer:** live rooms for 2–8 players with a 4-letter code (everyone gets the same question at once, faster correct answers score more, live scoreboard and podium, duel rating), and async challenges: play a round, share a `GEO-XXXX` code, and compare scores when friends play the same questions.
 - **Crosswords:** a daily crossword, or build your own from any mix of 21 topics (countries, capitals, flags, outlines, rivers, lakes, seas, mountains, peaks, states and provinces, history) in three sizes. Clues are written from the data, and picture clues use flags and outlines.
 - **Answer styles:** multiple choice, or typed answers with forgiving autocomplete. Questions adapt to your level.
 
@@ -90,6 +91,10 @@ npm run android       # web build → cap sync → Gradle; signed APK at dist-ap
 - **Requirements:** JDK 21 and the Android SDK, configured in `~/android/env.sh`. Local release signing reads `~/android/geoiq-release.properties` (never committed).
 - **ARM64 Linux build hosts:** Google only ships an x86_64 `aapt2`, so point `android.aapt2FromMavenOverride` (in `~/.gradle/gradle.properties`) at a wrapper that runs it through user-mode qemu.
 - **Releases:** pushing a tag `vX.Y.Z` runs [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml). It builds a signed APK (versionCode `X·10000 + Y·100 + Z`) and attaches it to a GitHub Release. Signing comes from the repo secrets `GEOIQ_KEYSTORE_B64`, `GEOIQ_KEYSTORE_PASSWORD`, `GEOIQ_KEY_ALIAS` and `GEOIQ_KEY_PASSWORD`.
+
+### Multiplayer server
+
+[`server/`](server/) is a Cloudflare Worker with Durable Objects (one per live room or challenge), deployed at `play.geoiq.workers.dev`. Questions are never sent over the wire: every device builds the same list from a shared seed and the bundled data, and the server runs the clock and the scores. See [`server/README.md`](server/README.md) for local dev, the end-to-end simulator (`node server/scripts/sim.mjs`) and the test bot.
 
 ### Data pipeline
 
