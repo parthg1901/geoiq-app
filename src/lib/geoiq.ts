@@ -47,14 +47,50 @@ export function pCorrect(theta: number, d: number, format: Format) {
 export interface Rating { theta: number; n: number }
 export const freshRating = (): Rating => ({ theta: BASE, n: 0 });
 
-/** Update a rating after an outcome in [0,1]. K shrinks as we get more confident. */
+/** Step size: large while we know little about you, settling as answers accumulate. */
+const kFactor = (n: number) => (10 + 60 / Math.sqrt(1 + n / 4)) * 1.5;
+
+/**
+ * Update a rating after an outcome in [0,1].
+ *
+ * This is a stochastic-gradient step on the 3PL log-likelihood: (outcome − p) weighted by the item's
+ * information, (1−g)·σ(1−σ) / (p(1−p)). The weight is 1 for typed answers and < 1 for multiple choice,
+ * where a right answer might be a lucky guess. Unlike an ad-hoc "discount right answers" rule it is
+ * unbiased: at your true ability the expected change is zero, so the rating settles on the truth.
+ * (scripts/audit-math.mjs checks this by simulation.)
+ */
 export function update(r: Rating, d: number, format: Format, outcome: number, kScale = 1): Rating {
-  const p = pCorrect(r.theta, d, format);
-  const k = (10 + 60 / Math.sqrt(1 + r.n / 4)) * kScale;
-  // Information weighting: a guessed multiple-choice right answer says less than a typed one.
   const g = guessFloor(format);
-  const delta = outcome >= p ? (outcome - p) * (1 - g) : outcome - p;
-  return { theta: r.theta + k * delta * 1.5, n: r.n + 1 };
+  const sig = 1 / (1 + Math.exp(-(r.theta - d) / S));
+  const p = g + (1 - g) * sig;
+  const w = ((1 - g) * sig * (1 - sig)) / Math.max(1e-6, p * (1 - p));
+  return { theta: r.theta + kFactor(r.n) * kScale * (outcome - p) * w, n: r.n + 1 };
+}
+
+/** Each Clue Ladder clue makes the country this much easier (θ points). */
+export const CLUE_STEP = 110;
+
+/**
+ * Clue Ladder update. Every clue is its own yes/no trial at a slightly easier difficulty
+ * (d − CLUE_STEP·(k−1)): clues you didn't solve on count as misses, the one you solved on as a hit.
+ * Summing these (a continuation-ratio model) is unbiased — scoring "eventually solved" as partial
+ * credit instead inflated the Clues rating by ~30–40 GeoIQ points in simulation.
+ */
+export function updateLadder(r: Rating, d: number, solvedAt: number, shown: number, kScale = 1): Rating {
+  // Up to six trials per question: a smaller per-clue step, capped at one ordinary answer's worth,
+  // keeps a single give-up from swinging the rating while staying unbiased (see audit-math).
+  const k = kFactor(r.n) * kScale;
+  const step = Math.max(-k, Math.min(k, k * 0.3 * ladderDelta(r.theta, d, solvedAt, shown)));
+  return { theta: r.theta + step, n: r.n + 1 };
+}
+/** Σ over the clues seen of (hit − P(hit)). solvedAt = clue number solved on (1-based), 0 = never. */
+/** The Clue Ladder's "surprise" on the same −1…1 footing as one right/wrong answer (used by the GeoIQ Test). */
+export const ladderSurprise = (theta: number, d: number, solvedAt: number, shown: number) =>
+  Math.max(-1, Math.min(1, 0.3 * ladderDelta(theta, d, solvedAt, shown)));
+export function ladderDelta(theta: number, d: number, solvedAt: number, shown: number) {
+  let delta = 0;
+  for (let k = 1; k <= shown; k++) delta += (k === solvedAt ? 1 : 0) - pCorrect(theta, d - CLUE_STEP * (k - 1), 'partial');
+  return delta;
 }
 
 export const toIQ = (theta: number) => Math.round(100 + (15 * (theta - BASE)) / SD);

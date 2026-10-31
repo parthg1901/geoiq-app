@@ -100,9 +100,9 @@ function Game({ route, kind, onAgain }: { route: Route; kind: Kind; onAgain: () 
     const list = [...guesses, id];
     setGuesses(list);
     if (onShortest(route, id)) {
+      // Not fed into GeoIQ: only correct route picks are observable here, and one-sided data would
+      // only ever push the Map rating up.
       sfx.right(list.length);
-      // Countries correctly placed on the route count as map practice.
-      useGame.getState().answer({ id, skill: 'map', format: 'typed', outcome: 1, practice: true });
     } else if (detour(route, id) <= 2) sfx.hint();
     else { sfx.wrong(); buzz([20, 30, 20]); }
     if (connected(route, list)) end(true, list);

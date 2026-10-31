@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { freshRatings, update, geoIQ, itemFor, type Format, type Ratings, type Skill } from './geoiq';
+import { freshRatings, update, updateLadder, geoIQ, itemFor, type Format, type Ratings, type Skill } from './geoiq';
 import { todayKey, dayDiff, addDays } from './rng';
 import { COUNTRIES } from '../data';
 
@@ -11,7 +11,13 @@ export interface Card { box: number; due: number; seen: number; right: number }
 export interface DayLog { xp: number; answers: number; right: number }
 export interface TestResult { date: string; iq: number; skills: Partial<Record<Skill, number>>; correct: number; total: number }
 /** dOffset: extra item difficulty for harder question types sharing a skill (e.g. coats of arms vs flags). */
-export interface AnswerInput { id: string; skill: Skill; format: Format; outcome: number; ms?: number; combo?: number; practice?: boolean; dOffset?: number }
+export interface AnswerInput {
+  id: string; skill: Skill; format: Format; outcome: number; ms?: number; combo?: number; practice?: boolean; dOffset?: number;
+  /** Clue Ladder: which clue it was solved on (0 = never) out of how many were shown — rated per clue. */
+  ladder?: { solvedAt: number; shown: number };
+  /** Whether this answer should train the country's memory card (false for e.g. coats of arms). */
+  srs?: boolean;
+}
 export interface AnswerResult { xp: number; iqBefore: number; iqAfter: number; stamp: boolean; levelUp: boolean }
 /** Progress in one content pack (regions / physical / history). Separate from the country GeoIQ. */
 export interface PackState { cards: Record<string, Card>; best: Record<string, number>; plays: number }
@@ -44,7 +50,8 @@ interface State {
   packAnswer: (a: PackAnswerInput) => { xp: number; levelUp: boolean };
   packUpdate: (pack: string, fn: (p: PackState) => PackState) => void;
   answer: (a: AnswerInput) => AnswerResult;
-  addXP: (n: number, coins?: number) => void;
+  /** bonus: rewards (e.g. the daily spin) add to total XP but don't count as today's practice. */
+  addXP: (n: number, coins?: number, opts?: { bonus?: boolean }) => void;
   checkStreak: () => { lost: number; froze: number };
   set: (p: Partial<State>) => void;
   bump: (key: string, n?: number) => void;
@@ -54,7 +61,7 @@ interface State {
 }
 
 export const levelFor = (xp: number) => {
-  // Level n needs 60·n^1.5 cumulative-ish XP; returns level and progress within it.
+  // Level 1→2 needs 80 XP; level n→n+1 needs 80·n^1.35. Returns level and progress within it.
   let lvl = 1, need = 80, acc = 0;
   while (xp >= acc + need) { acc += need; lvl++; need = Math.round(80 * Math.pow(lvl, 1.35)); }
   return { level: lvl, into: xp - acc, need };
@@ -91,11 +98,16 @@ const initial = () => ({
 
 export const emptyPack = (): PackState => ({ cards: {}, best: {}, plays: 0 });
 
-/** Next Leitner card after an answer (shared by countries and packs). */
-function nextCard(c: Card | undefined, ok: boolean): Card {
+/**
+ * Next Leitner card after an answer (shared by countries and packs).
+ * A right answer only moves a card up a box once it's due — repeating it minutes later proves
+ * nothing about long-term memory (and would let stamps be farmed). A miss always knocks it back.
+ */
+export function nextCard(c: Card | undefined, ok: boolean, now = Date.now()): Card {
   const cur = c ?? { box: 0, due: 0, seen: 0, right: 0 };
+  if (ok && cur.due > now) return { ...cur, seen: cur.seen + 1, right: cur.right + 1 };
   const box = ok ? Math.min(5, cur.box + 1) : Math.max(0, Math.min(1, cur.box - 2));
-  return { box, due: Date.now() + INTERVAL_DAYS[box] * 86400000 - 3600000, seen: cur.seen + 1, right: cur.right + (ok ? 1 : 0) };
+  return { box, due: now + INTERVAL_DAYS[box] * 86400000 - 3600000, seen: cur.seen + 1, right: cur.right + (ok ? 1 : 0) };
 }
 
 /** 0..1: average memory strength of a pack's items across the modes you've played. */
@@ -135,8 +147,9 @@ export const useGame = create<State>()(
         set((s) => ({ achievements: { ...s.achievements, [id]: todayKey() } }));
         return true;
       },
-      addXP: (n, coins = 0) => {
+      addXP: (n, coins = 0, opts) => {
         const day = todayKey();
+        if (opts?.bonus) { set((s) => ({ xp: s.xp + n, coins: s.coins + coins })); return; }
         set((s) => {
           const d = s.days[day] ?? { xp: 0, answers: 0, right: 0 };
           const nd = { ...d, xp: d.xp + n };
@@ -145,20 +158,9 @@ export const useGame = create<State>()(
       },
       checkStreak: () => {
         const s = get().streak;
-        const today = todayKey();
-        if (!s.last) return { lost: 0, froze: 0 };
-        const gap = dayDiff(s.last, today);
-        if (gap <= 1) return { lost: 0, froze: 0 };
-        const missed = gap - 1;
-        if (missed <= s.freezes) {
-          const frozen = Array.from({ length: missed }, (_, i) => addDays(s.last!, i + 1));
-          // Freezes bridge the gap: pretend "last" was yesterday.
-          set({ streak: { ...s, freezes: s.freezes - missed, last: addDays(today, -1), frozen: [...s.frozen, ...frozen] } });
-          return { lost: 0, froze: missed };
-        }
-        const lost = s.count;
-        set({ streak: { ...s, count: 0 } });
-        return { lost, froze: 0 };
+        const r = settleGap(s, todayKey());
+        if (r.streak !== s) set({ streak: r.streak });
+        return { lost: r.lost, froze: r.froze };
       },
       packUpdate: (pack, fn) => set((s) => ({ packs: { ...s.packs, [pack]: fn(s.packs[pack] ?? emptyPack()) } })),
       packAnswer: (a) => {
@@ -187,16 +189,14 @@ export const useGame = create<State>()(
         const before = geoIQ(s.ratings).iq;
         const item = itemFor(a.id, a.skill, a.dOffset);
         const kScale = a.practice ? 0.6 : 1;
-        const ratings: Ratings = {
-          ...s.ratings,
-          [a.skill]: update(s.ratings[a.skill], item.d, a.format, a.outcome, kScale),
-          all: update(s.ratings.all, item.d, a.format, a.outcome, kScale * 0.8),
-        };
+        const rate = (r: Ratings[Skill], k: number) =>
+          a.ladder ? updateLadder(r, item.d, a.ladder.solvedAt, a.ladder.shown, k) : update(r, item.d, a.format, a.outcome, k);
+        const ratings: Ratings = { ...s.ratings, [a.skill]: rate(s.ratings[a.skill], kScale), all: rate(s.ratings.all, kScale * 0.8) };
         const after = geoIQ(ratings).iq;
         // SRS (only for core skills; hint/photo feed the capital/shape-ish memory lightly)
         const key = `${a.id}:${a.skill}`;
         const cards = { ...s.cards };
-        if (CORE.includes(a.skill)) cards[key] = nextCard(cards[key], a.outcome >= 0.6);
+        if (CORE.includes(a.skill) && a.srs !== false) cards[key] = nextCard(cards[key], a.outcome >= 0.6);
         const wasStamped = !!s.stamps[a.id];
         const stamp = !wasStamped && mastery(cards, a.id) >= 0.75;
         // XP: base 10 for correct, partial credit, speed and combo bonus
@@ -221,11 +221,42 @@ export const useGame = create<State>()(
         return { xp, iqBefore: before, iqAfter: after, stamp, levelUp: levelFor(s.xp + xp).level > lvlBefore };
       },
     }),
-    { name: 'geoiq-v1', version: 1 },
+    {
+      name: 'geoiq-v1',
+      version: 2,
+      migrate: (persisted, version) => {
+        const st = persisted as State;
+        // v1 → v2: the Clue Ladder used to inflate the Clues rating (partial-credit bug). Pull it back to
+        // the overall level with low confidence so the new per-clue scoring recalibrates it quickly.
+        if (version < 2 && st?.ratings?.hint && st.ratings.all) {
+          const h = st.ratings.hint;
+          st.ratings = { ...st.ratings, hint: { theta: Math.min(h.theta, st.ratings.all.theta), n: Math.min(h.n, 8) } };
+        }
+        return st;
+      },
+    },
   ),
 );
 
-function bumpStreak(st: State['streak'], dayXp: number, day: string): State['streak'] {
+/**
+ * Resolve missed days before `today`: spend streak freezes to bridge the gap if there are enough,
+ * otherwise the streak is lost. Shared by the app-start check and by every XP gain, so freezes work
+ * even if the app stayed open across midnight.
+ */
+export function settleGap(st: State['streak'], today: string): { streak: State['streak']; lost: number; froze: number } {
+  if (!st.last || st.count === 0) return { streak: st, lost: 0, froze: 0 };
+  const missed = dayDiff(st.last, today) - 1;
+  if (missed <= 0) return { streak: st, lost: 0, froze: 0 };
+  if (missed <= st.freezes) {
+    const frozen = Array.from({ length: missed }, (_, i) => addDays(st.last!, i + 1));
+    // Freezes bridge the gap: pretend "last" was yesterday.
+    return { streak: { ...st, freezes: st.freezes - missed, last: addDays(today, -1), frozen: [...st.frozen, ...frozen].slice(-60) }, lost: 0, froze: missed };
+  }
+  return { streak: { ...st, count: 0 }, lost: st.count, froze: 0 };
+}
+
+export function bumpStreak(st0: State['streak'], dayXp: number, day: string): State['streak'] {
+  const st = settleGap(st0, day).streak;
   if (dayXp < STREAK_MIN_XP || st.last === day) return st;
   const cont = st.last && dayDiff(st.last, day) === 1;
   const count = cont ? st.count + 1 : 1;

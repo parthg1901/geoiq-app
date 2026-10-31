@@ -17,7 +17,8 @@ import { CountUp, Progress } from './ui';
 import { go } from '../lib/router';
 import { regionFrame } from '../lib/path';
 
-export interface QuizResult { q: Question; outcome: number; ms: number; given?: string | null }
+export type Ladder = { solvedAt: number; shown: number };
+export interface QuizResult { q: Question; outcome: number; ms: number; given?: string | null; ladder?: Ladder }
 
 export interface QuizConfig {
   title: string;
@@ -88,9 +89,13 @@ export function QuizRunner(cfg: QuizConfig) {
     cfg.onDone?.(results_);
   }, [results, bestCombo, cfg]);
 
-  const record = (outcome: number, given?: string | null) => {
+  const record = (outcome: number, given?: string | null, ladder?: Ladder) => {
     const ms = performance.now() - t0.current;
-    const res = answerFn({ id: q.id, skill: VARIANT_SKILL[q.variant], format: q.format, outcome, ms, combo, practice: cfg.practice, dOffset: q.variant === 'arms' ? 90 : 0 });
+    const res = answerFn({
+      id: q.id, skill: VARIANT_SKILL[q.variant], format: q.format, outcome, ms, combo, practice: cfg.practice, ladder,
+      // Coats of arms share the flag rating (with a difficulty bump) but don't train the flag memory card.
+      dOffset: q.variant === 'arms' ? 90 : 0, srs: q.variant !== 'arms',
+    });
     xpTotal.current += res.xp;
     const ok = outcome >= 0.6;
     if (ok) {
@@ -105,7 +110,7 @@ export function QuizRunner(cfg: QuizConfig) {
     }
     if (res.stamp) { stamps.current.push(q.id); setTimeout(() => sfx.stamp(), 300); }
     if (res.levelUp) { setTimeout(() => { sfx.level(); toast({ icon: '⬆️', title: 'Level up!', body: 'New level reached — keep going.' }); }, 400); }
-    const nr = [...results, { q, outcome, ms, given }];
+    const nr = [...results, { q, outcome, ms, given, ladder }];
     setResults(nr);
     setLast({ outcome, res });
     if (cfg.rush) {
@@ -188,7 +193,7 @@ export function QuizRunner(cfg: QuizConfig) {
 /* ------------------------------------------------------------------ */
 
 function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
-  q: Question; locked: boolean; onAnswer: (outcome: number, given?: string | null) => void; regionFocus?: string[] | null; rush: boolean;
+  q: Question; locked: boolean; onAnswer: (outcome: number, given?: string | null, ladder?: Ladder) => void; regionFocus?: string[] | null; rush: boolean;
 }) {
   const c = BY_ID[q.id];
   const [picked, setPicked] = useState<string | null>(null);
@@ -344,7 +349,7 @@ function MapFind({ q, locked, onAnswer, regionFocus, rush }: { q: Question; lock
 }
 
 /* -------- Clue ladder -------- */
-function HintLadder({ q, locked, onAnswer }: { q: Question; locked: boolean; onAnswer: (o: number, g?: string | null) => void }) {
+function HintLadder({ q, locked, onAnswer }: { q: Question; locked: boolean; onAnswer: (o: number, g?: string | null, ladder?: Ladder) => void }) {
   const c = BY_ID[q.id];
   const hints = useMemo(() => hintsFor(c), [c]);
   const stages = hints.length + 1; // last stage: silhouette
@@ -354,11 +359,12 @@ function HintLadder({ q, locked, onAnswer }: { q: Question; locked: boolean; onA
   const pts = Math.round(((stages - shown + 1) / stages) * 100);
   const next = () => {
     if (shown < stages) { setShown((s) => s + 1); sfx.hint(); }
-    else { setOver(true); onAnswer(0); }
+    else { setOver(true); onAnswer(0, null, { solvedAt: 0, shown: stages }); }
   };
   const guess = (id: string | null) => {
     if (locked || over) return;
-    if (id === q.id) { setOver(true); onAnswer(Math.max(0.6, (stages - shown + 1) / stages)); return; }
+    // outcome = partial credit for XP/feedback; the rating uses the per-clue ladder (see geoiq.updateLadder)
+    if (id === q.id) { setOver(true); onAnswer(Math.max(0.6, (stages - shown + 1) / stages), id, { solvedAt: shown, shown }); return; }
     setWrong((w) => [...w, id ? BY_ID[id]?.name ?? '?' : '?']);
     sfx.wrong();
     next();

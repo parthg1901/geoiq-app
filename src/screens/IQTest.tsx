@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useGame, type TestResult } from '../lib/store';
-import { difficulty, pCorrect, toIQ, fromIQ, tierFor, percentile, SKILL_LABEL, SKILL_ICON, type Skill } from '../lib/geoiq';
+import { difficulty, pCorrect, ladderSurprise, toIQ, fromIQ, tierFor, percentile, SKILL_LABEL, SKILL_ICON, type Skill } from '../lib/geoiq';
 import { makeQuestion, eligible, type Question, type Variant } from '../lib/questions';
 import { shuffle, todayKey } from '../lib/rng';
 import { go } from '../lib/router';
@@ -40,7 +40,7 @@ function nextQuestion(skill: Skill, theta: number, used: Set<string>): Question 
   return makeQuestion(id, v, { choices: 6 });
 }
 
-interface Step { q: Question; skill: Skill; d: number; outcome: number; thetaAfter: number }
+interface Step { q: Question; skill: Skill; d: number; outcome: number; thetaAfter: number; ladder?: { solvedAt: number; shown: number } }
 
 export default function IQTest() {
   const [phase, setPhase] = useState<'intro' | 'run' | 'result'>('intro');
@@ -66,10 +66,11 @@ export default function IQTest() {
     const i = steps.length;
     const skill = order[i];
     const d = difficulty(COUNTRIES.find((c) => c.id === current.id)!, skill);
-    const p = pCorrect(theta, d, current.format);
     const step = 220 / (1 + i * 0.35);
-    const t = theta + step * (r.outcome - p);
-    const ns = [...steps, { q: current, skill, d, outcome: r.outcome, thetaAfter: t }];
+    // Clue questions are scored per clue (unbiased); everything else is a single right/wrong trial.
+    const surprise = r.ladder ? ladderSurprise(theta, d, r.ladder.solvedAt, r.ladder.shown) : r.outcome - pCorrect(theta, d, current.format);
+    const t = theta + step * surprise;
+    const ns = [...steps, { q: current, skill, d, outcome: r.outcome, thetaAfter: t, ladder: r.ladder }];
     setSteps(ns);
     setTheta(t);
     if (ns.length >= TOTAL) { setCurrent(null); setPhase('result'); return; }
@@ -140,7 +141,7 @@ function Result({ steps, theta }: { steps: Step[]; theta: number }) {
       const mine = steps.filter((s) => s.skill === sk);
       // Anchor on the overall estimate, then adjust by this skill's surprise vs expectation.
       let adj = 0;
-      mine.forEach((s, j) => { adj += (160 / (1 + j * 0.5)) * (s.outcome - pCorrect(theta, s.d, s.q.format)); });
+      mine.forEach((s, j) => { adj += (160 / (1 + j * 0.5)) * (s.ladder ? ladderSurprise(theta, s.d, s.ladder.solvedAt, s.ladder.shown) : s.outcome - pCorrect(theta, s.d, s.q.format)); });
       out[sk] = toIQ(theta + adj * 0.6);
     }
     return out;
@@ -153,9 +154,12 @@ function Result({ steps, theta }: { steps: Step[]; theta: number }) {
     const g = useGame.getState();
     const result: TestResult = { date: todayKey(), iq, skills, correct, total: steps.length };
     const all = g.ratings.all;
+    // The test's answers already updated your ratings one by one. Pull the overall rating toward the
+    // test result in proportion to how little else we know: strong for newcomers, gentle for veterans.
+    const w = Math.min(0.5, 30 / (30 + all.n));
     g.set({
       tests: [...g.tests, result],
-      ratings: { ...g.ratings, all: { theta: 0.5 * all.theta + 0.5 * fromIQ(iq), n: all.n } },
+      ratings: { ...g.ratings, all: { theta: (1 - w) * all.theta + w * fromIQ(iq), n: all.n } },
     });
     import('../lib/achievements').then((m) => m.checkAchievements());
     setTimeout(() => {
@@ -193,6 +197,7 @@ function Result({ steps, theta }: { steps: Step[]; theta: number }) {
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.9 }}>
           <div className="text-mist mt-3">Sharper than <b className="text-paper">{pct}%</b> of explorers</div>
+          <div className="text-sm text-mist mt-1">Margin ±5 — a 24-question test lands within about 5 points of your true level two times in three.</div>
           <div className="text-sm text-mist mt-1">{tier.blurb}</div>
           {prev && (
             <div className={`chip mt-3 mono ${delta > 0 ? '!text-mint !border-mint/50' : delta < 0 ? '!text-rose !border-rose/50' : ''}`}>

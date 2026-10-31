@@ -34,7 +34,8 @@ export default function Daily() {
   const onDone = (res: QuizResult[]) => {
     const time = Math.round((performance.now() - t0.current) / 1000);
     const outcomes = questions.map((q) => res.find((r) => r.q === q)?.outcome ?? 0);
-    const score = outcomes.filter((o) => o >= 0.6).length;
+    // Matches the emoji grid: 🟩 and 🟨 (e.g. found on the second map try) both count as solved.
+    const score = outcomes.filter((o) => o >= 0.5).length;
     const grid = gridFor(outcomes);
     const s = useGame.getState();
     s.set({ daily: { ...s.daily, [day]: { score, grid, time } } });

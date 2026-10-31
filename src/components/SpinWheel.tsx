@@ -7,13 +7,13 @@ import { todayKey } from '../lib/rng';
 import { sfx } from '../lib/sound';
 
 export const PRIZES = [
-  { label: '+20 XP', color: '#53b8ff', apply: () => useGame.getState().addXP(20) },
+  { label: '+20 XP', color: '#53b8ff', apply: () => useGame.getState().addXP(20, 0, { bonus: true }) },
   { label: '+30 🪙', color: '#ffb547', apply: () => useGame.getState().set({ coins: useGame.getState().coins + 30 }) },
-  { label: '+50 XP', color: '#3ddc97', apply: () => useGame.getState().addXP(50) },
+  { label: '+50 XP', color: '#3ddc97', apply: () => useGame.getState().addXP(50, 0, { bonus: true }) },
   { label: '🧊 Freeze', color: '#9fe7ff', apply: () => { const s = useGame.getState(); s.set({ streak: { ...s.streak, freezes: Math.min(3, s.streak.freezes + 1) } }); } },
-  { label: '+15 XP', color: '#b48cff', apply: () => useGame.getState().addXP(15) },
+  { label: '+15 XP', color: '#b48cff', apply: () => useGame.getState().addXP(15, 0, { bonus: true }) },
   { label: '+80 🪙', color: '#ff6b5e', apply: () => useGame.getState().set({ coins: useGame.getState().coins + 80 }) },
-  { label: '+100 XP', color: '#ff5d73', apply: () => useGame.getState().addXP(100) },
+  { label: '+100 XP', color: '#ff5d73', apply: () => useGame.getState().addXP(100, 0, { bonus: true }) },
   { label: '+10 🪙', color: '#8aa0c8', apply: () => useGame.getState().set({ coins: useGame.getState().coins + 10 }) },
 ];
 const WEIGHTS = [22, 18, 12, 6, 20, 5, 3, 14];
