@@ -1,57 +1,138 @@
 # GeoIQ
 
-Learn every country by shape, flag, location, capital, clues and real photos, and track your **GeoIQ**: an IQ-style geography score where 100 is average and 15 points is one standard deviation.
+Learn the world the way geography YouTubers know it: every country by its **shape**, **flag**, **place on the map**, **capital**, **clues** and **real photos**. Then go further, to states and provinces, rivers, seas, mountains and the world map through history. Your **GeoIQ** tracks how good you really are: an IQ-style score where 100 is average and 15 points is one standard deviation.
 
-## Run
+Android app (Capacitor) and installable web app (PWA). Fully offline apart from photos.
 
-```bash
-npm install
-npm run dev        # http://localhost:5173
-npm run build && npm run preview   # production build (enables the offline service worker / installable PWA)
-```
+<p>
+  <img src="docs/screenshots/home.jpg" width="200" alt="Home: GeoIQ score, streak and daily check-in">
+  <img src="docs/screenshots/shape.jpg" width="200" alt="Shape quiz">
+  <img src="docs/screenshots/iq.jpg" width="200" alt="GeoIQ dashboard">
+  <img src="docs/screenshots/lesson.jpg" width="200" alt="Lesson card">
+</p>
+<p>
+  <img src="docs/screenshots/01-hub.jpg" width="200" alt="Explore packs">
+  <img src="docs/screenshots/13-name-all.jpg" width="200" alt="Name them all: Indian states">
+  <img src="docs/screenshots/05-river-name.jpg" width="200" alt="River quiz reveal">
+  <img src="docs/screenshots/08-1914.jpg" width="200" alt="1914 world map">
+</p>
+<p>
+  <img src="docs/screenshots/passport.jpg" width="200" alt="Passport stamps">
+  <img src="docs/screenshots/11-arms.jpg" width="200" alt="Coat of arms quiz">
+  <img src="docs/screenshots/12-profile.jpg" width="200" alt="Country profile">
+  <img src="docs/screenshots/hotcold.jpg" width="200" alt="Hot and Cold">
+</p>
 
-## Data
+## Features
 
-`src/data/countries.json` and `public/data/*` are generated:
+**Learn**
+- **Atlas Path:** 33 units covering all 197 countries, famous ones first. Each country gets a card with its shape, flag, globe location, capital, population, area, languages, currency, coat of arms, neighbours and a real photo, followed by a practice round.
+- **Smart Review:** spaced repetition brings back countries you're about to forget.
+- **World Atlas:** a full profile for every country (key facts, world rankings, memberships, map, photo gallery and Wikipedia deep dives into history, geography, economy, culture, food and more).
 
-```bash
-node scripts/fetch-data.mjs   # Wikipedia extracts, pageviews, photos, World Bank population (cached in scripts/.cache)
-node scripts/fetch-profiles.mjs  # Wikidata facts + Wikipedia sections for country profiles
-node scripts/build-data.mjs   # country metadata, silhouettes, world map, photo index, flags
-node scripts/build-profiles.mjs  # public/data/profiles/{ID}.json + src/data/stats.json
-```
+**Play**
+- **Core modes:** Shape Shifter, Flag Frenzy, Pin It (map), Capital Gains and Coat of Arms.
+- **Deduction:** the Clue Ladder (fewer clues, more points) and Street Eye (guess from real photos).
+- **Harder variants:** Twisted Shapes (rotated) and Shape Rush (60-second time attack).
+- **Specials:** a Daily Challenge (the same 5 questions for everyone, with a shareable emoji grid), Hot & Cold (find the mystery country by distance) and Borderline (walk from A to B across land borders).
+- **Answer styles:** multiple choice, or typed answers with forgiving autocomplete. Questions adapt to your level.
 
-**Content packs** (`public/data/packs/`, contract in `src/lib/packs.ts`) and coats of arms:
+**Explore packs**
+- **Regions:** US states, Indian states and union territories, Canadian provinces, Australian, Brazilian, Mexican and German states, Chinese provinces and Russian federal subjects.
+- **Physical world:** 79 rivers, 84 seas and oceans, 75 mountain ranges and deserts, and 55 famous peaks.
+- **Time machine:** the world map in 1815, 1880, 1914, 1938, 1945 and 1960.
+- **Modes:** each pack has flashcards, shapes, find on map, name the highlighted one, capitals, flags and arms, higher or lower, and a Sporcle-style **Name them all**.
 
-```bash
-node scripts/packs/build-regions.mjs && node scripts/packs/regions-images.mjs   # US/Indian/Canadian/… states & provinces
-node scripts/packs/build-physical.mjs   # rivers, seas, landforms, peaks
-node scripts/packs/build-history.mjs    # 1815–1960 world maps (historical-basemaps, GPL-3.0)
-node scripts/fetch-arms.mjs && sh scripts/compress-arms.sh   # country coats of arms
-```
-
-Bump `VERSION` in `public/sw.js` after regenerating data so installed apps pick up the new files.
+**Progress**
+- **GeoIQ** with tiers (Tourist → Atlas), a skill radar, a history chart and a 24-question adaptive **GeoIQ Test**.
+- Streaks with freezes, a daily XP goal, a daily check-in spin, levels, coins and achievements.
+- A **Passport** you fill with ink stamps as you master countries, plus a conquest map.
+- Streak-reminder notifications on Android.
 
 ## How GeoIQ works
 
-Each (country, skill) item has a difficulty from how well-known the country is (Wikipedia pageviews, population, area) plus skill-specific offsets. Answers update your ability with a 3-parameter logistic IRT model, which corrects for lucky guesses on multiple choice. The GeoIQ Test is a 24-question computerized adaptive test. See `src/lib/geoiq.ts`.
+Every (country, skill) question has a difficulty based on how well known the country is (Wikipedia pageviews, population and area). Your ability per skill is estimated with a **3-parameter logistic IRT model**, which accounts for lucky guesses on multiple choice. Ratings update by a stochastic-gradient step on that model's likelihood, which is **unbiased**: at your true level the expected change is zero, so the score settles on the truth. The Clue Ladder is scored per clue (a continuation-ratio model) rather than as partial credit.
 
-## Android app (Capacitor)
+The **GeoIQ Test** is a 24-item computerized adaptive test. It's accurate to about ±5 points (1 SD) in simulation.
 
-**Releases:** push a version tag and GitHub Actions builds a signed APK and publishes it as a GitHub Release (installed/updated on the phone via Obtainium):
+`npm run audit:math` re-checks all of this by simulation, along with streak, freeze and spaced-repetition logic (27 checks).
+
+> "100 = average" is a calibrated estimate, not yet normed on real players.
+
+See [`src/lib/geoiq.ts`](src/lib/geoiq.ts) and [`scripts/audit-math.mjs`](scripts/audit-math.mjs).
+
+## Install
+
+- **Android:** download the APK from [Releases](https://github.com/parthg1901/geoiq-app/releases), or add this repo to [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates. Releases are signed with the same key, so updates keep your progress.
+- **Web:** `npm run build` and host `dist/` on any static host. On HTTPS it's installable as a PWA and works offline.
+
+## Development
+
+Requires Node 22+.
 
 ```bash
-git tag v1.0.1 && git push origin v1.0.1    # v1.2.3 -> versionName 1.2.3, versionCode 10203 (must keep increasing)
+npm install
+npm run dev           # http://localhost:5173
+npm run build         # type-check + production build into dist/
+npm run audit:math    # scoring / progress math checks
+npx oxlint src        # lint
 ```
 
-Signing secrets live in the repo's Actions secrets (`GEOIQ_KEYSTORE_B64`, `GEOIQ_KEYSTORE_PASSWORD`, `GEOIQ_KEY_ALIAS`, `GEOIQ_KEY_PASSWORD`). The keystore must never change, or installed apps can't update.
+Progress is stored locally in the browser or app (no accounts or backend).
 
-**Local build** (same release key, read from `~/android/geoiq-release.properties`):
+### Android
 
 ```bash
-npm run android    # web build -> cap sync -> Gradle; APK at dist-apk/GeoIQ.apk
+npm run android       # web build → cap sync → Gradle; signed APK at dist-apk/GeoIQ.apk
 ```
 
-Needs `~/android/env.sh` (JDK 21 + Android SDK in `~/android`). This build host is ARM64 and Google only ships an x86_64 `aapt2`, so `~/.gradle/gradle.properties` (machine-level, not in the repo) points `android.aapt2FromMavenOverride` at `~/android/aapt2`, a wrapper that runs it through a user-mode qemu unpacked in `~/android/x86`.
+- **Requirements:** JDK 21 and the Android SDK, configured in `~/android/env.sh`. Local release signing reads `~/android/geoiq-release.properties` (never committed).
+- **ARM64 Linux build hosts:** Google only ships an x86_64 `aapt2`, so point `android.aapt2FromMavenOverride` (in `~/.gradle/gradle.properties`) at a wrapper that runs it through user-mode qemu.
+- **Releases:** pushing a tag `vX.Y.Z` runs [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml). It builds a signed APK (versionCode `X·10000 + Y·100 + Z`) and attaches it to a GitHub Release. Signing comes from the repo secrets `GEOIQ_KEYSTORE_B64`, `GEOIQ_KEYSTORE_PASSWORD`, `GEOIQ_KEY_ALIAS` and `GEOIQ_KEY_PASSWORD`.
 
-Native extras live in `src/lib/native.ts` (no-ops on the web): daily streak-reminder notifications (rescheduled for the next 7 days; today's is skipped once the streak is secured), haptics, dark status bar, Android back button (closes overlays first), and the native share sheet.
+### Data pipeline
+
+Everything in `src/data/` and `public/data/` is generated, and network responses are cached in `scripts/.cache/`:
+
+```bash
+node scripts/fetch-data.mjs        # Wikipedia extracts, pageviews, photo index, World Bank population
+node scripts/fetch-profiles.mjs    # Wikidata facts + Wikipedia sections for country profiles
+node scripts/build-data.mjs        # country metadata, silhouettes, world map, photo index, flags
+node scripts/build-profiles.mjs    # public/data/profiles/*.json + src/data/stats.json
+node scripts/fetch-arms.mjs && sh scripts/compress-arms.sh          # country coats of arms
+node scripts/packs/build-regions.mjs && node scripts/packs/regions-images.mjs   # state/province packs
+node scripts/packs/build-physical.mjs   # rivers, seas, landforms, peaks
+node scripts/packs/build-history.mjs    # 1815–1960 world maps
+node scripts/image-credits.mjs          # docs/IMAGE_CREDITS.md
+```
+
+Pack files follow the contract in [`src/lib/packs.ts`](src/lib/packs.ts). After regenerating data, bump `VERSION` in `public/sw.js` so installed web apps refresh their cache.
+
+### Layout
+
+```
+src/lib/        geoiq.ts (rating engine) · store.ts (progress, SRS, streaks) · questions.ts · packs.ts · native.ts
+src/screens/    Home, Learn/Lesson, Play, GeoIQ + Test, Daily, Borderline, Hot & Cold, Atlas/Country, Passport, Packs
+src/components/ QuizRunner, WorldMap, Globe, CountryProfile, pack/ (PackMap, PackQuiz)
+scripts/        data pipeline, APK build, math audit
+android/        Capacitor Android project
+```
+
+## Data sources and licences
+
+GeoIQ's code is licensed under the **GNU GPL v3.0 or later**; see [LICENSE](LICENSE). Bundled data keeps its original licence:
+
+| Data | Source | Licence |
+|---|---|---|
+| Country facts, flags | [mledoze/countries](https://github.com/mledoze/countries) (`world-countries`) | ODbL 1.0 |
+| World borders | [Natural Earth](https://www.naturalearthdata.com/) via [world-atlas](https://github.com/topojson/world-atlas) | Public domain |
+| States, rivers, seas, landforms, peaks | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
+| Historical borders (1815–1960) | [aourednik/historical-basemaps](https://github.com/aourednik/historical-basemaps) | GPL-3.0 (approximate, for learning) |
+| Facts (capitals, GDP, HDI, elevations, lengths…) | [Wikidata](https://www.wikidata.org/) | CC0 |
+| Descriptions, profiles | [Wikipedia](https://en.wikipedia.org/) | CC BY-SA 4.0 |
+| Population | [World Bank](https://data.worldbank.org/) | CC BY 4.0 |
+| Coats of arms, region flags | [Wikimedia Commons](https://commons.wikimedia.org/), per file | Mostly public domain; see [docs/IMAGE_CREDITS.md](docs/IMAGE_CREDITS.md) |
+| Photos | Wikimedia Commons (loaded at runtime, credited in-app) | Per file |
+| Fonts | Bricolage Grotesque, Figtree, JetBrains Mono | SIL OFL 1.1 |
+
+Borders, names and political status follow the sources above and don't imply any position on disputed territories.

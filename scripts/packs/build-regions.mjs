@@ -225,6 +225,7 @@ async function summary(title) {
 // Images are downloaded once (cached) and later converted to small WebP files by regions-images.mjs
 // (headless-browser canvas), because the build host has no image tooling.
 const imageJobs = [];
+const imageSources = {};
 async function commonsImage(file, dest) {
   if (!file) return null;
   const key = `img-${file}-${IMG_WIDTH}`;
@@ -233,6 +234,7 @@ async function commonsImage(file, dest) {
   const isPng = buf[0] === 0x89 && buf[1] === 0x50;
   const isJpg = buf[0] === 0xff && buf[1] === 0xd8;
   if (!isPng && !isJpg) return null;
+  imageSources[`${dest}.webp`.replace(/^public/, '')] = file; // for the credits list (regions-credits.mjs)
   imageJobs.push({ src: `scripts/.cache/packs-regions/${key.replace(/[^a-z0-9_.-]/gi, '_').slice(0, 180)}.bin`, mime: isPng ? 'image/png' : 'image/jpeg', dest: `${dest}.webp` });
   return `${dest}.webp`;
 }
@@ -354,5 +356,6 @@ for (const P of PACKS) {
 
 fs.writeFileSync(`${OUT}/index-regions.json`, JSON.stringify(index.sort((a, b) => a.order - b.order), null, 1));
 fs.writeFileSync('scripts/.cache/packs-regions/image-jobs.json', JSON.stringify(imageJobs));
+fs.writeFileSync('scripts/.cache/packs-regions/image-sources.json', JSON.stringify(imageSources));
 console.table(report);
 console.log(`${imageJobs.length} images queued → run: node scripts/packs/regions-images.mjs`);
