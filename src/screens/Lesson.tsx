@@ -8,13 +8,15 @@ import { makeQuestion, eligible, type Question, type Variant } from '../lib/ques
 import { shuffle } from '../lib/rng';
 import { go } from '../lib/router';
 import { sfx } from '../lib/sound';
-import { BY_ID, fmtPop } from '../data';
+import { BY_ID, ALL_NAMES, ARMS, ARMS_WORD, fmtPop, fmtArea, loadPhotos, type Photo } from '../data';
+import { ArmsImage } from '../components/Answer';
 import { QuizRunner, type QuizResult } from '../components/QuizRunner';
 import { Flag, Shape } from '../components/Shape';
 import { Globe, zoomFor } from '../components/Globe';
 import { TopBar } from '../components/ui';
 
-const VARIANTS: Variant[] = ['shape', 'flag', 'map-find', 'capital', 'flag-rev'];
+// Practice covers everything the cards teach: shape, flag both ways, location, capital both ways, arms.
+const VARIANTS: Variant[] = ['shape', 'flag', 'map-find', 'capital', 'arms', 'flag-rev', 'capital-rev'];
 
 export default function Lesson({ id }: { id?: string }) {
   const unit = id ? UNIT_BY_ID[id] : undefined;
@@ -119,12 +121,42 @@ function Meet({ unit, color, onStart }: { unit: Unit; color: string; onStart: ()
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="grid grid-cols-2 gap-2 mt-4">
               <Fact k="Capital" v={`★ ${c.capital || '—'}`} accent={color} />
               <Fact k="Population" v={fmtPop(c.population)} />
-              <Fact k="Neighbours" v={c.borders.length ? String(c.borders.length) : 'Island / none'} />
+              <Fact k="Area" v={fmtArea(c.area)} />
+              <Fact k="Coast" v={c.landlocked ? 'Landlocked' : 'Has a coastline'} />
+              <Fact k={c.languages.length > 1 ? 'Languages' : 'Language'} v={c.languages.slice(0, 3).join(', ') || '—'} />
+              <Fact k="Currency" v={c.currencies.join(', ') || '—'} />
             </div>
+
+            {ARMS[c.id] && (
+              <div className="flex items-center gap-3 mt-3 rounded-2xl bg-white/5 border border-line/60 p-2.5">
+                <ArmsImage id={c.id} className="w-14 shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[11px] uppercase text-mist font-bold">{ARMS_WORD[ARMS[c.id].kind]}</div>
+                  <div className="text-sm text-paper/85 leading-snug">Learn it alongside the flag — it appears in Coat of Arms rounds.</div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3">
+              <div className="text-[11px] uppercase text-mist font-bold mb-1.5">
+                {c.borders.length ? `Borders ${c.borders.length} ${c.borders.length === 1 ? 'country' : 'countries'}` : 'No land borders'}
+              </div>
+              {c.borders.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {c.borders.map((b) => BY_ID[b] ? (
+                    <button key={b} onClick={() => setAbout(b)} className="chip !text-sm !py-1 !px-2.5 hover:!border-sky">
+                      <Flag id={b} className="w-5 h-3.5 !rounded-sm !shadow-none" />{BY_ID[b].name}
+                    </button>
+                  ) : <span key={b} className="chip !text-sm !py-1 !px-2.5">{ALL_NAMES[b] ?? b}</span>)}
+                </div>
+              )}
+            </div>
+
             <p className="text-[15px] leading-relaxed text-paper/85 mt-4">{c.fact}</p>
+            <MeetPhoto id={c.id} />
             <button className="text-sky font-semibold mt-3" onClick={() => setAbout(c.id)}>📖 Read the full profile →</button>
           </motion.div>
         </AnimatePresence>
@@ -136,6 +168,22 @@ function Meet({ unit, color, onStart }: { unit: Unit; color: string; onStart: ()
         <button className="btn btn-primary text-lg" onClick={() => move(1)}>{i + 1 < n ? 'Next country →' : 'Start practice 🎯'}</button>
       </div>
     </div>
+  );
+}
+
+/** Commons captions often trail into camera notes — keep just the description. */
+const firstSentence = (t: string) => (t.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? t).trim();
+
+/** One real photo from the country — the kind of scene Street Eye asks about. */
+function MeetPhoto({ id }: { id: string }) {
+  const [p, setP] = useState<Photo | null>(null);
+  useEffect(() => { let live = true; setP(null); loadPhotos(id).then((l) => live && setP(l[0] ?? null)); return () => { live = false; }; }, [id]);
+  if (!p) return null;
+  return (
+    <figure className="mt-4">
+      <img src={p.u} alt={p.c} loading="lazy" referrerPolicy="no-referrer" className="w-full h-44 object-cover rounded-2xl bg-ink" />
+      <figcaption className="text-sm text-mist mt-1.5 leading-snug">📸 {firstSentence(p.c) || 'A scene from here'}</figcaption>
+    </figure>
   );
 }
 

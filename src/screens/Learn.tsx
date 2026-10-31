@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useGame, mastery } from '../lib/store';
+import { useGame, mastery, packMastery } from '../lib/store';
+import { loadPackIndex, GROUP_META, type PackMeta, type PackGroup } from '../lib/packs';
 import { UNITS, REGION_META, unitUnlocked, regionFrame, type Unit } from '../lib/path';
 import { COUNTRIES, REGIONS, type Region } from '../data';
 import { go } from '../lib/router';
@@ -97,6 +98,7 @@ export default function Learn() {
         ))}
       </div>
       <div className="text-center text-mist text-sm mt-4">🏁 Finish every unit to conquer {region}</div>
+      <MoreToLearn />
     </Page>
   );
 }
@@ -163,4 +165,42 @@ function shade(hex: string) {
   const n = parseInt(hex.slice(1), 16);
   const f = (v: number) => Math.round(v * 0.62).toString(16).padStart(2, '0');
   return `#${f((n >> 16) & 255)}${f((n >> 8) & 255)}${f(n & 255)}`;
+}
+
+/** Beyond countries: every Explore pack has its own flashcards — surface them on the Learn tab too. */
+function MoreToLearn() {
+  const [packs, setPacks] = useState<PackMeta[]>([]);
+  const progress = useGame((s) => s.packs);
+  useEffect(() => { loadPackIndex().then(setPacks); }, []);
+  if (!packs.length) return null;
+  const groups = (Object.keys(GROUP_META) as PackGroup[]).filter((g) => packs.some((p) => p.group === g));
+  return (
+    <section className="mt-10">
+      <h2 className="display text-2xl font-extrabold">More to learn</h2>
+      <p className="text-mist text-sm mt-1">States and provinces, rivers, seas, mountains and history maps — each pack has flashcards, then quizzes.</p>
+      {groups.map((g) => (
+        <div key={g} className="mt-5">
+          <div className="display font-bold flex items-center gap-2">{GROUP_META[g].emoji} {GROUP_META[g].title}</div>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            {packs.filter((p) => p.group === g).map((p) => {
+              const ps = progress[p.id];
+              // Items never played count as 0, so average over the played ones and scale to the pack size.
+              const played = ps ? [...new Set(Object.keys(ps.cards).map((k) => k.slice(0, k.lastIndexOf(':'))))] : [];
+              const m = played.length ? (packMastery(ps, played) * played.length) / Math.max(played.length, p.count) : 0;
+              return (
+                <button key={p.id} onClick={() => go(`/pack/${p.id}/learn`)} className="card !rounded-2xl p-3 text-left hover:border-amber/60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{p.emoji}</span>
+                    <span className="display font-bold leading-tight">{p.title}</span>
+                  </div>
+                  <div className="text-sm text-mist mt-1 leading-snug">{p.subtitle}</div>
+                  <div className="h-1.5 rounded-full mt-2" style={{ background: `linear-gradient(90deg, ${p.color} ${m * 100}%, rgba(255,255,255,.1) ${m * 100}%)` }} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
 }
