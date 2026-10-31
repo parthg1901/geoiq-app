@@ -131,7 +131,7 @@ function Meet({ unit, color, onStart }: { unit: Unit; color: string; onStart: ()
       </div>
 
       {about && <CountryProfile id={about} onClose={() => setAbout(null)} />}
-      <div className="grid grid-cols-[auto_1fr] gap-3 py-5 safe-bottom">
+      <div className="grid grid-cols-[auto_1fr] gap-3 py-5">
         <button className="btn btn-ghost w-14" disabled={i === 0} onClick={() => move(-1)} aria-label="Previous">←</button>
         <button className="btn btn-primary text-lg" onClick={() => move(1)}>{i + 1 < n ? 'Next country →' : 'Start practice 🎯'}</button>
       </div>

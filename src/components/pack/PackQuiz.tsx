@@ -99,9 +99,9 @@ export function PackQuiz({ pack, mode, typed = false, onExit }: { pack: PackData
       <AnimatePresence>
         {phase === 'reveal' && last && (
           <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-            className="fixed inset-x-0 bottom-0 z-40 safe-bottom">
-            <div className="mx-auto max-w-2xl rounded-t-3xl border-t-4 bg-deep px-5 pt-4 pb-3 max-h-[70dvh] overflow-y-auto shadow-[0_-20px_60px_rgba(0,0,0,.5)]"
-              style={{ borderColor: last.outcome >= 0.6 ? 'var(--color-mint)' : 'var(--color-rose)' }}>
+            className="fixed inset-x-0 bottom-0 z-40">
+            <div className="mx-auto max-w-2xl rounded-t-3xl border-t-4 bg-deep px-5 pt-4 max-h-[70dvh] overflow-y-auto shadow-[0_-20px_60px_rgba(0,0,0,.5)]"
+              style={{ borderColor: last.outcome >= 0.6 ? 'var(--color-mint)' : 'var(--color-rose)', paddingBottom: 'calc(var(--sab) + 0.75rem)' }}>
               <div className="flex items-center gap-2 mb-2">
                 <span className={`display text-lg font-extrabold ${last.outcome >= 0.95 ? 'text-mint' : last.outcome >= 0.6 ? 'text-amber' : 'text-rose'}`}>
                   {last.outcome >= 0.95 ? 'Correct!' : last.outcome >= 0.6 ? 'Got it!' : 'Not quite'}

@@ -42,13 +42,16 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
   /* Android 15+ draws the app edge-to-edge under the status bar and camera cutout */
-  padding: var(--sat) var(--sar) 0 var(--sal);
+  padding: var(--sat) var(--sar) var(--sab) var(--sal);
 }
-/* Solid strip behind the status bar so scrolled content never shows through around the notch */
-body::before {
-  content: ''; position: fixed; top: 0; left: 0; right: 0; height: var(--sat);
-  background: var(--color-ink); z-index: 80; pointer-events: none;
+/* Solid strips behind the status bar and the gesture handle / 3-button nav, so scrolled content
+   never shows through around the notch or under the system navigation */
+body::before, body::after {
+  content: ''; position: fixed; left: 0; right: 0;
+  background: var(--color-ink); pointer-events: none;
 }
+body::before { top: 0; height: var(--sat); z-index: 80; }
+body::after { bottom: 0; height: var(--sab); z-index: 5; } /* above page content, below quiz screens, sheets and the nav */
 /* Atmosphere: soft aurora + topographic contours */
 .atlas-bg {
   background:
@@ -100,8 +103,8 @@ body::before {
 .safe-top { padding-top: var(--sat); }
 .safe-bottom { padding-bottom: max(var(--sab), .5rem); }
 
-/* Full-height screens exclude the notch area the body already pads for */
-.min-h-dvh { min-height: calc(100dvh - var(--sat)); }
+/* Full-height screens exclude the notch and system-nav areas the body already pads for */
+.min-h-dvh { min-height: calc(100dvh - var(--sat) - var(--sab)); }
 
 /* ---------- On-screen keyboard open (see lib/keyboard.ts) ---------- */
 .kb-open .app-nav { display: none; }

@@ -11,8 +11,8 @@ const ITEMS = [
 
 export function NavBar({ active }: { active: string }) {
   return (
-    <nav className="app-nav fixed bottom-0 inset-x-0 z-30 safe-bottom pointer-events-none">
-      <div className="pointer-events-auto mx-auto max-w-md mx-3 sm:mx-auto mb-2 rounded-[26px] border border-line/70 bg-deep shadow-[0_10px_40px_rgba(0,0,0,.5)] flex justify-around px-2 py-1.5">
+    <nav className="app-nav fixed bottom-0 inset-x-0 z-30 bg-deep border-t border-line/70 rounded-t-[26px] shadow-[0_-10px_40px_rgba(0,0,0,.45)]" style={{ paddingBottom: 'max(var(--sab), 6px)' }}>
+      <div className="mx-auto max-w-md flex justify-around px-2 pt-1.5">
         {ITEMS.map((it) => {
           const a = active === it.key || (it.key === 'passport' && (active === 'me' || active === 'atlas'));
           return (

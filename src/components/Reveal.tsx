@@ -17,9 +17,9 @@ export function Reveal({ id, correct, partial, xp, iqDelta, stamp, onNext, nextL
   return (
     <motion.div
       initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-      className="fixed inset-x-0 bottom-0 z-40 safe-bottom"
+      className="fixed inset-x-0 bottom-0 z-40"
     >
-      <div className="mx-auto max-w-2xl rounded-t-3xl border-t-4 bg-deep px-5 pt-4 pb-3 shadow-[0_-20px_60px_rgba(0,0,0,.5)]" style={{ borderColor: color }}>
+      <div className="mx-auto max-w-2xl rounded-t-3xl border-t-4 bg-deep px-5 pt-4 shadow-[0_-20px_60px_rgba(0,0,0,.5)]" style={{ borderColor: color, paddingBottom: 'calc(var(--sab) + 0.75rem)' }}>
         <div className="flex items-start gap-4">
           <div className="shrink-0 relative">
             <Globe size={112} zoom={zoomFor(id)} focus={id} spin={false} fills={{ [id]: color }} />

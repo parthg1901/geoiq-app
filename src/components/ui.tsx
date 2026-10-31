@@ -37,7 +37,7 @@ export function Ring({ value, size = 64, stroke = 7, color = 'var(--color-amber)
 }
 
 export function Page({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
-  return <div className={`relative mx-auto px-4 pb-28 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>{children}</div>;
+  return <div className={`relative mx-auto px-4 pb-24 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>{children}</div>;
 }
 
 export function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: React.ReactNode }) {

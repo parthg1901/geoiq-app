@@ -176,7 +176,7 @@ function Learn({ pack, onExit }: { pack: PackData; onExit: () => void }) {
         )}
       </AnimatePresence>
       {!done && (
-        <div className="grid grid-cols-[auto_1fr] gap-3 py-4 safe-bottom">
+        <div className="grid grid-cols-[auto_1fr] gap-3 py-4">
           <button className="btn btn-ghost w-14" disabled={i === 0} onClick={() => setI(i - 1)} aria-label="Previous">←</button>
           <button className="btn btn-primary text-lg" onClick={() => { sfx.tap(); setI(i + 1); }}>{i + 1 < deck.length ? 'Next →' : 'Finish 🎯'}</button>
         </div>
