@@ -20,6 +20,7 @@ const Country = lazy(() => import('./screens/Country'));
 const Atlas = lazy(() => import('./screens/Atlas'));
 const Packs = lazy(() => import('./screens/Packs'));
 const Pack = lazy(() => import('./screens/Pack'));
+const Crossword = lazy(() => import('./screens/Crossword'));
 const Onboarding = lazy(() => import('./screens/Onboarding'));
 
 export default function App() {
@@ -35,7 +36,8 @@ export default function App() {
 
   const top = parts[0] ?? '';
   const immersive = (['play', 'lesson', 'test', 'daily', 'borderline', 'hotcold', 'country'].includes(top) && parts.length > (top === 'play' ? 1 : 0))
-    || (top === 'pack' && parts.length > 2);
+    || (top === 'pack' && parts.length > 2)
+    || (top === 'crossword' && parts.length > 1);
 
   let screen: React.ReactNode;
   if (!onboarded) screen = <Onboarding />;
@@ -55,6 +57,7 @@ export default function App() {
     case 'atlas': screen = <Atlas />; break;
     case 'packs': screen = <Packs />; break;
     case 'pack': screen = <Pack key={parts[1]} id={parts[1]} />; break;
+    case 'crossword': screen = <Crossword key={parts[1] ?? 'setup'} slot={parts[1]} />; break;
     default: go('/');
   }
 

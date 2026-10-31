@@ -43,7 +43,7 @@ export const entity = (qid) => cached(`wd-${qid}`, async () => {
   const e = j?.entities?.[qid] ?? Object.values(j?.entities || {})[0];
   if (!e) return null;
   // keep only what we use, to keep the cache small
-  const keep = ['P17', 'P403', 'P885', 'P2043', 'P2046', 'P2044', 'P625', 'P4552', 'P2660', 'P4511', 'P610', 'P30', 'P31'];
+  const keep = ['P17', 'P403', 'P885', 'P2043', 'P2046', 'P2044', 'P625', 'P4552', 'P2660', 'P4511', 'P610', 'P30', 'P31', 'P200', 'P201'];
   const claims = {};
   for (const k of keep) if (e.claims?.[k]) claims[k] = e.claims[k].filter((c) => c.rank !== 'deprecated').map((c) => ({ rank: c.rank, v: c.mainsnak?.datavalue?.value }));
   return { label: e.labels?.en?.value, aliases: (e.aliases?.en || []).map((a) => a.value), claims };

@@ -35,11 +35,12 @@ Android app (Capacitor) and installable web app (PWA). Fully offline apart from 
 - **Deduction:** the Clue Ladder (fewer clues, more points) and Street Eye (guess from real photos).
 - **Harder variants:** Twisted Shapes (rotated) and Shape Rush (60-second time attack).
 - **Specials:** a Daily Challenge (the same 5 questions for everyone, with a shareable emoji grid), Hot & Cold (find the mystery country by distance) and Borderline (walk from A to B across land borders).
+- **Crosswords:** a daily crossword, or build your own from any mix of 21 topics (countries, capitals, flags, outlines, rivers, lakes, seas, mountains, peaks, states and provinces, history) in three sizes. Clues are written from the data, and picture clues use flags and outlines.
 - **Answer styles:** multiple choice, or typed answers with forgiving autocomplete. Questions adapt to your level.
 
 **Explore packs**
 - **Regions:** US states, Indian states and union territories, Canadian provinces, Australian, Brazilian, Mexican and German states, Chinese provinces and Russian federal subjects.
-- **Physical world:** 79 rivers, 84 seas and oceans, 75 mountain ranges and deserts, and 55 famous peaks.
+- **Physical world:** 79 rivers, 70 lakes, 84 seas and oceans, 75 mountain ranges and deserts, and 55 famous peaks.
 - **Time machine:** the world map in 1815, 1880, 1914, 1938, 1945 and 1960.
 - **Modes:** each pack has flashcards, shapes, find on map, name the highlighted one, capitals, flags and arms, higher or lower, and a Sporcle-style **Name them all**.
 
@@ -101,7 +102,7 @@ node scripts/build-data.mjs        # country metadata, silhouettes, world map, p
 node scripts/build-profiles.mjs    # public/data/profiles/*.json + src/data/stats.json
 node scripts/fetch-arms.mjs && sh scripts/compress-arms.sh          # country coats of arms
 node scripts/packs/build-regions.mjs && node scripts/packs/regions-images.mjs   # state/province packs
-node scripts/packs/build-physical.mjs   # rivers, seas, landforms, peaks
+node scripts/packs/build-physical.mjs   # rivers, lakes, seas, landforms, peaks
 node scripts/packs/build-history.mjs    # 1815–1960 world maps
 node scripts/image-credits.mjs          # docs/IMAGE_CREDITS.md
 ```

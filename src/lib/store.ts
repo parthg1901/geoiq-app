@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { freshRatings, update, updateLadder, geoIQ, itemFor, type Format, type Ratings, type Skill } from './geoiq';
 import { todayKey, dayDiff, addDays } from './rng';
 import { COUNTRIES } from '../data';
+import type { Crossword } from './crossword';
 
 export const CORE: Skill[] = ['shape', 'flag', 'map', 'capital'];
 const INTERVAL_DAYS = [0, 1, 3, 7, 16, 40];
@@ -20,6 +21,19 @@ export interface AnswerInput {
 }
 export interface AnswerResult { xp: number; iqBefore: number; iqAfter: number; stamp: boolean; levelUp: boolean }
 /** Progress in one content pack (regions / physical / history). Separate from the country GeoIQ. */
+/** An in-progress (or just finished) crossword. Flat strings are row-major over the grid. */
+export interface SavedCrossword {
+  key: string; // 'daily:2026-10-31' or 'custom'
+  title: string;
+  size: string; // mini | standard | big
+  cw: Crossword;
+  fill: string; // typed letters, ' ' for empty, '#' for blocks
+  revealed: string; // '1' where a letter was revealed
+  checks: number;
+  reveals: number;
+  elapsed: number; // seconds
+  done: boolean;
+}
 export interface PackState { cards: Record<string, Card>; best: Record<string, number>; plays: number }
 export interface PackAnswerInput { pack: string; item: string; mode: string; outcome: number; ms?: number; combo?: number }
 
@@ -46,6 +60,9 @@ interface State {
   reminder: { on: boolean; hour: number; minute: number };
   onboarded: boolean;
   packs: Record<string, PackState>;
+  crossword: { daily?: SavedCrossword; custom?: SavedCrossword };
+  cwDaily: Record<string, { time: number; reveals: number }>;
+  cwPrefs: { sources: string[]; size: string };
   // actions
   packAnswer: (a: PackAnswerInput) => { xp: number; levelUp: boolean };
   packUpdate: (pack: string, fn: (p: PackState) => PackState) => void;
@@ -94,6 +111,9 @@ const initial = () => ({
   reminder: { on: false, hour: 19, minute: 0 },
   onboarded: false,
   packs: {} as Record<string, PackState>,
+  crossword: {} as { daily?: SavedCrossword; custom?: SavedCrossword },
+  cwDaily: {} as Record<string, { time: number; reveals: number }>,
+  cwPrefs: { sources: [] as string[], size: 'standard' },
 });
 
 export const emptyPack = (): PackState => ({ cards: {}, best: {}, plays: 0 });

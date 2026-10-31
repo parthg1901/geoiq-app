@@ -40,6 +40,7 @@ export default function PlayHub() {
         <Special onClick={() => go('/daily')} e="☀️" t="Daily Challenge" d="Same 5 for everyone" c="#53b8ff" />
         <Special onClick={() => go('/hotcold')} e="🌡️" t="Hot & Cold" d={`Find the mystery country by distance${bests.hotcold ? ` · best ${bests.hotcold}` : ''}`} c="#ff6b5e" />
         <Special onClick={() => go('/borderline')} e="🛤️" t="Borderline" d="Cross borders from A to B" c="#3ddc97" />
+        <Special onClick={() => go('/crossword')} e="🧩" t="Crosswords" d="Daily grid, or build your own from any topic" c="#b48cff" />
       </div>
 
       <SectionTitle sub={<button className="text-sky" onClick={() => go('/packs')}>All packs →</button>}>Explore more</SectionTitle>

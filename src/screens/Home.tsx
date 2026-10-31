@@ -181,6 +181,8 @@ export default function Home() {
           { to: '/hotcold', t: 'Hot & Cold', d: 'Find the mystery country', e: '🌡️', c: '#ff6b5e' },
           { to: '/borderline', t: 'Borderline', d: 'Walk across borders', e: '🛤️', c: '#3ddc97' },
           { to: '/play/photo', t: 'Street Eye', d: 'Guess from photos', e: '📸', c: '#53b8ff' },
+          { to: '/crossword', t: 'Crosswords', d: 'Daily grid or your own topics', e: '🧩', c: '#b48cff' },
+          { to: '/packs', t: 'Explore packs', d: 'States, rivers, history', e: '🗺️', c: '#3ddc97' },
         ].map((m) => (
           <button key={m.to} onClick={() => go(m.to)} className="card p-4 text-left relative overflow-hidden group">
             <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-20 group-hover:opacity-35 transition-opacity pointer-events-none" style={{ background: `radial-gradient(circle, ${m.c} 0%, transparent 68%)` }} />

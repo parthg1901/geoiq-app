@@ -15,6 +15,21 @@
     "order": 1
   },
   {
+    "id": "lakes",
+    "group": "physical",
+    "title": "Lakes",
+    "subtitle": "70 lakes from Baikal to Titicaca",
+    "emoji": "💧",
+    "color": "#3fd6c6",
+    "count": 70,
+    "modes": [
+      "find",
+      "name",
+      "higher"
+    ],
+    "order": 1.5
+  },
+  {
     "id": "seas",
     "group": "physical",
     "title": "Seas & Oceans",

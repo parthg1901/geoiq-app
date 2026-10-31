@@ -6,7 +6,7 @@ import { presimplify, simplify } from 'topojson-simplify';
 import { quantize, feature as topoFeature } from 'topojson-client';
 import { geoArea } from 'd3-geo';
 import countries from 'world-countries';
-import { RIVERS, SEAS, LANDFORMS, PEAKS } from './physical-specs.mjs';
+import { RIVERS, SEAS, LANDFORMS, PEAKS, LAKES } from './physical-specs.mjs';
 import {
   wikiPage, pageviews, entity, labels, lengthKm, areaKm2, elevationM, prominenceM, depthM, itemIds, coords, blurbOf, pool,
 } from './physical-wiki.mjs';
@@ -83,7 +83,7 @@ const listNames = (ids, lab, max = 6) => {
 // unrelated historical/indigenous aliases ("Big River" for the Colorado) would accept wrong answers.
 const fold = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const cleanAliases = (aliases, name) => {
-  const words = fold(name).split(/[^a-z]+/).filter((w) => w.length >= 4 && !['river', 'mount', 'mountains', 'desert', 'peninsula', 'ocean', 'gulf', 'strait'].includes(w));
+  const words = fold(name).split(/[^a-z]+/).filter((w) => w.length >= 4 && !['river', 'mount', 'mountains', 'desert', 'peninsula', 'ocean', 'gulf', 'strait', 'lake', 'loch', 'reservoir'].includes(w));
   return aliases.filter((a) => a.length >= 3 && a.length <= 40 && !/[()]|\bR\./.test(a) && /^[\p{Script=Latin}\s'’.\-]+$/u.test(a)
     && fold(a) !== fold(name) && words.some((w) => fold(a).includes(w))).slice(0, 6);
 };
@@ -262,6 +262,58 @@ async function buildSeas() {
   return meta;
 }
 
+// ================= LAKES
+const LAKE_KIND = { Lake: 'lake', 'Alkaline Lake': 'salt lake', Reservoir: 'reservoir' };
+async function buildLakes() {
+  const lakes = read('ne_10m_lakes').features;
+  const marine = read('ne_10m_geography_marine_polys').features;
+  const rows = await enrich(LAKES);
+  const geoms = {};
+  const kept = [];
+  for (const r of rows) {
+    const m = merge(r.spec.src === 'marine' ? marine : lakes, r.spec, 'name', 'poly');
+    if (!m) { console.warn('  ! no NE geometry for lake', r.spec.id); continue; }
+    geoms[r.spec.id] = m.geometry;
+    r.kind = r.spec.kind ?? LAKE_KIND[m.hits[0].properties.featurecla] ?? 'lake';
+    kept.push(r);
+  }
+  const lab = await labels(kept.flatMap((r) => [...itemIds(r.ent?.claims, 'P17'), ...itemIds(r.ent?.claims, 'P200'), ...itemIds(r.ent?.claims, 'P201')]));
+  const diff = difficulties(kept);
+  const items = kept.map((r, i) => {
+    const c = r.ent?.claims;
+    let area = areaKm2(c);
+    if (area && area < 10) area = null; // unit slips
+    const depth = depthM(c), elev = elevationM(c);
+    const facts = [['Type', r.kind.charAt(0).toUpperCase() + r.kind.slice(1)]];
+    if (area) facts.push([r.spec.noRank ? 'Area (varies)' : 'Area', `${fmt(area)} km²`]);
+    if (depth) facts.push(['Max depth', `${fmt(depth)} m`]);
+    if (elev != null) facts.push(['Surface elevation', `${fmt(elev)} m`]);
+    const n = countryCount(itemIds(c, 'P17'), lab);
+    const where = countryNames(itemIds(c, 'P17'), lab, 5);
+    if (where) facts.push([n > 1 ? 'Countries' : 'Country', where]);
+    // Wikidata inflow/outflow lists can be long or contain non-names ("evaporation"): keep proper nouns, max 3.
+    const named = (prop, max) => {
+      const ns = [...new Set(itemIds(c, prop).map((q) => lab[q]).filter((l) => l && /^\p{Lu}/u.test(l)))];
+      return ns.length ? (ns.length > max ? `${ns.slice(0, max).join(', ')} and others` : ns.join(', ')) : null;
+    };
+    const inflow = named('P200', 3);
+    if (inflow) facts.push(['Fed by', inflow]);
+    const outflow = named('P201', 2);
+    if (outflow) facts.push(['Drains into', outflow]);
+    if (r.spec.note) facts.push(['Note', r.spec.note]);
+    return {
+      id: r.spec.id, name: r.spec.name, alt: [...new Set([...(r.spec.alt || []), ...cleanAliases(r.ent?.aliases || [], r.spec.name)])],
+      kind: r.kind, area: area ? Math.round(area) : undefined,
+      rank: area && !r.spec.noRank ? { label: 'Area', value: Math.round(area), unit: 'km²' } : undefined,
+      facts, blurb: blurbOf(r.page?.extract), wiki: r.page?.title, difficulty: diff[i],
+    };
+  });
+  const meta = { id: 'lakes', group: 'physical', title: 'Lakes', subtitle: `${items.length} lakes from Baikal to Titicaca`, emoji: '💧', color: '#3fd6c6', count: items.length, modes: ['find', 'name', 'higher'], order: 1.5 };
+  const bytes = writePack(meta, items, makeTopo(items, geoms, 0.0008), {}, LAKES);
+  stat('lakes', items, bytes);
+  return meta;
+}
+
 // ================= LANDFORMS
 async function buildLandforms() {
   const ne = read('ne_10m_geography_regions_polys').features;
@@ -326,7 +378,8 @@ async function buildPeaks() {
     const countries = countryNames(itemIds(c, 'P17'), lab, 3);
     if (countries) facts.push([countryCount(itemIds(c, 'P17'), lab) > 1 ? 'Countries' : 'Country', countries]);
     const range = listNames(itemIds(c, 'P4552'), lab, 1);
-    if (range) facts.push(['Range', range]);
+    // Wikidata sometimes names a neighbouring peak as the "range" (Mount Kenya → Mount Kilimanjaro): skip those.
+    if (range && !(/^(Mount|Mt\.?)\s/.test(range) && !/(range|massif|mountains)/i.test(range))) facts.push(['Range', range]);
     const prom = prominenceM(c);
     if (prom) facts.push(['Prominence', `${fmt(prom)} m`]);
     return {
@@ -343,7 +396,7 @@ async function buildPeaks() {
 
 fs.mkdirSync(OUT, { recursive: true });
 const metas = [];
-for (const [name, fn] of [['rivers', buildRivers], ['seas', buildSeas], ['landforms', buildLandforms], ['peaks', buildPeaks]]) {
+for (const [name, fn] of [['rivers', buildRivers], ['lakes', buildLakes], ['seas', buildSeas], ['landforms', buildLandforms], ['peaks', buildPeaks]]) {
   console.log(`building ${name}…`);
   metas.push(await fn());
 }

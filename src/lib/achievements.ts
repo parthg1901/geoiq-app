@@ -34,6 +34,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'test', name: 'Measured', desc: 'Take the GeoIQ Test', icon: '🧠', test: (s) => s.tests.length > 0 },
   { id: 'daily7', name: 'Daily Devotee', desc: 'Finish 7 Daily Challenges', icon: '☀️', test: (s) => Object.keys(s.daily).length >= 7 },
   { id: 'rush20', name: 'Speed Demon', desc: '20+ in a Shape Rush', icon: '⚡', test: (s) => (s.bests['rush'] ?? 0) >= 20 },
+  { id: 'cw-first', name: 'Cruciverbalist', desc: 'Finish a crossword', icon: '🧩', test: (s) => (s.counters['cwDone'] ?? 0) > 0 },
+  { id: 'cw-clean', name: 'Clean Sheet', desc: 'Finish a Standard or Big crossword without reveals', icon: '✒️', test: (s) => (s.counters['cwClean'] ?? 0) > 0 },
   { id: 'border', name: 'Border Runner', desc: 'Solve a Borderline route perfectly', icon: '🛤️', test: (s) => (s.counters['borderPerfect'] ?? 0) > 0 },
   { id: 'hotcold', name: 'Heat Seeker', desc: 'Find the mystery country in ≤ 4 guesses', icon: '🌡️', test: (s) => (s.bests['hotcold'] ?? 99) <= 4 },
   { id: 'lvl10', name: 'Seasoned', desc: 'Reach level 10', icon: '⭐', test: (s) => levelFor(s.xp).level >= 10 },
