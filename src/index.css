@@ -102,3 +102,11 @@ body::before {
 
 /* Full-height screens exclude the notch area the body already pads for */
 .min-h-dvh { min-height: calc(100dvh - var(--sat)); }
+
+/* ---------- On-screen keyboard open (see lib/keyboard.ts) ---------- */
+.kb-open .app-nav { display: none; }
+.kb-open .kb-hide { display: none !important; }
+/* Big prompt visuals give up height so the input stays on screen */
+.kb-open .kb-prompt { min-height: 0 !important; padding-top: 0; padding-bottom: 0; }
+.kb-open .kb-media { max-height: 26dvh !important; width: auto !important; }
+.kb-open .kb-photo { aspect-ratio: auto !important; height: 28dvh !important; }

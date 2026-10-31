@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { BY_ID, loadPhotos, type Photo } from '../data';
+import { BY_ID, ARMS, ARMS_WORD, loadPhotos, type Photo } from '../data';
 import { useGame, type AnswerResult } from '../lib/store';
 import { VARIANT_SKILL, hintsFor, type Question } from '../lib/questions';
 import { geoIQ, tierFor } from '../lib/geoiq';
 import { sfx, buzz } from '../lib/sound';
 import { checkAchievements } from '../lib/achievements';
 import { toast } from './Toasts';
-import { ChoiceGrid, TypeAnswer } from './Answer';
+import { ChoiceGrid, TypeAnswer, ArmsImage } from './Answer';
 import { Flag, Shape } from './Shape';
 import { WorldMap } from './WorldMap';
 import { Reveal } from './Reveal';
@@ -90,7 +90,7 @@ export function QuizRunner(cfg: QuizConfig) {
 
   const record = (outcome: number, given?: string | null) => {
     const ms = performance.now() - t0.current;
-    const res = answerFn({ id: q.id, skill: VARIANT_SKILL[q.variant], format: q.format, outcome, ms, combo, practice: cfg.practice });
+    const res = answerFn({ id: q.id, skill: VARIANT_SKILL[q.variant], format: q.format, outcome, ms, combo, practice: cfg.practice, dOffset: q.variant === 'arms' ? 90 : 0 });
     xpTotal.current += res.xp;
     const ok = outcome >= 0.6;
     if (ok) {
@@ -214,7 +214,7 @@ function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
           <Prompt kicker={q.variant === 'shape-twist' ? 'Rotated! Which country is this?' : 'Which country is this?'}>
             <div className="relative">
               <div className="absolute inset-0 -m-6 rounded-full bg-[radial-gradient(circle,rgba(255,181,71,.18),transparent_65%)]" />
-              <Shape id={q.id} size="min(64vw, 300px)" rotate={q.rotate ?? 0}
+              <Shape id={q.id} size="min(64vw, 300px, 36dvh)" rotate={q.rotate ?? 0}
                 color={locked ? (picked === q.id ? 'var(--color-mint)' : 'var(--color-rose)') : 'var(--color-amber)'} />
             </div>
           </Prompt>
@@ -225,11 +225,21 @@ function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
         <Body answer={answerArea()}>
           <Prompt kicker="Whose flag is this?">
             <motion.div initial={{ rotateY: 90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 120 }}>
-              <Flag id={q.id} className="w-[min(78vw,340px)] aspect-[3/2] !rounded-xl shadow-[0_20px_60px_rgba(0,0,0,.6)]" />
+              <Flag id={q.id} className="w-[min(78vw,340px,54dvh)] aspect-[3/2] !rounded-xl shadow-[0_20px_60px_rgba(0,0,0,.6)]" />
             </motion.div>
           </Prompt>
         </Body>
       );
+    case 'arms': {
+      const a = ARMS[q.id];
+      return (
+        <Body answer={answerArea()}>
+          <Prompt kicker={`Whose ${ARMS_WORD[a.kind]} is this?`}>
+            <ArmsImage id={q.id} className="w-[min(70vw,300px,36dvh)]" />
+          </Prompt>
+        </Body>
+      );
+    }
     case 'flag-rev':
       return (
         <Body answer={answerArea('flag')}>
@@ -263,7 +273,7 @@ function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
       const focus = [q.id, ...c.borders.filter((b) => BY_ID[b])].slice(0, 6);
       return (
         <Body answer={answerArea()} wideTop={
-          <div className="relative flex-1 min-h-[38vh] w-full rounded-3xl overflow-hidden border border-line bg-deep">
+          <div className="relative flex-1 min-h-[38dvh] w-full rounded-3xl overflow-hidden border border-line bg-deep">
             <WorldMap className="absolute inset-0" focus={focus} fills={{ [q.id]: locked ? (picked === q.id ? 'var(--color-mint)' : 'var(--color-rose)') : 'var(--color-amber)' }}
               pulse={[q.id]} highlight={q.id} />
           </div>
@@ -281,7 +291,7 @@ function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
 
 function Prompt({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-[34vh] py-2">
+    <div className="kb-prompt flex-1 flex flex-col items-center justify-center min-h-[34dvh] py-2">
       <div className="text-mist text-sm uppercase tracking-[.18em] font-semibold mb-3">{kicker}</div>
       {children}
     </div>
@@ -326,7 +336,7 @@ function MapFind({ q, locked, onAnswer, regionFocus, rush }: { q: Question; lock
         <div className="display text-3xl sm:text-4xl font-extrabold">{c.name}</div>
         {!rush && <div className="text-sm text-mist mt-1">{maxTries - wrong.length} {maxTries - wrong.length === 1 ? 'try' : 'tries'} left · {frame && !regionFocus ? `somewhere in ${c.region} · ` : ''}pinch / scroll to zoom</div>}
       </div>
-      <div className="relative flex-1 min-h-[52vh] rounded-3xl overflow-hidden border border-line bg-deep">
+      <div className="relative flex-1 min-h-[52dvh] rounded-3xl overflow-hidden border border-line bg-deep">
         <WorldMap className="absolute inset-0" onPick={onPick} fills={fills} labels={labels} focus={done ? [q.id] : frame} pulse={done ? [q.id] : []} highlight={done ? q.id : null} />
       </div>
     </div>
@@ -400,7 +410,7 @@ function PhotoQ({ q, locked, onAnswer, answerArea, picked }: {
   return (
     <Body answer={answerArea()}>
       <div className="text-center text-mist text-sm uppercase tracking-[.18em] font-semibold my-2">Where was this photo taken?</div>
-      <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-3xl overflow-hidden border border-line bg-deep">
+      <div className="kb-photo relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-3xl overflow-hidden border border-line bg-deep">
         {!p && <div className="absolute inset-0 grid place-items-center text-mist">Loading photo…</div>}
         {p && (
           <motion.img key={p.u} src={p.u} alt="mystery place" onLoad={() => setLoaded(true)}
@@ -475,7 +485,7 @@ function Summary({ cfg, results, xp, bestCombo, startIQ, stamps }: { cfg: QuizCo
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {misses.map((m, i) => (
               <button key={i} onClick={() => setAbout(m.q.id)} className="card !rounded-2xl p-2.5 flex items-center gap-2.5 text-left hover:border-amber/60">
-                {m.q.variant.startsWith('flag') ? <Flag id={m.q.id} className="w-10 h-7 !rounded shrink-0" /> : <Shape id={m.q.id} size={40} glow={false} color="var(--color-rose)" />}
+                {m.q.variant === 'arms' ? <ArmsImage id={m.q.id} small className="w-10" /> : m.q.variant.startsWith('flag') ? <Flag id={m.q.id} className="w-10 h-7 !rounded shrink-0" /> : <Shape id={m.q.id} size={40} glow={false} color="var(--color-rose)" />}
                 <div className="min-w-0">
                   <div className="font-bold leading-tight break-words">{BY_ID[m.q.id].name}</div>
                   <div className="text-[13px] text-mist leading-snug break-words">★ {BY_ID[m.q.id].capital}</div>

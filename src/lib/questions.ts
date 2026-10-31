@@ -1,4 +1,4 @@
-import { BY_ID, COUNTRIES, NO_SHAPE, ALL_NAMES, fmtPop, fmtArea, fame, type Country } from '../data';
+import { BY_ID, COUNTRIES, NO_SHAPE, ALL_NAMES, fmtPop, fmtArea, fame, type Country, ARMS } from '../data';
 import { difficulty, type Skill, type Format } from './geoiq';
 import { shuffle, pick } from './rng';
 import type { Card } from './store';
@@ -6,13 +6,14 @@ import type { Card } from './store';
 export type Variant =
   | 'shape' | 'shape-twist' // name the silhouette (twist = rotated)
   | 'flag' | 'flag-rev' // name the flag / pick the flag
+  | 'arms' // name the coat of arms / national emblem / seal
   | 'capital' | 'capital-rev' // name the capital / which country has this capital
   | 'map-find' | 'map-name' // click it on the map / name the highlighted country
   | 'hint' // clue ladder
   | 'photo'; // street eye
 
 export const VARIANT_SKILL: Record<Variant, Skill> = {
-  shape: 'shape', 'shape-twist': 'shape', flag: 'flag', 'flag-rev': 'flag', capital: 'capital', 'capital-rev': 'capital',
+  shape: 'shape', 'shape-twist': 'shape', flag: 'flag', 'flag-rev': 'flag', arms: 'flag', capital: 'capital', 'capital-rev': 'capital',
   'map-find': 'map', 'map-name': 'map', hint: 'hint', photo: 'photo',
 };
 
@@ -28,6 +29,7 @@ export interface Question {
 /** Pool filter so every variant only asks fair questions. */
 export function eligible(c: Country, v: Variant) {
   if (v.startsWith('shape')) return !NO_SHAPE.has(c.id);
+  if (v === 'arms') return !!ARMS[c.id];
   if (v.startsWith('capital')) return !!c.capital && c.id !== 'VAT' && c.id !== 'MCO' && c.id !== 'SGP';
   return true;
 }
@@ -51,7 +53,7 @@ export function distractors(id: string, n: number, v: Variant, r = Math.random):
 export function makeQuestion(id: string, v: Variant, opts: { choices?: 4 | 6 | 0; r?: () => number } = {}): Question {
   const r = opts.r ?? Math.random;
   const nChoices = opts.choices ?? 4;
-  const typedOk = v === 'shape' || v === 'shape-twist' || v === 'flag' || v === 'photo' || v === 'capital-rev' || v === 'map-name';
+  const typedOk = v === 'shape' || v === 'shape-twist' || v === 'flag' || v === 'arms' || v === 'photo' || v === 'capital-rev' || v === 'map-name';
   const q: Question = { variant: v, id, format: 'choice4' };
   if (v === 'map-find') q.format = 'map';
   else if (v === 'hint') q.format = 'partial';

@@ -91,3 +91,9 @@ export function matchCountry(q: string): string | null {
 export const fmtPop = (n: number | null) =>
   n == null ? 'unknown' : n >= 1e9 ? `${(n / 1e9).toFixed(2)} billion` : n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)} million` : n >= 1e3 ? `${Math.round(n / 1e3)} thousand` : `${n}`;
 export const fmtArea = (n: number) => `${n >= 1e4 ? Math.round(n / 1e3).toLocaleString() + 'k' : Math.round(n).toLocaleString()} km²`;
+
+import armsRaw from './data/arms.json';
+export interface Arms { kind: 'arms' | 'emblem' | 'seal'; file: string; credit: string; page: string }
+/** Coat of arms / national emblem / seal for a country (Wikimedia Commons), if we have one. */
+export const ARMS = armsRaw as Record<string, Arms>;
+export const ARMS_WORD: Record<Arms['kind'], string> = { arms: 'coat of arms', emblem: 'national emblem', seal: 'seal' };

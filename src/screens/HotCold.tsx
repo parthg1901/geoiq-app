@@ -95,7 +95,7 @@ function Game({ target, kind, dailyDone, onMode }: { target: string; kind: Kind;
         <span className="text-sm text-mist self-center ml-auto hidden sm:inline">Guess any country — we’ll tell you how close you are.</span>
       </div>
 
-      <div className="relative mt-3 flex justify-center">
+      <div className="kb-hide relative mt-3 flex justify-center">
         <div className="absolute inset-0 m-auto w-72 h-72 rounded-full opacity-30 pointer-events-none" style={{ background: `radial-gradient(circle, ${closest ? heat(closest.km) : '#53b8ff'} 0%, transparent 68%)` }} />
         <Globe size={Math.min(320, typeof window !== 'undefined' ? window.innerWidth - 48 : 320)} focus={last} fills={fills} spin={!guesses.length} />
         {closest && status === 'play' && (

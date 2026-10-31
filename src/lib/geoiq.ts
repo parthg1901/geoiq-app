@@ -86,16 +86,16 @@ export const freshRatings = (): Ratings =>
 
 /** Composite GeoIQ: global θ, blended toward skill θs that have data. */
 export function geoIQ(r: Ratings) {
-  const used = SKILLS.filter((s) => r[s].n > 0);
   const total = SKILLS.reduce((a, s) => a + r[s].n, 0);
-  if (!used.length) return { iq: 100, provisional: true, answered: 0 };
-  // Skills you never practised count as "average" so cherry-picking one mode can't inflate the score.
+  // Skills you never practised stay at their starting estimate (your onboarding self-assessment),
+  // capped at your overall level — so cherry-picking one mode can't inflate the score, and your
+  // first answers don't make the other skills look worse than where you started.
   const w = SKILLS.map((s) => Math.min(1, r[s].n / 20) + 0.15);
-  const avg = SKILLS.reduce((a, s, i) => a + w[i] * (r[s].n ? r[s].theta : BASE - 40), 0) / w.reduce((a, b) => a + b, 0);
+  const avg = SKILLS.reduce((a, s, i) => a + w[i] * (r[s].n ? r[s].theta : Math.min(r[s].theta, r.all.theta)), 0) / w.reduce((a, b) => a + b, 0);
   const theta = 0.5 * avg + 0.5 * r.all.theta;
   return { iq: toIQ(theta), provisional: total < 30, answered: total };
 }
 
-export function itemFor(id: string, skill: Skill) {
-  return { id, skill, d: difficulty(BY_ID[id], skill) };
+export function itemFor(id: string, skill: Skill, dOffset = 0) {
+  return { id, skill, d: difficulty(BY_ID[id], skill) + dOffset };
 }

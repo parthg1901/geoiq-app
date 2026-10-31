@@ -1,0 +1,60 @@
+[
+  {
+    "id": "rivers",
+    "group": "physical",
+    "title": "Great Rivers",
+    "subtitle": "79 rivers of the world",
+    "emoji": "🏞️",
+    "color": "#53b8ff",
+    "count": 79,
+    "modes": [
+      "find",
+      "name",
+      "higher"
+    ],
+    "order": 1
+  },
+  {
+    "id": "seas",
+    "group": "physical",
+    "title": "Seas & Oceans",
+    "subtitle": "Oceans, seas, gulfs, bays and straits",
+    "emoji": "🌊",
+    "color": "#2ec4d6",
+    "count": 84,
+    "modes": [
+      "find",
+      "name"
+    ],
+    "order": 2
+  },
+  {
+    "id": "landforms",
+    "group": "physical",
+    "title": "Mountains & Deserts",
+    "subtitle": "Ranges, deserts, plateaus and peninsulas",
+    "emoji": "🏜️",
+    "color": "#ffb547",
+    "count": 75,
+    "modes": [
+      "find",
+      "name"
+    ],
+    "order": 3
+  },
+  {
+    "id": "peaks",
+    "group": "physical",
+    "title": "Famous Peaks",
+    "subtitle": "8000ers, Seven Summits and iconic volcanoes",
+    "emoji": "🏔️",
+    "color": "#b48cff",
+    "count": 55,
+    "modes": [
+      "find",
+      "name",
+      "higher"
+    ],
+    "order": 4
+  }
+]

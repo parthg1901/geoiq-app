@@ -10,8 +10,12 @@ const INTERVAL_DAYS = [0, 1, 3, 7, 16, 40];
 export interface Card { box: number; due: number; seen: number; right: number }
 export interface DayLog { xp: number; answers: number; right: number }
 export interface TestResult { date: string; iq: number; skills: Partial<Record<Skill, number>>; correct: number; total: number }
-export interface AnswerInput { id: string; skill: Skill; format: Format; outcome: number; ms?: number; combo?: number; practice?: boolean }
+/** dOffset: extra item difficulty for harder question types sharing a skill (e.g. coats of arms vs flags). */
+export interface AnswerInput { id: string; skill: Skill; format: Format; outcome: number; ms?: number; combo?: number; practice?: boolean; dOffset?: number }
 export interface AnswerResult { xp: number; iqBefore: number; iqAfter: number; stamp: boolean; levelUp: boolean }
+/** Progress in one content pack (regions / physical / history). Separate from the country GeoIQ. */
+export interface PackState { cards: Record<string, Card>; best: Record<string, number>; plays: number }
+export interface PackAnswerInput { pack: string; item: string; mode: string; outcome: number; ms?: number; combo?: number }
 
 interface State {
   name: string;
@@ -35,7 +39,10 @@ interface State {
   sound: boolean;
   reminder: { on: boolean; hour: number; minute: number };
   onboarded: boolean;
+  packs: Record<string, PackState>;
   // actions
+  packAnswer: (a: PackAnswerInput) => { xp: number; levelUp: boolean };
+  packUpdate: (pack: string, fn: (p: PackState) => PackState) => void;
   answer: (a: AnswerInput) => AnswerResult;
   addXP: (n: number, coins?: number) => void;
   checkStreak: () => { lost: number; froze: number };
@@ -79,7 +86,34 @@ const initial = () => ({
   sound: true,
   reminder: { on: false, hour: 19, minute: 0 },
   onboarded: false,
+  packs: {} as Record<string, PackState>,
 });
+
+export const emptyPack = (): PackState => ({ cards: {}, best: {}, plays: 0 });
+
+/** Next Leitner card after an answer (shared by countries and packs). */
+function nextCard(c: Card | undefined, ok: boolean): Card {
+  const cur = c ?? { box: 0, due: 0, seen: 0, right: 0 };
+  const box = ok ? Math.min(5, cur.box + 1) : Math.max(0, Math.min(1, cur.box - 2));
+  return { box, due: Date.now() + INTERVAL_DAYS[box] * 86400000 - 3600000, seen: cur.seen + 1, right: cur.right + (ok ? 1 : 0) };
+}
+
+/** 0..1: average memory strength of a pack's items across the modes you've played. */
+export function packMastery(ps: PackState | undefined, itemIds: string[]): number {
+  if (!ps || !itemIds.length) return 0;
+  const byItem: Record<string, number[]> = {};
+  for (const [k, c] of Object.entries(ps.cards)) {
+    const id = k.slice(0, k.lastIndexOf(':'));
+    (byItem[id] ??= []).push(Math.min(4, c.box) / 4);
+  }
+  return itemIds.reduce((a, id) => a + (byItem[id] ? Math.max(...byItem[id]) : 0), 0) / itemIds.length;
+}
+export function itemMastery(ps: PackState | undefined, id: string): number {
+  if (!ps) return 0;
+  let m = 0;
+  for (const [k, c] of Object.entries(ps.cards)) if (k.slice(0, k.lastIndexOf(':')) === id) m = Math.max(m, Math.min(4, c.box) / 4);
+  return m;
+}
 
 export const STREAK_MIN_XP = 20;
 
@@ -126,10 +160,32 @@ export const useGame = create<State>()(
         set({ streak: { ...s, count: 0 } });
         return { lost, froze: 0 };
       },
+      packUpdate: (pack, fn) => set((s) => ({ packs: { ...s.packs, [pack]: fn(s.packs[pack] ?? emptyPack()) } })),
+      packAnswer: (a) => {
+        const s = get();
+        const ps = s.packs[a.pack] ?? emptyPack();
+        const ok = a.outcome >= 0.6;
+        const key = `${a.item}:${a.mode}`;
+        const speed = a.ms != null && ok ? Math.max(0, Math.round((8000 - a.ms) / 1000)) : 0;
+        const combo = Math.min(5, Math.floor((a.combo ?? 0) / 3));
+        const xp = Math.round(a.outcome * 10) + speed + (ok ? combo * 2 : 0) + 1;
+        const day = todayKey();
+        const d = s.days[day] ?? { xp: 0, answers: 0, right: 0 };
+        const nd = { xp: d.xp + xp, answers: d.answers + 1, right: d.right + (ok ? 1 : 0) };
+        const lvlBefore = levelFor(s.xp).level;
+        set({
+          packs: { ...s.packs, [a.pack]: { ...ps, cards: { ...ps.cards, [key]: nextCard(ps.cards[key], ok) } } },
+          xp: s.xp + xp,
+          coins: s.coins + (ok ? 1 : 0),
+          days: { ...s.days, [day]: nd },
+          streak: bumpStreak(s.streak, nd.xp, day),
+        });
+        return { xp, levelUp: levelFor(s.xp + xp).level > lvlBefore };
+      },
       answer: (a) => {
         const s = get();
         const before = geoIQ(s.ratings).iq;
-        const item = itemFor(a.id, a.skill);
+        const item = itemFor(a.id, a.skill, a.dOffset);
         const kScale = a.practice ? 0.6 : 1;
         const ratings: Ratings = {
           ...s.ratings,
@@ -140,12 +196,7 @@ export const useGame = create<State>()(
         // SRS (only for core skills; hint/photo feed the capital/shape-ish memory lightly)
         const key = `${a.id}:${a.skill}`;
         const cards = { ...s.cards };
-        if (CORE.includes(a.skill)) {
-          const c = cards[key] ?? { box: 0, due: 0, seen: 0, right: 0 };
-          const ok = a.outcome >= 0.6;
-          const box = ok ? Math.min(5, c.box + 1) : Math.max(0, Math.min(1, c.box - 2));
-          cards[key] = { box, due: Date.now() + INTERVAL_DAYS[box] * 86400000 - 3600000, seen: c.seen + 1, right: c.right + (ok ? 1 : 0) };
-        }
+        if (CORE.includes(a.skill)) cards[key] = nextCard(cards[key], a.outcome >= 0.6);
         const wasStamped = !!s.stamps[a.id];
         const stamp = !wasStamped && mastery(cards, a.id) >= 0.75;
         // XP: base 10 for correct, partial credit, speed and combo bonus

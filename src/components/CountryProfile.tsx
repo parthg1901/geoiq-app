@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { BY_ID, ALL_NAMES, fmtPop, fmtArea, loadPhotos, type Photo } from '../data';
+import { BY_ID, ALL_NAMES, ARMS, ARMS_WORD, fmtPop, fmtArea, loadPhotos, type Photo } from '../data';
+import { ArmsImage } from './Answer';
 import { loadProfile, rank, metric, money, ordinal, trivia, METRIC_LABEL, type Metric, type Profile } from '../lib/profile';
 import { useGame, mastery, CORE } from '../lib/store';
 import { SKILL_LABEL } from '../lib/geoiq';
@@ -105,7 +106,10 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
             <div className="text-sm font-bold uppercase tracking-wider" style={{ color }}>{meta?.emoji} {c.subregion}</div>
             <h1 className="display text-4xl sm:text-5xl font-extrabold leading-tight mt-1">{c.name}</h1>
             {c.official !== c.name && <div className="text-mist mt-1">{c.official}</div>}
-            <Flag id={id} className="w-32 aspect-[3/2] mt-4 !rounded-lg" />
+            <div className="flex items-center gap-3 mt-4">
+              <Flag id={id} className="w-32 aspect-[3/2] !rounded-lg" />
+              {ARMS[id] && <ArmsImage id={id} className="w-[86px]" small />}
+            </div>
             <div className="flex flex-wrap gap-2 mt-4">
               {stamp ? <span className="chip !text-violet !border-violet/60">🛂 Stamped {stamp}</span> : <span className="chip">🛂 {Math.round(m * 100)}% to stamp</span>}
               {c.landlocked && <span className="chip">🏔️ Landlocked</span>}
@@ -159,6 +163,7 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
         {f?.timezones.length ? <Fact icon="🕒" k={f.timezones.length > 1 ? 'Time zones' : 'Time zone'} v={f.timezones.join(', ')} /> : null}
         <Fact icon="📞" k="Calling code" v={c.calling || '—'} />
         <Fact icon="🌐" k="Internet domain" v={c.tld || '—'} />
+        {ARMS[id] && <Fact icon="🛡️" k={cap(ARMS_WORD[ARMS[id].kind])} v={<a className="text-sky underline" href={ARMS[id].page} target="_blank" rel="noreferrer">View on Wikimedia Commons</a>} />}
         {f?.drive && <Fact icon="🚗" k="Driving side" v={cap(f.drive)} />}
       </div>
       {loading && <div className="text-mist text-sm mt-3 animate-pulse">Loading the full dossier…</div>}
@@ -267,12 +272,12 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
       )}
 
       <div className="text-sm text-mist mt-8 leading-relaxed">
-        Text from <a className="text-sky underline" href={`https://en.wikipedia.org/wiki/${encodeURIComponent(c.name)}`} target="_blank" rel="noreferrer">Wikipedia</a> (CC BY-SA 4.0); facts from Wikidata, World Bank and mledoze/countries. Photos from Wikimedia Commons; credits shown in each photo.
+        Text from <a className="text-sky underline" href={`https://en.wikipedia.org/wiki/${encodeURIComponent(c.name)}`} target="_blank" rel="noreferrer">Wikipedia</a> (CC BY-SA 4.0); facts from Wikidata, World Bank and mledoze/countries. Photos from Wikimedia Commons; credits shown in each photo.{ARMS[id] && <> {cap(ARMS_WORD[ARMS[id].kind])}: {ARMS[id].credit || 'Wikimedia Commons'}.</>}
       </div>
 
       {lightbox != null && photos[lightbox] && createPortal(
         <div className="fixed inset-0 z-[70] bg-black/90 flex flex-col items-center justify-center p-4" onClick={() => setLightbox(null)}>
-          <img src={photos[lightbox].u} alt={photos[lightbox].c} referrerPolicy="no-referrer" className="max-h-[70vh] max-w-full rounded-xl" />
+          <img src={photos[lightbox].u} alt={photos[lightbox].c} referrerPolicy="no-referrer" className="max-h-[70dvh] max-w-full rounded-xl" />
           <div className="max-w-2xl text-center mt-4 leading-relaxed">{photos[lightbox].c}</div>
           <div className="text-sm text-mist mt-1">{photos[lightbox].a} · {photos[lightbox].l}</div>
           <div className="flex gap-3 mt-4" onClick={(e) => e.stopPropagation()}>

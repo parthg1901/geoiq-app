@@ -5,6 +5,14 @@ import { COUNTRIES, REGIONS } from '../data';
 export interface Achievement { id: string; name: string; desc: string; icon: string; test: (s: ReturnType<typeof useGame.getState>, ctx: Ctx) => boolean }
 export interface Ctx { perfect?: boolean; combo?: number; mode?: string; score?: number; total?: number }
 
+/** Rough pack mastery from stored cards alone (best box per item over items seen, scaled by plays). */
+function packAvg(p: { cards: Record<string, { box: number }> }) {
+  const best: Record<string, number> = {};
+  for (const [k, c] of Object.entries(p.cards)) { const id = k.slice(0, k.lastIndexOf(':')); best[id] = Math.max(best[id] ?? 0, Math.min(4, c.box) / 4); }
+  const v = Object.values(best);
+  return v.length >= 8 ? v.reduce((a, b) => a + b, 0) / v.length : 0;
+}
+
 const regionDone = (s: ReturnType<typeof useGame.getState>, r: string, th = 0.75) =>
   COUNTRIES.filter((c) => c.region === r).every((c) => mastery(s.cards, c.id) >= th);
 
@@ -30,6 +38,10 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'hotcold', name: 'Heat Seeker', desc: 'Find the mystery country in ≤ 4 guesses', icon: '🌡️', test: (s) => (s.bests['hotcold'] ?? 99) <= 4 },
   { id: 'lvl10', name: 'Seasoned', desc: 'Reach level 10', icon: '⭐', test: (s) => levelFor(s.xp).level >= 10 },
   { id: 'photo25', name: 'Street Smart', desc: '25 correct Street Eye answers', icon: '📸', test: (s) => (s.counters['photoRight'] ?? 0) >= 25 },
+  { id: 'pack1', name: 'Explorer at Large', desc: 'Finish your first pack round', icon: '🧭', test: (s) => (s.counters['packRounds'] ?? 0) >= 1 },
+  { id: 'nameall', name: 'Total Recall', desc: 'Name every item in a pack', icon: '🧠', test: (s) => (s.counters['nameAll'] ?? 0) >= 1 },
+  { id: 'packs3', name: 'Specialist', desc: 'Master 3 packs to 50%', icon: '🎓', test: (s) => Object.values(s.packs ?? {}).filter((p) => packAvg(p) >= 0.5).length >= 3 },
+  { id: 'rivers', name: 'River Runner', desc: 'Name every river in the Rivers pack', icon: '🏞️', test: (s) => (s.packs?.['rivers']?.best.allTime ?? null) != null },
   { id: 'twist', name: 'Twisted', desc: 'Name 10 rotated shapes', icon: '🌀', test: (s) => (s.counters['twistRight'] ?? 0) >= 10 },
 ];
 

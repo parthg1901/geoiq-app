@@ -161,6 +161,18 @@ export default function Home() {
       <SectionTitle sub={<button className="text-sky" onClick={() => go('/atlas')}>World Atlas →</button>}>Country of the day</SectionTitle>
       <CountryOfDay c={cotd} />
 
+      {/* Packs */}
+      <button onClick={() => go('/packs')} className="card w-full mt-6 p-4 flex items-center gap-4 text-left relative overflow-hidden hover:border-amber/60 transition-colors">
+        <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(61,220,151,.25) 0%, transparent 68%)' }} />
+        <div className="text-4xl relative">🧭</div>
+        <div className="flex-1 relative">
+          <div className="text-xs font-bold uppercase tracking-wider text-mint">New</div>
+          <div className="display font-bold text-lg leading-tight">States, rivers & history</div>
+          <div className="text-sm text-mist">US & Indian states, the world's rivers and peaks, maps from 1914…</div>
+        </div>
+        <span className="text-mint text-xl relative">→</span>
+      </button>
+
       {/* Quick play */}
       <SectionTitle sub={<button className="text-sky" onClick={() => go('/play')}>All games →</button>}>Quick play</SectionTitle>
       <div className="grid grid-cols-2 gap-3">

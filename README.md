@@ -21,6 +21,15 @@ node scripts/build-data.mjs   # country metadata, silhouettes, world map, photo 
 node scripts/build-profiles.mjs  # public/data/profiles/{ID}.json + src/data/stats.json
 ```
 
+**Content packs** (`public/data/packs/`, contract in `src/lib/packs.ts`) and coats of arms:
+
+```bash
+node scripts/packs/build-regions.mjs && node scripts/packs/regions-images.mjs   # US/Indian/Canadian/… states & provinces
+node scripts/packs/build-physical.mjs   # rivers, seas, landforms, peaks
+node scripts/packs/build-history.mjs    # 1815–1960 world maps (historical-basemaps, GPL-3.0)
+node scripts/fetch-arms.mjs && sh scripts/compress-arms.sh   # country coats of arms
+```
+
 Bump `VERSION` in `public/sw.js` after regenerating data so installed apps pick up the new files.
 
 ## How GeoIQ works

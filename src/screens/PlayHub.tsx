@@ -6,6 +6,7 @@ import { REGIONS } from '../data';
 import { useGame } from '../lib/store';
 import { Page, SectionTitle } from '../components/ui';
 import { StatusBar } from './Home';
+import { GROUP_META } from '../lib/packs';
 
 export default function PlayHub() {
   const [region, setRegion] = useState<string>('');
@@ -39,6 +40,16 @@ export default function PlayHub() {
         <Special onClick={() => go('/daily')} e="☀️" t="Daily Challenge" d="Same 5 for everyone" c="#53b8ff" />
         <Special onClick={() => go('/hotcold')} e="🌡️" t="Hot & Cold" d={`Find the mystery country by distance${bests.hotcold ? ` · best ${bests.hotcold}` : ''}`} c="#ff6b5e" />
         <Special onClick={() => go('/borderline')} e="🛤️" t="Borderline" d="Cross borders from A to B" c="#3ddc97" />
+      </div>
+
+      <SectionTitle sub={<button className="text-sky" onClick={() => go('/packs')}>All packs →</button>}>Explore more</SectionTitle>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {(['regions', 'physical', 'history'] as const).map((g) => (
+          <button key={g} onClick={() => go('/packs')} className="card p-4 text-left flex sm:flex-col items-center sm:items-start gap-3 hover:border-amber/60 transition-colors">
+            <span className="text-3xl">{GROUP_META[g].emoji}</span>
+            <span><span className="display font-bold block">{GROUP_META[g].title}</span><span className="text-sm text-mist">{GROUP_META[g].blurb}</span></span>
+          </button>
+        ))}
       </div>
 
       <SectionTitle>Game modes</SectionTitle>

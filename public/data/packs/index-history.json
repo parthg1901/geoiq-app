@@ -1,0 +1,92 @@
+[
+  {
+    "id": "h1815",
+    "group": "history",
+    "title": "1815 · After Napoleon",
+    "subtitle": "Europe redrawn at the Congress of Vienna",
+    "emoji": "🎩",
+    "color": "#c8a26b",
+    "count": 61,
+    "modes": [
+      "find",
+      "name",
+      "shape"
+    ],
+    "order": 1
+  },
+  {
+    "id": "h1880",
+    "group": "history",
+    "title": "1880 · Age of Empires",
+    "subtitle": "On the eve of the Scramble for Africa",
+    "emoji": "🚂",
+    "color": "#d4935a",
+    "count": 79,
+    "modes": [
+      "find",
+      "name",
+      "shape"
+    ],
+    "order": 2
+  },
+  {
+    "id": "h1914",
+    "group": "history",
+    "title": "1914 · Eve of WWI",
+    "subtitle": "The world of empires, weeks before the Great War",
+    "emoji": "⚔️",
+    "color": "#c97b5b",
+    "count": 93,
+    "modes": [
+      "find",
+      "name",
+      "shape"
+    ],
+    "order": 3
+  },
+  {
+    "id": "h1938",
+    "group": "history",
+    "title": "1938 · Eve of WWII",
+    "subtitle": "Dictators, mandates and empires at their peak",
+    "emoji": "📻",
+    "color": "#b8865a",
+    "count": 99,
+    "modes": [
+      "find",
+      "name",
+      "shape"
+    ],
+    "order": 4
+  },
+  {
+    "id": "h1945",
+    "group": "history",
+    "title": "1945 · World War II ends",
+    "subtitle": "Occupation zones and a world about to be remade",
+    "emoji": "🕊️",
+    "color": "#a7906a",
+    "count": 115,
+    "modes": [
+      "find",
+      "name",
+      "shape"
+    ],
+    "order": 5
+  },
+  {
+    "id": "h1960",
+    "group": "history",
+    "title": "1960 · Year of Africa",
+    "subtitle": "Seventeen African nations win independence",
+    "emoji": "✊",
+    "color": "#c99a4e",
+    "count": 103,
+    "modes": [
+      "find",
+      "name",
+      "shape"
+    ],
+    "order": 6
+  }
+]

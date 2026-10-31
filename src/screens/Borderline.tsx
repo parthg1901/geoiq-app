@@ -136,7 +136,7 @@ function Game({ route, kind, onAgain }: { route: Route; kind: Kind; onAgain: () 
         <Endpoint id={route.end} color={COL.end} label="To" right />
       </div>
 
-      <div className="relative mt-3 h-[40vh] sm:h-[48vh] rounded-3xl overflow-hidden border border-line bg-deep">
+      <div className="relative mt-3 h-[40dvh] sm:h-[48dvh] rounded-3xl overflow-hidden border border-line bg-deep">
         <WorldMap focus={[route.start, route.end, ...frame]} fills={fills} labels={labels} pulse={[route.start, route.end]} />
       </div>
       <Progress value={guesses.length / maxGuesses} className="mt-3" h={6} color={guesses.length >= maxGuesses - 1 ? 'var(--color-rose)' : 'var(--color-sky)'} />

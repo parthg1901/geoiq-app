@@ -1,0 +1,158 @@
+[
+ {
+  "id": "us-states",
+  "group": "regions",
+  "title": "US States",
+  "subtitle": "50 states + Washington, D.C.",
+  "emoji": "🇺🇸",
+  "color": "#53b8ff",
+  "count": 51,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital",
+   "flag"
+  ],
+  "order": 1
+ },
+ {
+  "id": "in-states",
+  "group": "regions",
+  "title": "Indian States",
+  "subtitle": "28 states + 8 union territories",
+  "emoji": "🇮🇳",
+  "color": "#ffb547",
+  "count": 36,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital"
+  ],
+  "order": 2
+ },
+ {
+  "id": "ca-provinces",
+  "group": "regions",
+  "title": "Canadian Provinces",
+  "subtitle": "10 provinces + 3 territories",
+  "emoji": "🇨🇦",
+  "color": "#ff5d73",
+  "count": 13,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital",
+   "flag",
+   "arms"
+  ],
+  "order": 3
+ },
+ {
+  "id": "au-states",
+  "group": "regions",
+  "title": "Australian States",
+  "subtitle": "6 states + 2 mainland territories",
+  "emoji": "🇦🇺",
+  "color": "#3ddc97",
+  "count": 8,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital",
+   "flag",
+   "arms"
+  ],
+  "order": 4
+ },
+ {
+  "id": "br-states",
+  "group": "regions",
+  "title": "Brazilian States",
+  "subtitle": "26 states + Federal District",
+  "emoji": "🇧🇷",
+  "color": "#3ddc97",
+  "count": 27,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital",
+   "flag",
+   "arms"
+  ],
+  "order": 5
+ },
+ {
+  "id": "mx-states",
+  "group": "regions",
+  "title": "Mexican States",
+  "subtitle": "31 states + Mexico City",
+  "emoji": "🇲🇽",
+  "color": "#ff6b5e",
+  "count": 32,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital",
+   "arms"
+  ],
+  "order": 6
+ },
+ {
+  "id": "de-states",
+  "group": "regions",
+  "title": "German States",
+  "subtitle": "16 Länder",
+  "emoji": "🇩🇪",
+  "color": "#ffb547",
+  "count": 16,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital",
+   "flag",
+   "arms"
+  ],
+  "order": 7
+ },
+ {
+  "id": "cn-provinces",
+  "group": "regions",
+  "title": "Chinese Provinces",
+  "subtitle": "Provinces, regions & municipalities",
+  "emoji": "🇨🇳",
+  "color": "#ff5d73",
+  "count": 31,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital"
+  ],
+  "order": 8
+ },
+ {
+  "id": "ru-subjects",
+  "group": "regions",
+  "title": "Russian Regions",
+  "subtitle": "Federal subjects of Russia",
+  "emoji": "🇷🇺",
+  "color": "#b48cff",
+  "count": 83,
+  "modes": [
+   "shape",
+   "find",
+   "name",
+   "capital",
+   "flag",
+   "arms"
+  ],
+  "order": 9
+ }
+]

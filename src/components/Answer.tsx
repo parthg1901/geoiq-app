@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BY_ID, searchCountries, matchCountry } from '../data';
+import { BY_ID, ARMS, ARMS_WORD, searchCountries, matchCountry } from '../data';
 import { Flag } from './Shape';
 import { sfx } from '../lib/sound';
 
@@ -82,6 +82,16 @@ export function TypeAnswer({ onSubmit, disabled, placeholder = 'Type a countryâ€
 
   return (
     <div className="relative">
+      {sugg.length > 0 && !disabled && (
+        <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-none">
+          {sugg.map((c, i) => (
+            <button onPointerDown={(e) => e.preventDefault()} key={c.id} onClick={() => submit(c.id)}
+              className={`chip shrink-0 whitespace-nowrap !text-sm !py-1.5 !px-3 transition-colors ${i === sel ? '!bg-amber/20 !border-amber text-amber' : 'hover:!border-sky'}`}>
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex gap-2">
         <input
           ref={ref}
@@ -97,18 +107,22 @@ export function TypeAnswer({ onSubmit, disabled, placeholder = 'Type a countryâ€
           autoComplete="off" autoCorrect="off" spellCheck={false}
           className="flex-1 min-w-0 bg-ink/70 border-2 border-line focus:border-amber outline-none rounded-2xl px-4 py-3.5 text-lg display placeholder:text-mist/90"
         />
-        <button className="btn btn-primary px-5" disabled={disabled || !q.trim()} onClick={() => submit()}>Go</button>
+        <button onPointerDown={(e) => e.preventDefault()} className="btn btn-primary px-5" disabled={disabled || !q.trim()} onClick={() => submit()}>Go</button>
       </div>
-      {sugg.length > 0 && !disabled && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {sugg.map((c, i) => (
-            <button key={c.id} onClick={() => submit(c.id)}
-              className={`chip !text-sm !py-1.5 !px-3 transition-colors ${i === sel ? '!bg-amber/20 !border-amber text-amber' : 'hover:!border-sky'}`}>
-              {c.name}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
+
+/** Coat of arms on a soft paper disc so dark or transparent heraldry stays visible on the dark theme. */
+export function ArmsImage({ id, className = '', small = false }: { id: string; className?: string; small?: boolean }) {
+  const a = ARMS[id];
+  if (!a) return null;
+  return (
+    <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 140, damping: 14 }}
+      className={`aspect-square rounded-full grid place-items-center shrink-0 ${className}`}
+      style={{ background: 'radial-gradient(circle, #f6f2e7 55%, #d9deea 100%)', boxShadow: small ? '0 2px 8px rgba(0,0,0,.4)' : '0 20px 60px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.6)' }}>
+      <img src={a.file} alt={ARMS_WORD[a.kind]} draggable={false} className="w-[78%] h-[78%] object-contain" />
+    </motion.div>
+  );
+}
+

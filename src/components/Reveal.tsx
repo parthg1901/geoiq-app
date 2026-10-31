@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { CountryProfile } from './CountryProfile';
 import { motion } from 'framer-motion';
-import { BY_ID, fmtPop } from '../data';
+import { ArmsImage } from './Answer';
+import { BY_ID, fmtPop, ARMS } from '../data';
 import { Flag, Shape } from './Shape';
 import { Globe, zoomFor } from './Globe';
 
@@ -34,6 +35,7 @@ export function Reveal({ id, correct, partial, xp, iqDelta, stamp, onNext, nextL
             </div>
             <div className="flex items-center gap-2 mt-1">
               <Flag id={id} className="h-6 w-9 !rounded" />
+              {ARMS[id] && <ArmsImage id={id} small className="w-8" />}
               <span className="display text-2xl font-bold leading-tight break-words min-w-0">{c.name}</span>
             </div>
             <div className="text-sm text-mist mt-1 flex flex-wrap gap-x-3">
