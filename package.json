@@ -1,7 +1,7 @@
 {
   "name": "geoiq",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "GeoIQ — learn the world's countries, regions, rivers and history maps, and measure your geography IQ",
   "license": "GPL-3.0-or-later",
   "repository": {

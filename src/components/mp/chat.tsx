@@ -11,8 +11,10 @@ import { useGame } from '../../lib/store';
 import { onBack } from '../../lib/native';
 import { sfx } from '../../lib/sound';
 
-/** Phases where the screen is busy with a question/race: chat stays out of the way. */
-const BUSY: Phase[] = ['countdown', 'question', 'race'];
+/** In-game phases: the header has a progress row + a timer row, so chat sits below them. */
+const BUSY: Phase[] = ['countdown', 'question', 'reveal', 'race'];
+/** Distance from the top: under the in-game header rows, or beside the lobby/results title. */
+const topFor = (busy: boolean) => (busy ? 'calc(var(--sat) + 5.75rem)' : 'calc(var(--sat) + 0.75rem)');
 
 export function ChatDock({ phase }: { phase: Phase }) {
   const { chat, unread, chatOpen, setChatOpen, you, state } = useRoom();
@@ -25,12 +27,12 @@ export function ChatDock({ phase }: { phase: Phase }) {
   return createPortal(
     <>
       <Reactions chat={chat} />
-      {!chatOpen && bubblesOn && <Bubbles chat={chat} you={you} compact={busy} />}
+      {!chatOpen && bubblesOn && <Bubbles chat={chat} you={you} compact={busy} top={busy ? topFor(true) : 'calc(var(--sat) + 4.25rem)'} />}
       {!chatOpen && (
         <button aria-label={`Chat${unread ? ` (${unread} new)` : ''}`} onClick={() => setChatOpen(true)}
-          className={`fixed z-[45] right-3 rounded-full grid place-items-center bg-deep border border-line shadow-[0_6px_20px_rgba(0,0,0,.5)] ${busy ? 'w-10 h-10 text-lg' : 'w-12 h-12 text-xl'}`}
-          // During questions/races: small, top-right under the header. Otherwise: bottom-right above the actions.
-          style={busy ? { top: 'calc(var(--sat) + 5.75rem)', opacity: 0.85 } : { bottom: 'calc(var(--sab) + 6.5rem)' }}>
+          className={`fixed z-[45] right-3 rounded-full grid place-items-center bg-deep border border-line shadow-[0_6px_20px_rgba(0,0,0,.5)] ${busy ? 'w-10 h-10 text-lg' : 'w-11 h-11 text-xl'}`}
+          // Top-right, where no screen has controls: beside the lobby/results title, or under the in-game header.
+          style={{ top: topFor(busy), opacity: busy ? 0.85 : 1 }}>
           💬
           {unread > 0 && (
             <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-coral text-ink text-xs font-bold grid place-items-center">{unread > 9 ? '9+' : unread}</span>
@@ -118,22 +120,26 @@ function ChatSheet({ onClose, mutedByHost }: { onClose: () => void; mutedByHost:
   );
 }
 
-/** New text messages pop up briefly (smaller and higher up during questions/races). */
-function Bubbles({ chat, you, compact }: { chat: ChatMsg[]; you: string | null; compact: boolean }) {
+/** New text messages pop up briefly (smaller during questions/races). */
+function Bubbles({ chat, you, compact, top }: { chat: ChatMsg[]; you: string | null; compact: boolean; top: string }) {
   const [shown, setShown] = useState<ChatMsg[]>([]);
   const seen = useRef<number>(chat.at(-1)?.id ?? 0);
+  const compactRef = useRef(compact);
+  useEffect(() => { compactRef.current = compact; }, [compact]);
+  // Each bubble gets its own timer, independent of re-renders and phase changes (so none get stuck).
+  const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => () => { for (const t of timers.current) clearTimeout(t); }, []);
   useEffect(() => {
     const fresh = chat.filter((m) => m.id > seen.current && m.text && m.from !== you);
     if (chat.length) seen.current = Math.max(seen.current, chat.at(-1)!.id);
     if (!fresh.length) return;
     setShown((s) => [...s, ...fresh].slice(-3));
     const ids = fresh.map((m) => m.id);
-    const t = setTimeout(() => setShown((s) => s.filter((m) => !ids.includes(m.id))), compact ? 3500 : 5000);
-    return () => clearTimeout(t);
-  }, [chat, you, compact]);
+    const t = setTimeout(() => { timers.current.delete(t); setShown((s) => s.filter((m) => !ids.includes(m.id))); }, compactRef.current ? 3500 : 5000);
+    timers.current.add(t);
+  }, [chat, you]);
   return (
-    <div className="fixed z-[44] left-3 right-16 flex flex-col items-start gap-1.5 pointer-events-none"
-      style={compact ? { top: 'calc(var(--sat) + 5.75rem)' } : { bottom: 'calc(var(--sab) + 6.5rem)' }}>
+    <div className="fixed z-[44] left-3 right-16 flex flex-col items-start gap-1.5 pointer-events-none" style={{ top }}>
       <AnimatePresence>
         {shown.map((m) => (
           <motion.div key={m.id} layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
