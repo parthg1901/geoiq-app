@@ -8,6 +8,7 @@
 //   --url <base>          server (default https://play.geoiq.workers.dev; local: http://127.0.0.1:8787)
 //   --room <CODE>         join this room            --create        create a room instead (bot is host)
 //   --name <name>         default "Atlas Bot"       --skill <0..1>  chance of answering right (default 0.7)
+//   --quiet               no chat messages or reactions (by default the bot says gl/gg and reacts sometimes)
 //   --game <kind>         quiz (default) | crossword | hotcold | borderline   (with --create)
 //   --topic <topic>       quiz: e.g. world:mix, world:flag, pack:us-states:shape   (with --create)
 //   --rounds <n>          quiz: 5–20 (default 10)   --seconds <n>   quiz: 8–30 (default 15)
@@ -32,6 +33,7 @@ const NAME = arg('name', 'Atlas Bot');
 const SKILL = Math.max(0, Math.min(1, Number(arg('skill', '0.7'))));
 const DATA_VERSION = arg('data-version', repoVersion());
 const START_AFTER = Number(arg('start-after', '0'));
+const QUIET = process.argv.includes('--quiet'); // no chat or reactions
 const DEVICE = `bot${Math.random().toString(36).slice(2, 12)}`;
 const PROTOCOL = 2;
 const RACE_DEFAULT_SEC = { crossword: 420, hotcold: 240, borderline: 180 };
@@ -76,6 +78,9 @@ function connect() {
   };
 }
 const send = (m) => { if (ws?.readyState === 1) ws.send(JSON.stringify(m)); };
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const say = (text) => { if (!QUIET) { send({ t: 'chat', text }); log(`💬 me: ${text}`); } };
+const react = (emoji) => { if (!QUIET) send({ t: 'react', emoji }); };
 setInterval(() => send({ t: 'ping', c: Date.now() }), 20000);
 
 function onMessage(m) {
@@ -85,6 +90,14 @@ function onMessage(m) {
     return;
   }
   if (m.t === 'pong') return;
+  if (m.t === 'chat') {
+    const c = m.msg;
+    if (c.from !== you) log(c.text ? `💬 ${c.name}: ${c.text}` : `${c.emoji} from ${c.name}`);
+    // answer a greeting or a "gg"
+    if (!QUIET && c.from !== you && c.text && /\b(hi|hey|hello|yo)\b/i.test(c.text)) setTimeout(() => say(pick(['hey! 👋', 'hi there', 'hello hello'])), rnd(900, 2200));
+    if (!QUIET && c.from !== you && c.text && /\bgg\b/i.test(c.text)) setTimeout(() => react('🫡'), rnd(500, 1500));
+    return;
+  }
   if (m.t === 'welcome') { you = m.you; log(`joined room ${code} as "${NAME}" (skill ${SKILL})`); }
   if (m.t !== 'welcome' && m.t !== 'state') return;
   const prev = state;
@@ -125,6 +138,7 @@ function onMessage(m) {
     case 'countdown': {
       const s = state.settings;
       log(`game starting: ${s.game === 'quiz' || !s.game ? `${s.topic}, ${s.rounds} rounds` : `${s.game} race (${s.limitSec}s)`}`);
+      if (Math.random() < 0.7) setTimeout(() => say(pick(['gl hf!', 'good luck 🍀', "let's go", 'ready 🧭'])), rnd(300, 1800));
       answeredRound = -1;
       break;
     }
@@ -134,6 +148,7 @@ function onMessage(m) {
       const mine = state.answers[you];
       const board = [...state.players].sort((a, b) => b.score - a.score).slice(0, 3).map((p, i) => `${i + 1}. ${p.name} ${p.score}`).join('  ');
       log(`  round ${state.round + 1}: ${mine ? (mine.outcome >= 0.6 ? `✓ +${mine.points}` : '✗ +0') : 'no answer'} | ${board}`);
+      if (Math.random() < 0.35) setTimeout(() => react(mine?.outcome >= 0.6 ? pick(['🔥', '👏', '🤯']) : pick(['😭', '😱', '😂'])), rnd(400, 2000));
       break;
     }
     case 'end': {
@@ -141,6 +156,7 @@ function onMessage(m) {
       const race = state.settings.game && state.settings.game !== 'quiz';
       const detail = (p) => (race ? (state.progress[p.id]?.done ? 'finished' : 'unfinished') : `${p.correct}/${state.settings.rounds}`);
       log(`game over — ${ranking.map((p, i) => `${i + 1}. ${p.name} ${p.score} (${detail(p)})`).join(', ')}`);
+      setTimeout(() => say(ranking[0]?.id === you ? pick(['gg! 😎', 'gg, close one', 'gg wp']) : pick(['gg 👏', 'gg, rematch?', 'nice one, gg'])), rnd(800, 2500));
       if (isHost) log('type "lobby" for another game, or "quit"');
       break;
     }

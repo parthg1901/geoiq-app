@@ -64,7 +64,8 @@ class Client {
   onMsg(m, L, resolve, arrived = Date.now()) {
     if (m.t === 'error') { this.errors.push(m.code); this.notify(); resolve(this); return; }
     if (m.t === 'pong') { this.lastPong = m; this.notify(); return; }
-    if (m.t === 'welcome') this.you = m.you;
+    if (m.t === 'chat') { (this.chat ??= []).push(m.msg); this.notify(); return; }
+    if (m.t === 'welcome') { this.you = m.you; this.history = m.chat ?? []; }
     if (m.t === 'welcome' || m.t === 'state') {
       const s = m.state;
       const key = `${s.phase}:${s.round}`;
@@ -236,6 +237,54 @@ async function scenarioEmptyRoomAlarms() {
   await sleep(15000); // past the 10 s host grace period, where the old loop began
   const after = (await api(`/api/rooms/${code}`)).body?.alarmFires ?? 0;
   check('empty room fires at most a couple of alarms in 15 s (no runaway loop)', after - before <= 3, `${after - before} alarm firings`);
+}
+
+async function scenarioChat() {
+  console.log('\n▶ Chat: relay, reactions, history on reconnect, limits, mute');
+  const code = await createRoom();
+  const host = await new Client(code, { name: 'Host' }).connect();
+  const p2 = await new Client(code, { name: 'P2' }).connect();
+  const got = (c, pred) => (c.chat ?? []).some(pred);
+  host.send({ t: 'chat', text: '  hello   there  ' });
+  await p2.waitFor((c) => got(c, (m) => m.text === 'hello there'), 4000, 'chat relayed');
+  check('chat relayed to everyone, whitespace tidied', got(p2, (m) => m.text === 'hello there' && m.name === 'Host') && got(host, (m) => m.text === 'hello there'));
+  p2.send({ t: 'react', emoji: '🔥' });
+  await host.waitFor((c) => got(c, (m) => m.emoji === '🔥'), 4000, 'reaction relayed');
+  check('reaction relayed', true);
+  const before = (host.chat ?? []).length;
+  p2.send({ t: 'react', emoji: '💩' }); p2.send({ t: 'chat', text: '' }); p2.send({ t: 'chat', text: 42 }); p2.send({ t: 'chat', text: 'x'.repeat(5000) });
+  await sleep(1200);
+  check('unknown emoji, empty, non-string and oversized messages dropped', (host.chat ?? []).length === before);
+  p2.send({ t: 'chat', text: 'y'.repeat(300) });
+  await host.waitFor((c) => got(c, (m) => m.text?.startsWith('yyy')), 4000, 'long chat');
+  check('long text trimmed to the max length', (host.chat ?? []).find((m) => m.text?.startsWith('yyy'))?.text.length === 200);
+  // rate limit: a burst of 10 → only the burst allowance gets through
+  const n0 = (host.chat ?? []).filter((m) => m.from === host.you && m.text?.startsWith('spam')).length;
+  for (let i = 0; i < 10; i++) host.send({ t: 'chat', text: 'spam ' + i });
+  await sleep(1500);
+  const n1 = (p2.chat ?? []).filter((m) => m.text?.startsWith('spam')).length - n0;
+  check('chat flood limited to a short burst', n1 >= 1 && n1 <= 4, `${n1} of 10 delivered`);
+  // history on reconnect
+  p2.close(); await sleep(300);
+  const p2b = await new Client(code, { name: 'P2', deviceId: p2.deviceId }).connect();
+  check('reconnect receives recent chat history (text only)', (p2b.history ?? []).some((m) => m.text === 'hello there') && !(p2b.history ?? []).some((m) => m.emoji));
+  // mute
+  host.send({ t: 'mute', playerId: p2b.you, muted: true });
+  await host.waitFor((c) => (c.state.muted ?? []).includes(p2b.you), 4000, 'muted');
+  const m0 = (host.chat ?? []).length;
+  p2b.send({ t: 'chat', text: 'can you hear me' }); p2b.send({ t: 'react', emoji: '😂' });
+  await sleep(1200);
+  check('muted player\'s chat and reactions are dropped', (host.chat ?? []).length === m0);
+  p2b.send({ t: 'mute', playerId: host.you, muted: true });
+  await sleep(800);
+  check('only the host can mute', !(host.state.muted ?? []).includes(host.you));
+  host.send({ t: 'mute', playerId: p2b.you, muted: false });
+  await host.waitFor((c) => !(c.state.muted ?? []).includes(p2b.you), 4000, 'unmuted');
+  await sleep(1600);
+  p2b.send({ t: 'chat', text: 'back again' });
+  await host.waitFor((c) => got(c, (m) => m.text === 'back again'), 4000, 'unmuted chat');
+  check('unmuted player can chat again', true);
+  host.close(); p2b.close();
 }
 
 async function scenarioJoinRules() {
@@ -493,7 +542,7 @@ async function scenarioRaceChallenges() {
 const t0 = Date.now();
 try {
   const all = {
-    http: scenarioHttp, empty: scenarioEmptyRoomAlarms, basic: scenarioBasic, reconnect: scenarioReconnect, host: scenarioHostTransfer, join: scenarioJoinRules, malformed: scenarioMalformed,
+    http: scenarioHttp, empty: scenarioEmptyRoomAlarms, chat: scenarioChat, basic: scenarioBasic, reconnect: scenarioReconnect, host: scenarioHostTransfer, join: scenarioJoinRules, malformed: scenarioMalformed,
     hotcold: scenarioRaceHotCold, borderline: scenarioRaceBorderline, crossword: scenarioRaceCrossword, racechallenges: scenarioRaceChallenges,
   };
   const only = arg('only', '');
@@ -501,7 +550,7 @@ try {
   else {
     await scenarioHttp();
     await scenarioRaceChallenges();
-    await Promise.all([scenarioEmptyRoomAlarms(), scenarioBasic(), scenarioReconnect(), scenarioHostTransfer(), scenarioJoinRules(), scenarioMalformed(),
+    await Promise.all([scenarioEmptyRoomAlarms(), scenarioChat(), scenarioBasic(), scenarioReconnect(), scenarioHostTransfer(), scenarioJoinRules(), scenarioMalformed(),
       scenarioRaceHotCold(), scenarioRaceBorderline(), scenarioRaceCrossword()]);
   }
 } catch (e) {

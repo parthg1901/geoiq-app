@@ -224,6 +224,8 @@ export function CrosswordPlay({ slot, onExit, onNew, race }: { slot?: Slot; onEx
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || sheet) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return; // e.g. room chat
       const h = handlers.current;
       if (/^[a-z]$/i.test(e.key)) { e.preventDefault(); h.type(e.key.toUpperCase()); }
       else if (e.key === 'Backspace') { e.preventDefault(); h.back(); }

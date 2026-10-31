@@ -84,7 +84,7 @@ interface State {
 /** Multiplayer identity and duel record (separate from GeoIQ). */
 export interface MpChallengeRef { code: string; topic: string; createdAt: number; role: 'creator' | 'player' }
 export interface MpGameOutcome { key: string; delta: number; won: boolean; xp: number }
-export interface MpState { deviceId: string; name: string; rating: number; matches: number; wins: number; challenges: MpChallengeRef[]; lastGame: string | null; lastResult?: MpGameOutcome }
+export interface MpState { deviceId: string; name: string; rating: number; matches: number; wins: number; challenges: MpChallengeRef[]; lastGame: string | null; lastResult?: MpGameOutcome; /** room chat pop-ups while playing (default on) */ chatBubbles?: boolean }
 /** `xp`: base XP for this game when it isn't 8 per correct answer (race games). */
 export interface MpGameResult { key: string; you: string; players: { id: string; score: number; rating: number; correct: number }[]; xp?: number }
 

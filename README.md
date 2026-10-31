@@ -35,7 +35,7 @@ Android app (Capacitor) and installable web app (PWA). Fully offline apart from 
 - **Deduction:** the Clue Ladder (fewer clues, more points) and Street Eye (guess from real photos).
 - **Harder variants:** Twisted Shapes (rotated) and Shape Rush (60-second time attack).
 - **Specials:** a Daily Challenge (the same 5 questions for everyone, with a shareable emoji grid), Hot & Cold (find the mystery country by distance) and Borderline (walk from A to B across land borders).
-- **Multiplayer:** live rooms for 2–8 players with a 4-letter code (everyone gets the same question at once, faster correct answers score more, live scoreboard and podium, duel rating), and async challenges: play a round, share a `GEO-XXXX` code, and compare scores when friends play the same questions.
+- **Multiplayer:** live rooms for 2–8 players with a 4-letter code (everyone gets the same question at once, faster correct answers score more, live scoreboard and podium, duel rating, room chat with quick reactions), and async challenges: play a round, share a `GEO-XXXX` code, and compare scores when friends play the same questions.
 - **Crosswords:** a daily crossword, or build your own from any mix of 21 topics (countries, capitals, flags, outlines, rivers, lakes, seas, mountains, peaks, states and provinces, history) in three sizes. Clues are written from the data, and picture clues use flags and outlines.
 - **Answer styles:** multiple choice, or typed answers with forgiving autocomplete. Questions adapt to your level.
 

@@ -124,6 +124,8 @@ export interface RoomState {
   answers: Record<string, RoundAnswer>;
   /** Race games: live progress per player (visible to everyone during the race). */
   progress: Record<string, RaceProgress>;
+  /** Players the host has muted (their chat/reactions are dropped by the server). */
+  muted: string[];
   serverNow: number;
 }
 
@@ -136,15 +138,43 @@ export type C2S =
   | { t: 'progress'; report: RaceReport } // race games: latest progress (send on every change; final with done=true)
   | { t: 'lobby' } // host, after 'end': back to the lobby for another game
   | { t: 'kick'; playerId: string } // host
+  | { t: 'chat'; text: string } // ≤ CHAT.maxLen chars; rate-limited; dropped if you're muted
+  | { t: 'react'; emoji: string } // one of REACTIONS
+  | { t: 'mute'; playerId: string; muted: boolean } // host: silence a player's chat & reactions
   | { t: 'ping'; c: number };
 
 /* ---------------- server → client ---------------- */
 export type ErrorCode = 'notfound' | 'full' | 'version' | 'bad' | 'started' | 'kicked';
 export type S2C =
-  | { t: 'welcome'; you: string; state: RoomState }
+  | { t: 'welcome'; you: string; state: RoomState; chat: ChatMsg[] } // chat = recent history (oldest first)
+  | { t: 'chat'; msg: ChatMsg }
   | { t: 'state'; state: RoomState }
   | { t: 'pong'; c: number; s: number }
   | { t: 'error'; code: ErrorCode; message: string };
+
+/* ---------------- chat ---------------- */
+/**
+ * Room chat: short text messages and one-tap reactions, relayed to everyone in the room.
+ * Kept only while the room exists (the last CHAT.history messages, for reconnects) — never stored after.
+ */
+export interface ChatMsg {
+  id: number; // increasing per room
+  from: string; // player id
+  name: string;
+  text?: string;
+  emoji?: string; // reactions
+  at: number; // server epoch ms
+}
+export const REACTIONS = ['🔥', '😂', '😱', '👏', '🤯', '🫡', '😭', 'GG'] as const;
+export const CHAT = {
+  maxLen: 200,
+  history: 40,
+  /** Per-player limits (token buckets): a burst, then one per `everyMs`. */
+  text: { burst: 3, everyMs: 1500 },
+  react: { burst: 5, everyMs: 500 },
+};
+/** Strip control characters and collapse whitespace; '' means "don't send". */
+export const cleanChat = (s: string) => s.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, CHAT.maxLen);
 
 /* ---------------- HTTP API ---------------- */
 // POST /api/rooms                         { dataVersion }                → { code }

@@ -15,6 +15,7 @@ import { checkAchievements } from '../lib/achievements';
 import { toast } from '../components/Toasts';
 import { TopicPicker, Stepper, MpQuestionView, AnswerLabel, TimerBar, Avatar, Scoreboard, Podium, useServerNow } from '../components/mp/parts';
 import { mpName } from './Multiplayer';
+import { ChatDock } from '../components/mp/chat';
 
 export default function MpRoom({ code }: { code?: string }) {
   const room = useRoom();
@@ -61,6 +62,7 @@ export default function MpRoom({ code }: { code?: string }) {
       {(st.phase === 'question' || st.phase === 'reveal') && <Game st={st} you={room.you} onLeave={leave} />}
       {st.phase === 'race' && <Race st={st} you={room.you} onLeave={leave} />}
       {st.phase === 'end' && <End st={st} you={room.you} onLeave={leave} />}
+      <ChatDock phase={st.phase} />
     </>
   );
 }
@@ -135,9 +137,14 @@ function Lobby({ st, you, onLeave }: { st: RoomState; you: string; onLeave: () =
               <Avatar p={p} size={34} dim={!p.connected} />
               <div className="min-w-0 flex-1">
                 <div className="font-bold leading-tight break-words">{p.name}{p.id === you ? ' (you)' : ''} {p.id === st.hostId && <span title="Host">👑</span>}</div>
-                <div className="text-xs text-mist">{p.connected ? 'Ready' : 'Reconnecting…'} · rating {p.rating}</div>
+                <div className="text-xs text-mist">{p.connected ? 'Ready' : 'Reconnecting…'} · rating {p.rating}{st.muted.includes(p.id) ? ' · muted in chat' : ''}</div>
               </div>
               <span className={`w-2.5 h-2.5 rounded-full ${p.connected ? 'bg-mint' : 'bg-white/20'}`} />
+              {host && p.id !== you && (
+                <button aria-label={st.muted.includes(p.id) ? `Unmute ${p.name}` : `Mute ${p.name} in chat`} title={st.muted.includes(p.id) ? 'Unmute' : 'Mute in chat'}
+                  onClick={() => send({ t: 'mute', playerId: p.id, muted: !st.muted.includes(p.id) })}
+                  className={`w-8 h-8 rounded-full grid place-items-center border border-line/60 ${st.muted.includes(p.id) ? 'text-rose' : 'text-mist'}`}>{st.muted.includes(p.id) ? '🔇' : '🔈'}</button>
+              )}
               {host && p.id !== you && (
                 <button aria-label={`Remove ${p.name}`} onClick={() => void askConfirm(`Remove ${p.name} from the room?`, { confirm: 'Remove' }).then((ok) => ok && send({ t: 'kick', playerId: p.id }))}
                   className="w-8 h-8 rounded-full grid place-items-center text-mist hover:text-rose border border-line/60">✕</button>

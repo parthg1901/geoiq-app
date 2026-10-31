@@ -11,6 +11,8 @@ export function ChoiceGrid({ choices, answer, picked, onPick, render = 'name', d
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return; // typing (e.g. room chat), not picking
       const n = Number(e.key);
       if (!disabled && !picked && n >= 1 && n <= choices.length) onPick(choices[n - 1]);
     };

@@ -9,9 +9,9 @@
  */
 import { DurableObject } from 'cloudflare:workers';
 import {
-  MP_PROTOCOL, LIMITS, TIMING, DEFAULT_SETTINGS, points, cleanName,
+  MP_PROTOCOL, LIMITS, TIMING, DEFAULT_SETTINGS, points, cleanName, cleanChat, CHAT, REACTIONS,
   type C2S, type S2C, type RoomSettings, type RoomState, type Player, type Phase, type RoundAnswer, type ErrorCode,
-  type RaceProgress,
+  type RaceProgress, type ChatMsg,
 } from '../../src/lib/mp/protocol';
 import { validSettings, validReport, scoreOf, isRace } from './validate';
 import type { Env } from './index';
@@ -45,6 +45,10 @@ interface RoomRecord {
   hostLostAt: number | null;
   /** How many times the alarm has fired (diagnostics; guards against alarm loops in tests). */
   alarmFires?: number;
+  /** Recent chat (last CHAT.history), so reconnecting players see the conversation. */
+  chat: ChatMsg[];
+  chatSeq: number;
+  muted: string[];
 }
 
 interface Attachment { pid: string }
@@ -53,6 +57,8 @@ export class Room extends DurableObject<Env> {
   private room: RoomRecord | null = null;
   private loaded = false;
   private buckets = new WeakMap<WebSocket, { tokens: number; at: number }>();
+  /** Chat limits per player id (not per socket, so reconnecting doesn't reset them). */
+  private chatBuckets = new Map<string, { tokens: number; at: number }>();
   private alarmAt: number | null = null; // cached so we don't read storage on every message
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -67,6 +73,9 @@ export class Room extends DurableObject<Env> {
       this.room.settings = { ...DEFAULT_SETTINGS, ...this.room.settings };
       this.room.progress ??= {};
       this.room.raceStartedAt ??= 0;
+      this.room.chat ??= [];
+      this.room.chatSeq ??= 0;
+      this.room.muted ??= [];
     }
     this.loaded = true;
   }
@@ -86,7 +95,7 @@ export class Room extends DurableObject<Env> {
       this.room = {
         code, createdAt: now, dataVersion, phase: 'lobby', hostId: '', settings: { ...DEFAULT_SETTINGS },
         seed: 0, round: 0, phaseEndsAt: 0, questionStartedAt: 0, seats: {}, order: [], answers: {},
-        progress: {}, raceStartedAt: 0, blocked: [], emptySince: now, hostLostAt: null,
+        progress: {}, raceStartedAt: 0, blocked: [], emptySince: now, hostLostAt: null, chat: [], chatSeq: 0, muted: [],
       };
       await this.save();
       await this.schedule();
@@ -138,6 +147,9 @@ export class Room extends DurableObject<Env> {
     const isHost = pid === r.hostId;
     const now = Date.now();
 
+    // Chat is relayed on its own: it never changes game state, so no full-state broadcast.
+    if (msg.t === 'chat' || msg.t === 'react') return this.onChat(pid, msg, now);
+
     switch (msg.t) {
       case 'settings': {
         if (!isHost || r.phase !== 'lobby') return;
@@ -183,6 +195,11 @@ export class Room extends DurableObject<Env> {
       case 'lobby': {
         if (!isHost || r.phase !== 'end') return;
         this.resetToLobby();
+        break;
+      }
+      case 'mute': {
+        if (!isHost || typeof msg.playerId !== 'string' || msg.playerId === pid || !r.seats[msg.playerId]) return;
+        r.muted = msg.muted ? [...new Set([...r.muted, msg.playerId])] : r.muted.filter((id) => id !== msg.playerId);
         break;
       }
       case 'kick': {
@@ -265,7 +282,7 @@ export class Room extends DurableObject<Env> {
     if (!r.hostId || !r.seats[r.hostId]) r.hostId = pid;
     if (pid === r.hostId) r.hostLostAt = null;
     r.emptySince = null;
-    this.sendTo(ws, { t: 'welcome', you: pid, state: this.view() });
+    this.sendTo(ws, { t: 'welcome', you: pid, state: this.view(), chat: r.chat });
     await this.commit();
   }
 
@@ -414,6 +431,7 @@ export class Room extends DurableObject<Env> {
       answered: Object.keys(r.answers),
       answers: open ? r.answers : {},
       progress: r.progress,
+      muted: r.muted,
       serverNow: Date.now(),
     };
   }
@@ -455,6 +473,43 @@ export class Room extends DurableObject<Env> {
     const r = this.room!;
     const c = this.connectedIds();
     return c.size > 0 && [...c].every((id) => r.progress[id]?.done);
+  }
+
+  private async onChat(pid: string, msg: Extract<C2S, { t: 'chat' } | { t: 'react' }>, now: number) {
+    const r = this.room!;
+    if (r.muted.includes(pid)) return; // silently dropped for muted players
+    let entry: Omit<ChatMsg, 'id' | 'from' | 'name' | 'at'>;
+    if (msg.t === 'chat') {
+      const text = typeof msg.text === 'string' ? cleanChat(msg.text) : '';
+      if (!text || !this.chatAllow(pid, 'text', now)) return;
+      entry = { text };
+    } else {
+      if (typeof msg.emoji !== 'string' || !(REACTIONS as readonly string[]).includes(msg.emoji) || !this.chatAllow(pid, 'react', now)) return;
+      entry = { emoji: msg.emoji };
+    }
+    const chat: ChatMsg = { id: ++r.chatSeq, from: pid, name: r.seats[pid].name, at: now, ...entry };
+    const text = JSON.stringify({ t: 'chat', msg: chat } satisfies S2C);
+    for (const ws of this.ctx.getWebSockets()) {
+      if (!this.pidOf(ws)) continue;
+      try { ws.send(text); } catch { /* socket gone */ }
+    }
+    // Only text goes into the replayable history; reactions are fire-and-forget.
+    if (chat.text) {
+      r.chat = [...r.chat, chat].slice(-CHAT.history);
+      await this.save();
+    }
+  }
+
+  private chatAllow(pid: string, kind: 'text' | 'react', now: number) {
+    const lim = CHAT[kind];
+    const key = `${kind}:${pid}`;
+    const b = this.chatBuckets.get(key) ?? { tokens: lim.burst, at: now };
+    b.tokens = Math.min(lim.burst, b.tokens + (now - b.at) / lim.everyMs);
+    b.at = now;
+    const ok = b.tokens >= 1;
+    if (ok) b.tokens -= 1;
+    this.chatBuckets.set(key, b);
+    return ok;
   }
 
   private allConnectedAnswered() {
