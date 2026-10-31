@@ -86,7 +86,9 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
     const f = paths.find((x) => x.id === c.id);
     // prefer the polygon centroid when we have it
     const cen = f ? path.centroid(f.f) : p;
-    return { id: c.id, x: isFinite(cen[0]) ? cen[0] : p[0], y: isFinite(cen[1]) ? cen[1] : p[1] };
+    // projected polygon area (viewBox units²); 0 when the 50m map has no shape at all (e.g. Tuvalu)
+    const area = f ? path.area(f.f as GeoPermissibleObjects) : 0;
+    return { id: c.id, area, x: isFinite(cen[0]) ? cen[0] : p[0], y: isFinite(cen[1]) ? cen[1] : p[1] };
   }), [projection, paths, path]);
 
   useEffect(() => {
@@ -119,8 +121,16 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
       let b: [[number, number], [number, number]];
       if (f) b = path.bounds(f.f as GeoPermissibleObjects);
       else { const c = BY_ID[id]; if (!c) continue; const p = projection([c.latlng[1], c.latlng[0]])!; b = [[p[0] - 4, p[1] - 4], [p[0] + 4, p[1] + 4]]; }
-      // Skip absurd bounds from far-flung overseas parts (e.g. France, USA)
-      if (b[1][0] - b[0][0] > W * 0.4) { const c = BY_ID[id]; const p = projection([c.latlng[1], c.latlng[0]])!; b = [[p[0] - 40, p[1] - 30], [p[0] + 40, p[1] + 30]]; }
+      // Far-flung overseas parts (France with French Guiana, USA with Hawaii, Norway with Svalbard…) make
+      // the outline's bounds much wider than the country's land area suggests: frame its main location.
+      const c = BY_ID[id];
+      if (c) {
+        const p = projection([c.latlng[1], c.latlng[0]])!;
+        const halfDeg = Math.max(1.5, Math.sqrt(c.area) / 111 / 2) * 1.3; // rough half-width in degrees
+        const q = projection([c.latlng[1] + halfDeg, c.latlng[0]])!;
+        const half = Math.abs(q[0] - p[0]);
+        if (b[1][0] - b[0][0] > half * 2 * 3.5) b = [[p[0] - half, p[1] - half * 0.75], [p[0] + half, p[1] + half * 0.75]];
+      }
       x0 = Math.min(x0, b[0][0]); y0 = Math.min(y0, b[0][1]); x1 = Math.max(x1, b[1][0]); y1 = Math.max(y1, b[1][1]);
     }
     if (!isFinite(x0)) return;
@@ -171,16 +181,30 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
         <path d={sphere} fill="url(#ocean)" stroke="rgba(83,184,255,.25)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
         <path d={grat} fill="none" stroke="rgba(142,163,204,.08)" strokeWidth={0.6} vectorEffect="non-scaling-stroke" />
         {countryLayer}
-        {showTiny && tiny.map(({ id, x, y }) => {
-          const fill = fills[id] ?? defaultFill;
+        {/* Tap markers for countries too small to see or tap at this zoom (microstates, small islands). */}
+        {showTiny && tiny.map(({ id, x, y, area }) => {
           const pick = canPick(id);
-          const r = Math.max(1.2, (3.2 * Math.sqrt(ui)) / Math.sqrt(k));
+          const coloured = fills[id] !== undefined;
+          const marked = coloured || highlight === id || pulse.includes(id);
+          // Only where it helps: on tap-to-answer maps, or when the dot carries a colour / highlight.
+          if (!pick && !marked) return null;
+          // Hide once the real outline is big enough to see and tap (~17×17 px on screen).
+          const screenArea = (area * k * k) / (ui * ui);
+          if (area > 0 && screenArea > 300) return null;
+          // Constant on-screen size at any zoom (radius in px × viewBox units per px ÷ zoom).
+          const r = ((marked ? 5 : 4) * ui) / k;
+          const hoverOn = hover === id && pick;
           return (
             <g key={id} style={{ cursor: pick ? 'pointer' : 'default' }} onClick={() => pick && onPick!(id)}
               onPointerEnter={() => pick && setHover(id)} onPointerLeave={() => setHover((h) => (h === id ? null : h))}>
-              <circle cx={x} cy={y} r={r * 2.2} fill="transparent" />
-              <circle cx={x} cy={y} r={r} style={{ fill: hover === id && pick ? '#ffd28a' : fill, stroke: highlight === id ? '#fff' : fills[id] ?? 'rgba(255,255,255,.55)' }} fillOpacity={0.9} strokeWidth={highlight === id ? 2 : fills[id] ? 1.6 : 0.8} vectorEffect="non-scaling-stroke"
-                className={pulse.includes(id) ? 'glow-pulse' : ''} />
+              <circle cx={x} cy={y} r={(12 * ui) / k} fill="transparent" />
+              <circle cx={x} cy={y} r={r} vectorEffect="non-scaling-stroke" className={pulse.includes(id) ? 'glow-pulse' : ''}
+                style={{
+                  // subtle ring by default; filled when it shows a colour, a highlight or hover
+                  fill: hoverOn ? '#ffd28a' : marked ? (fills[id] ?? 'var(--color-amber)') : 'transparent',
+                  stroke: highlight === id ? '#fff' : coloured ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.55)',
+                  strokeWidth: highlight === id ? 2 : 1.2,
+                }} />
             </g>
           );
         })}

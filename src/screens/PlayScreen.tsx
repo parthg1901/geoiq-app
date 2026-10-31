@@ -4,7 +4,7 @@ import { MODE_BY_KEY } from '../lib/modes';
 import { useGame, dueCards } from '../lib/store';
 import { sessionQuestions, makeQuestion, type Question, type Variant } from '../lib/questions';
 import { useRoute, go } from '../lib/router';
-import { COUNTRIES } from '../data';
+import { regionFrame } from '../lib/path';
 import { shuffle } from '../lib/rng';
 
 function build(modeKey: string, region: string | null, typed: boolean): Question[] {
@@ -30,7 +30,8 @@ export default function PlayScreen({ mode }: { mode: string }) {
   const [round, setRound] = useState(0);
   const questions = useMemo(() => (m ? build(mode, region, typed) : []), [mode, region, typed, round, m]);
   if (!m) { go('/play'); return null; }
-  const regionFocus = region ? COUNTRIES.filter((c) => c.region === region).map((c) => c.id) : null;
+  // Frame the region without far-flung outliers (Russia across the 180° line, French overseas territories…).
+  const regionFocus = region ? regionFrame(region) : null;
   return (
     <QuizRunner
       key={`${mode}|${region}|${typed}|${round}`}
