@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { freshRatings, update, updateLadder, geoIQ, itemFor, type Format, type Ratings, type Skill } from './geoiq';
 import { todayKey, dayDiff, addDays } from './rng';
-import { COUNTRIES } from '../data';
+import { COUNTRIES, BY_ID, NO_SHAPE, NO_CAPITAL_Q } from '../data';
 import type { Crossword } from './crossword';
 
 export const CORE: Skill[] = ['shape', 'flag', 'map', 'capital'];
@@ -116,8 +116,18 @@ export const levelFor = (xp: number) => {
   return { level: lvl, into: xp - acc, need };
 };
 
+/**
+ * The core skills a country can actually be asked about. Microstates have no shape question and
+ * city-states no capital question, so their stamp is earned on the skills they do have.
+ */
+export function stampSkills(id: string): Skill[] {
+  return CORE.filter((s) => (s !== 'shape' || !NO_SHAPE.has(id)) && (s !== 'capital' || (!!BY_ID[id]?.capital && !NO_CAPITAL_Q.has(id))));
+}
+
+/** 0..1 memory strength over the country's available core skills (each skill counts up to box 4). */
 export function mastery(cards: Record<string, Card>, id: string) {
-  return CORE.reduce((a, s) => a + Math.min(4, cards[`${id}:${s}`]?.box ?? 0) / 4, 0) / CORE.length;
+  const skills = stampSkills(id);
+  return skills.reduce((a, s) => a + Math.min(4, cards[`${id}:${s}`]?.box ?? 0) / 4, 0) / Math.max(1, skills.length);
 }
 
 const initial = () => ({
@@ -293,9 +303,17 @@ export const useGame = create<State>()(
     }),
     {
       name: 'geoiq-v1',
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const st = persisted as State;
+        // v2 → v3: mastery counts only the skills a country can be asked about — award any stamps that
+        // were blocked before (e.g. Vatican City and Monaco could never be stamped).
+        if (version < 3 && st?.cards) {
+          const day = new Date().toISOString().slice(0, 10);
+          const stamps = { ...(st.stamps ?? {}) };
+          for (const c of COUNTRIES) if (!stamps[c.id] && mastery(st.cards, c.id) >= 0.75) stamps[c.id] = day;
+          st.stamps = stamps;
+        }
         // v1 → v2: the Clue Ladder used to inflate the Clues rating (partial-credit bug). Pull it back to
         // the overall level with low confidence so the new per-clue scoring recalibrates it quickly.
         if (version < 2 && st?.ratings?.hint && st.ratings.all) {

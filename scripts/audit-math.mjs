@@ -7,6 +7,7 @@ import path from 'node:path';
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'geoiq-audit-'));
 for (const m of ['geoiq', 'store']) execSync(`npx rolldown src/lib/${m}.ts --format esm --platform node -o ${dir}/${m}.mjs`, { stdio: 'ignore' });
+execSync(`npx rolldown src/data.ts --format esm --platform node -o ${dir}/data.mjs`, { stdio: 'ignore' });
 globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {} }; // zustand persist in node
 const G = await import(`${dir}/geoiq.mjs`);
 const St = await import(`${dir}/store.mjs`);
@@ -67,6 +68,16 @@ check(G.toIQ(G.fromIQ(123)) === 123, 'toIQ/fromIQ round-trip');
   c = St.nextCard(c, true, c.due + 1);
   check(c.box === 2, 'right answer once due → box 2');
   check(St.nextCard(c, false, t0).box === 0, 'a miss knocks the card back');
+}
+
+// 4b. Every country can earn a passport stamp (mastery reaches 1.0 on the skills it can be asked about).
+{
+  const { COUNTRIES } = await import(`${dir}/data.mjs`);
+  const maxed = (id) => Object.fromEntries(St.stampSkills(id).map((s) => [`${id}:${s}`, { box: 4, due: 0, seen: 9, right: 9 }]));
+  const stuck = COUNTRIES.filter((c) => St.mastery(maxed(c.id), c.id) < 1).map((c) => c.id);
+  check(stuck.length === 0, `every country can reach full mastery (stamp reachable)${stuck.length ? ' — stuck: ' + stuck.join(', ') : ''}`);
+  check(St.stampSkills('VAT').join() === 'flag,map' && St.mastery(maxed('VAT'), 'VAT') === 1, 'Vatican City is stamped on flag + map alone');
+  check(St.stampSkills('FRA').length === 4 && St.mastery({ 'FRA:flag': { box: 4 }, 'FRA:map': { box: 4 } }, 'FRA') === 0.5, 'a normal country still needs all four skills');
 }
 
 // 5. Streaks & freezes.

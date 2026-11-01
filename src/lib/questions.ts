@@ -1,4 +1,4 @@
-import { BY_ID, COUNTRIES, NO_SHAPE, ALL_NAMES, fmtPop, fmtArea, fame, type Country, ARMS } from '../data';
+import { BY_ID, COUNTRIES, NO_SHAPE, NO_CAPITAL_Q, ALL_NAMES, fmtPop, fmtArea, fame, type Country, ARMS } from '../data';
 import { difficulty, type Skill, type Format } from './geoiq';
 import { shuffle, pick } from './rng';
 import type { Card } from './store';
@@ -30,7 +30,7 @@ export interface Question {
 export function eligible(c: Country, v: Variant) {
   if (v.startsWith('shape')) return !NO_SHAPE.has(c.id);
   if (v === 'arms') return !!ARMS[c.id];
-  if (v.startsWith('capital')) return !!c.capital && c.id !== 'VAT' && c.id !== 'MCO' && c.id !== 'SGP';
+  if (v.startsWith('capital')) return !!c.capital && !NO_CAPITAL_Q.has(c.id);
   return true;
 }
 

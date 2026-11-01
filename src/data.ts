@@ -38,6 +38,8 @@ export type Region = (typeof REGIONS)[number];
 
 /** Countries whose silhouette is too tiny/scattered to be a fair shape question. */
 export const NO_SHAPE = new Set(['VAT', 'MCO', 'NRU', 'TUV', 'MHL', 'KIR', 'FSM', 'MDV', 'PLW', 'TON', 'SYC', 'SMR']);
+/** City-states whose capital is the country itself: no capital questions. */
+export const NO_CAPITAL_Q = new Set(['VAT', 'MCO', 'SGP']);
 /** Countries too small to click on the 50m world map — drawn as circles instead. */
 export const TINY = new Set(COUNTRIES.filter((c) => c.area < 12000).map((c) => c.id));
 

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { BY_ID, ALL_NAMES, ARMS, ARMS_WORD, fmtPop, fmtArea, loadPhotos, type Photo } from '../data';
 import { ArmsImage } from './Answer';
 import { loadProfile, rank, metric, money, ordinal, trivia, METRIC_LABEL, type Metric, type Profile } from '../lib/profile';
-import { useGame, mastery, CORE } from '../lib/store';
+import { useGame, mastery, stampSkills } from '../lib/store';
 import { SKILL_LABEL } from '../lib/geoiq';
 import { makeQuestion, eligible, type Variant } from '../lib/questions';
 import { shuffle } from '../lib/rng';
@@ -127,7 +127,7 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
       <div className="card mt-3 p-4">
         <div className="display font-bold mb-2">Your memory of {c.name}</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {CORE.map((s) => {
+          {stampSkills(id).map((s) => {
             const box = cards[`${id}:${s}`]?.box ?? 0;
             return (
               <div key={s}>

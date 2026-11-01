@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { BY_ID, fmtPop, fmtArea } from '../../data';
-import { useGame, mastery, CORE } from '../../lib/store';
+import { useGame, mastery, stampSkills } from '../../lib/store';
 import { SKILL_LABEL } from '../../lib/geoiq';
 import { makeQuestion, eligible, type Variant } from '../../lib/questions';
 import { go } from '../../lib/router';
@@ -70,7 +70,7 @@ export function CountrySheet({ id, onClose }: { id: string; onClose: () => void 
           <div className="mono text-sm text-mist">{Math.round(m * 100)}% mastered</div>
         </div>
         <div className="grid grid-cols-4 gap-2 mt-2">
-          {CORE.map((sk) => {
+          {stampSkills(id).map((sk) => {
             const box = cards[`${id}:${sk}`]?.box ?? 0;
             const seen = cards[`${id}:${sk}`]?.seen ?? 0;
             return (
@@ -86,7 +86,9 @@ export function CountrySheet({ id, onClose }: { id: string; onClose: () => void 
             );
           })}
         </div>
-        <div className="text-sm text-mist mt-2 leading-snug">Reach 3+ bars on all four skills to earn this country's passport stamp.</div>
+        <div className="text-sm text-mist mt-2 leading-snug">
+          Earn the stamp at 3 of 4 bars on average across {stampSkills(id).length === 4 ? 'these four skills' : `these ${stampSkills(id).length} skills (the others aren't asked for ${c.name})`}. A bar fills when you answer right on a later day.
+        </div>
 
         <button className="btn btn-ghost w-full mt-5" onClick={() => { onClose(); go('/country/' + id); }}>📖 Full country profile</button>
         <div className="grid grid-cols-2 gap-3 mt-3">
