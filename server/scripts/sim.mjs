@@ -210,20 +210,28 @@ async function scenarioReconnect() {
 }
 
 async function scenarioHostTransfer() {
-  console.log('\n▶ Host transfer after the host drops for >10 s');
+  console.log('\n▶ Host transfer after the host drops for >20 s, and the creator gets it back on return');
   const code = await createRoom();
-  const a = await new Client(code, { name: 'H' }).connect();
+  const aId = dev('h');
+  let a = await new Client(code, { name: 'H', deviceId: aId }).connect();
   const b = await new Client(code, { name: 'Next' }).connect();
   const c = await new Client(code, { name: 'Third' }).connect();
+  // a quick app switch (5 s) keeps hosting
+  a.close(); await sleep(5000);
+  a = await new Client(code, { name: 'H', deviceId: aId }).connect();
+  check('a short absence keeps hosting with the creator', a.state.hostId === a.you);
   a.close();
   const t0 = Date.now();
-  await b.waitFor((x) => x.state.hostId === b.you, 16000, 'host transfer');
+  await b.waitFor((x) => x.state.hostId === b.you, 26000, 'host transfer');
   const dt = Date.now() - t0;
-  check('host passes to the next connected player after the grace period', dt >= 9000, `${dt} ms`);
+  check('host passes to the next connected player after the grace period', dt >= 19000, `${dt} ms`);
   b.send({ t: 'settings', settings: { topic: 'world:capital', rounds: 6, seconds: 12 } });
   await c.waitFor((x) => x.state.settings.rounds === 6, 5000, 'new host can change settings');
   check('new host can change settings', true);
-  b.close(); c.close();
+  a = await new Client(code, { name: 'H', deviceId: aId }).connect();
+  await b.waitFor((x) => x.state.hostId === a.you, 5000, 'creator reclaims host');
+  check('creator gets hosting back when they return', b.state.hostId === a.you);
+  a.close(); b.close(); c.close();
 }
 
 async function scenarioEmptyRoomAlarms() {
@@ -234,9 +242,9 @@ async function scenarioEmptyRoomAlarms() {
   // Host leaves first (starts the hand-over clock), then the last player leaves: room is empty.
   a.close(); await sleep(500); b.close();
   const before = (await api(`/api/rooms/${code}`)).body?.alarmFires ?? 0;
-  await sleep(15000); // past the 10 s host grace period, where the old loop began
+  await sleep(25000); // past the 20 s host grace period, where the old loop began
   const after = (await api(`/api/rooms/${code}`)).body?.alarmFires ?? 0;
-  check('empty room fires at most a couple of alarms in 15 s (no runaway loop)', after - before <= 3, `${after - before} alarm firings`);
+  check('empty room fires at most a couple of alarms in 25 s (no runaway loop)', after - before <= 3, `${after - before} alarm firings`);
 }
 
 async function scenarioChat() {

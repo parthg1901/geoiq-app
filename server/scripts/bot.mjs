@@ -8,6 +8,7 @@
 //   --url <base>          server (default https://play.geoiq.workers.dev; local: http://127.0.0.1:8787)
 //   --room <CODE>         join this room            --create        create a room instead (bot is host)
 //   --name <name>         default "Atlas Bot"       --skill <0..1>  chance of answering right (default 0.7)
+//   --device <id>         stable player id (rejoin the same seat)    stdin: "say <text>", "react <emoji>", start, lobby, quit
 //   --quiet               no chat messages or reactions (by default the bot says gl/gg and reacts sometimes)
 //   --game <kind>         quiz (default) | crossword | hotcold | borderline   (with --create)
 //   --topic <topic>       quiz: e.g. world:mix, world:flag, pack:us-states:shape   (with --create)
@@ -34,7 +35,7 @@ const SKILL = Math.max(0, Math.min(1, Number(arg('skill', '0.7'))));
 const DATA_VERSION = arg('data-version', repoVersion());
 const START_AFTER = Number(arg('start-after', '0'));
 const QUIET = process.argv.includes('--quiet'); // no chat or reactions
-const DEVICE = `bot${Math.random().toString(36).slice(2, 12)}`;
+const DEVICE = arg('device', '') || `bot${Math.random().toString(36).slice(2, 12)}`; // --device keeps the same seat across restarts
 const PROTOCOL = 2;
 const RACE_DEFAULT_SEC = { crossword: 420, hotcold: 240, borderline: 180 };
 
@@ -58,7 +59,16 @@ async function main() {
   connect();
   const rl = readline.createInterface({ input: process.stdin });
   rl.on('line', (line) => {
-    const cmd = line.trim().toLowerCase();
+    const raw = line.trim();
+    const cmd = raw.toLowerCase();
+    if (cmd.startsWith('say ')) { send({ t: 'chat', text: raw.slice(4) }); log(`💬 me: ${raw.slice(4)}`); return; }
+    if (cmd.startsWith('react ')) { send({ t: 'react', emoji: raw.slice(6).trim() }); return; }
+    // host: remove disconnected seats with this name (e.g. a bot's stale seat after a restart)
+    if (cmd.startsWith('kick-away ')) {
+      const name = raw.slice(10).trim();
+      for (const p of state?.players ?? []) if (!p.connected && p.name === name && p.id !== you) { send({ t: 'kick', playerId: p.id }); log(`kicked stale seat ${p.name}`); }
+      return;
+    }
     if (cmd === 'start') send({ t: 'start' });
     else if (cmd === 'lobby') send({ t: 'lobby' });
     else if (cmd === 'quit') { stopped = true; ws?.close(); process.exit(0); }

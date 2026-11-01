@@ -17,7 +17,8 @@ import { validSettings, validReport, scoreOf, isRace } from './validate';
 import type { Env } from './index';
 
 const MAX_MSG = 2048;
-const HOST_GRACE_MS = 10_000;
+// Long enough to survive a quick app switch on a phone (the old 10 s handed hosting away too eagerly).
+const HOST_GRACE_MS = 20_000;
 const EMPTY_TTL_MS = 10 * 60_000;
 const MAX_AGE_MS = 3 * 60 * 60_000;
 const RATE = { capacity: 20, refillPerSec: 10 }; // per-socket token bucket
@@ -43,6 +44,9 @@ interface RoomRecord {
   blocked: string[];
   emptySince: number | null;
   hostLostAt: number | null;
+  /** The room's first host. If hosting was handed over only because they were away, they get it back on return. */
+  creatorId?: string;
+  hostAutoMoved?: boolean;
   /** How many times the alarm has fired (diagnostics; guards against alarm loops in tests). */
   alarmFires?: number;
   /** Recent chat (last CHAT.history), so reconnecting players see the conversation. */
@@ -280,6 +284,9 @@ export class Room extends DurableObject<Env> {
     }
     if (r.phase === 'race' && !r.progress[pid]) r.progress[pid] = emptyProgress(); // late joiner
     if (!r.hostId || !r.seats[r.hostId]) r.hostId = pid;
+    r.creatorId ??= r.hostId;
+    // The creator coming back reclaims hosting that was only moved because they were away.
+    if (pid === r.creatorId && r.hostAutoMoved && r.hostId !== pid) { r.hostId = pid; r.hostAutoMoved = false; }
     if (pid === r.hostId) r.hostLostAt = null;
     r.emptySince = null;
     this.sendTo(ws, { t: 'welcome', you: pid, state: this.view(), chat: r.chat });
@@ -305,7 +312,7 @@ export class Room extends DurableObject<Env> {
     const connected = this.connectedIds();
     if (r.hostLostAt !== null && now - r.hostLostAt >= HOST_GRACE_MS && !connected.has(r.hostId)) {
       const next = r.order.find((id) => connected.has(id));
-      if (next) { r.hostId = next; r.hostLostAt = null; }
+      if (next) { r.hostId = next; r.hostLostAt = null; r.hostAutoMoved = true; }
     }
     // Phase transitions. The next phase starts *now* (when it's actually broadcast), not when it was
     // scheduled: alarms can fire a little late, and speed points must count from when players saw it.
