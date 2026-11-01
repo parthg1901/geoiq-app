@@ -16,6 +16,8 @@ import { toast } from '../components/Toasts';
 import { TopicPicker, Stepper, MpQuestionView, AnswerLabel, TimerBar, Avatar, Scoreboard, Podium, useServerNow } from '../components/mp/parts';
 import { mpName } from './Multiplayer';
 import { ChatDock } from '../components/mp/chat';
+import { ensureProfile } from '../lib/social';
+import { PlayerLink } from '../components/social/PlayerSheet';
 
 export default function MpRoom({ code }: { code?: string }) {
   const room = useRoom();
@@ -24,8 +26,13 @@ export default function MpRoom({ code }: { code?: string }) {
 
   useEffect(() => {
     if (!code) return;
-    useRoom.getState().connect(code, { deviceId, name: mpName(), rating });
-    return () => useRoom.getState().leave();
+    let cancelled = false;
+    const connect = (pid?: string) => { if (!cancelled) useRoom.getState().connect(code, { deviceId, name: mpName(), rating, pid }); };
+    // Players carry their public profile id so others can tap them (made on first multiplayer use).
+    const have = useGame.getState().social?.pid;
+    if (have) connect(have);
+    else Promise.race([ensureProfile(), new Promise<undefined>((r) => setTimeout(() => r(undefined), 3000))]).catch(() => undefined).then(connect);
+    return () => { cancelled = true; useRoom.getState().leave(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
@@ -134,9 +141,9 @@ function Lobby({ st, you, onLeave }: { st: RoomState; you: string; onLeave: () =
         <div className="space-y-1.5">
           {st.players.map((p) => (
             <div key={p.id} className={`rounded-2xl px-3 py-2.5 flex items-center gap-3 border ${p.id === you ? 'border-amber/60 bg-amber/10' : 'border-line/60 bg-white/5'}`}>
-              <Avatar p={p} size={34} dim={!p.connected} />
+              <PlayerLink pid={p.pid}><Avatar p={p} size={34} dim={!p.connected} /></PlayerLink>
               <div className="min-w-0 flex-1">
-                <div className="font-bold leading-tight break-words">{p.name}{p.id === you ? ' (you)' : ''} {p.id === st.hostId && <span title="Host">👑</span>}</div>
+                <PlayerLink pid={p.pid} className="font-bold leading-tight break-words block">{p.name}{p.id === you ? ' (you)' : ''} {p.id === st.hostId && <span title="Host">👑</span>}</PlayerLink>
                 <div className="text-xs text-mist">{p.connected ? 'Ready' : 'Reconnecting…'} · rating {p.rating}{st.muted.includes(p.id) ? ' · muted in chat' : ''}</div>
               </div>
               <span className={`w-2.5 h-2.5 rounded-full ${p.connected ? 'bg-mint' : 'bg-white/20'}`} />

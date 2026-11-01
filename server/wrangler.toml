@@ -12,7 +12,19 @@ class_name = "Room"
 name = "CHALLENGES"
 class_name = "ChallengeStore"
 
+[[durable_objects.bindings]]
+name = "VAULTS"
+class_name = "SyncVault"
+
+[[durable_objects.bindings]]
+name = "PLAYERS"
+class_name = "PlayerStore"
+
 # SQLite-backed Durable Objects (available on the Workers free plan)
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room", "ChallengeStore"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["SyncVault", "PlayerStore"]

@@ -11,6 +11,7 @@ import { onBack } from '../../lib/native';
 import { BY_ID } from '../../data';
 import type { Player, RoundAnswer, Topic } from '../../lib/mp/protocol';
 import { serverNow } from '../../lib/mp/room';
+import { PlayerLink } from '../social/PlayerSheet';
 
 /* ---------------- topic picker ---------------- */
 
@@ -158,9 +159,9 @@ export function Scoreboard({ players, you, round, detail }: { players: Player[];
             <motion.div key={p.id} layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className={`rounded-2xl px-3 py-2.5 flex items-center gap-3 border ${p.id === you ? 'border-amber/70 bg-amber/10' : 'border-line/60 bg-white/5'}`}>
               <span className="mono w-6 text-center font-bold text-mist">{i + 1}</span>
-              <Avatar p={p} size={32} dim={!p.connected} />
+              <PlayerLink pid={p.pid}><Avatar p={p} size={32} dim={!p.connected} /></PlayerLink>
               <div className="min-w-0 flex-1">
-                <div className="font-bold leading-tight break-words">{p.name}{p.id === you ? ' (you)' : ''}</div>
+                <PlayerLink pid={p.pid} className="font-bold leading-tight break-words block">{p.name}{p.id === you ? ' (you)' : ''}</PlayerLink>
                 {detail && <div className="text-xs text-mist">{detail(p)}</div>}
                 {!p.connected && <div className="text-xs text-mist">reconnecting…</div>}
               </div>
@@ -188,8 +189,10 @@ export function Podium({ players }: { players: Player[] }) {
         <motion.div key={p.id} initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 + i * 0.15, type: 'spring' }}
           className="flex flex-col items-center w-24">
           <div className="text-2xl">{medal(p)}</div>
-          <Avatar p={p} size={44} />
-          <div className="font-bold text-sm mt-1 text-center break-words leading-tight">{p.name}</div>
+          <PlayerLink pid={p.pid} className="flex flex-col items-center">
+            <Avatar p={p} size={44} />
+            <div className="font-bold text-sm mt-1 text-center break-words leading-tight">{p.name}</div>
+          </PlayerLink>
           <div className="mono text-sm text-mist">{p.score.toLocaleString()}</div>
           <div className="w-full rounded-t-2xl mt-1.5 border border-line/60" style={{ height: h(p), background: `linear-gradient(180deg, ${colorFor(p.id)}55, ${colorFor(p.id)}11)` }} />
         </motion.div>

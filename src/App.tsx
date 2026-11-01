@@ -17,6 +17,9 @@ const Borderline = lazy(() => import('./screens/Borderline'));
 const HotCold = lazy(() => import('./screens/HotCold'));
 const Passport = lazy(() => import('./screens/Passport'));
 const Profile = lazy(() => import('./screens/Profile'));
+const Friends = lazy(() => import('./screens/Friends'));
+const PlayerSheet = lazy(() => import('./components/social/PlayerSheet'));
+const UpdatePrompt = lazy(() => import('./components/UpdatePrompt'));
 const Country = lazy(() => import('./screens/Country'));
 const Atlas = lazy(() => import('./screens/Atlas'));
 const Packs = lazy(() => import('./screens/Packs'));
@@ -58,6 +61,7 @@ export default function App() {
     case 'hotcold': screen = <HotCold />; break;
     case 'passport': screen = <Passport />; break;
     case 'me': screen = <Profile />; break;
+    case 'friends': screen = <Friends />; break;
     case 'country': screen = <Country id={parts[1]} />; break;
     case 'atlas': screen = <Atlas />; break;
     case 'packs': screen = <Packs />; break;
@@ -77,6 +81,9 @@ export default function App() {
       <ConfirmHost />
       <Suspense fallback={<div className="min-h-dvh grid place-items-center text-mist display">Unfolding the map…</div>}>{screen}</Suspense>
       {onboarded && !immersive && <NavBar active={top} />}
+      {onboarded && <Suspense fallback={null}><PlayerSheet /></Suspense>}
+      {/* never interrupt a game or lesson with the update popup */}
+      {onboarded && !immersive && <Suspense fallback={null}><UpdatePrompt /></Suspense>}
     </div>
   );
 }

@@ -37,7 +37,7 @@ export interface SavedCrossword {
 export interface PackState { cards: Record<string, Card>; best: Record<string, number>; plays: number }
 export interface PackAnswerInput { pack: string; item: string; mode: string; outcome: number; ms?: number; combo?: number }
 
-interface State {
+export interface State {
   name: string;
   createdAt: string;
   ratings: Ratings;
@@ -64,6 +64,8 @@ interface State {
   cwDaily: Record<string, { time: number; reveals: number }>;
   cwPrefs: { sources: string[]; size: string };
   mp: MpState;
+  /** Friends profile: public player id + the secret that authorises changes (null until created). */
+  social: { pid: string; key: string } | null;
   mpUpdate: (p: Partial<MpState>) => void;
   /** Record a finished live game once (keyed by room+seed): duel rating, win count and XP. Repeat calls return the stored outcome. */
   mpFinish: (g: MpGameResult) => MpGameOutcome | null;
@@ -130,7 +132,7 @@ export function mastery(cards: Record<string, Card>, id: string) {
   return skills.reduce((a, s) => a + Math.min(4, cards[`${id}:${s}`]?.box ?? 0) / 4, 0) / Math.max(1, skills.length);
 }
 
-const initial = () => ({
+export const initial = () => ({
   name: '',
   createdAt: todayKey(),
   ratings: freshRatings(),
@@ -156,6 +158,7 @@ const initial = () => ({
   crossword: {} as { daily?: SavedCrossword; custom?: SavedCrossword },
   cwDaily: {} as Record<string, { time: number; reveals: number }>,
   cwPrefs: { sources: [] as string[], size: 'standard' },
+  social: null as { pid: string; key: string } | null,
   mp: { deviceId: newDeviceId(), name: '', rating: 1000, matches: 0, wins: 0, challenges: [] as MpChallengeRef[], lastGame: null as string | null },
 });
 

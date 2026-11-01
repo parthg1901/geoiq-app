@@ -16,6 +16,8 @@ import { checkAchievements } from '../lib/achievements';
 import { toast } from '../components/Toasts';
 import { TopicPicker, Stepper, MpQuestionView, AnswerLabel, TimerBar, Avatar } from '../components/mp/parts';
 import { mpName } from './Multiplayer';
+import { PlayerLink } from '../components/social/PlayerSheet';
+import { ensureProfile } from '../lib/social';
 
 /** Everything needed to rebuild a challenge's questions or puzzle. */
 type PlaySpec = Required<Pick<ChallengeSpec, 'game' | 'topic' | 'rounds' | 'seed' | 'sources' | 'size' | 'limitSec'>>;
@@ -45,6 +47,7 @@ const randomSeed = () => {
 export default function MpChallenge({ id }: { id?: string }) {
   const isNew = !id || id === 'new';
   const deviceId = useGame((s) => s.mp.deviceId);
+  useEffect(() => { void ensureProfile().catch(() => {}); }, []); // results carry your profile id
   const [view, setView] = useState<View>(isNew ? { k: 'setup' } : { k: 'loading' });
   const [topic, setTopic] = useState<Topic>('world:mix');
   const [rounds, setRounds] = useState(10);
@@ -210,6 +213,7 @@ function Play({ topic, rounds, seed, onDone, onQuit }: { topic: Topic; rounds: n
     const result: ChallengeResult = {
       deviceId: useGame.getState().mp.deviceId,
       name: mpName(),
+      pid: useGame.getState().social?.pid,
       score: os.reduce((a, o, k) => a + points(o, ts[k], CHALLENGE_SECONDS), 0),
       correct: os.filter((o) => o >= 0.6).length,
       total: os.length,
@@ -289,6 +293,7 @@ function RacePlay({ spec, onDone, onQuit }: { spec: PlaySpec; onDone: (r: Challe
     const result: ChallengeResult = {
       deviceId: useGame.getState().mp.deviceId,
       name: mpName(),
+      pid: useGame.getState().social?.pid,
       score: raceScore(game, r, r.done ? timeMs : null, limitMs),
       correct: r.done ? 1 : 0,
       total: 1,
@@ -356,9 +361,9 @@ function Results({ ch, fresh, you, onRefresh }: { ch: Challenge; fresh: boolean;
             className={`rounded-2xl px-3 py-2.5 border ${r.deviceId === you ? 'border-amber/70 bg-amber/10' : 'border-line/60 bg-white/5'}`}>
             <div className="flex items-center gap-3">
               <span className="mono w-6 text-center font-bold text-mist">{k + 1}</span>
-              <Avatar p={{ id: r.deviceId, name: r.name }} size={32} />
+              <PlayerLink pid={r.pid}><Avatar p={{ id: r.deviceId, name: r.name }} size={32} /></PlayerLink>
               <div className="min-w-0 flex-1">
-                <div className="font-bold leading-tight break-words">{r.name}{r.deviceId === you ? ' (you)' : ''}</div>
+                <PlayerLink pid={r.pid} className="font-bold leading-tight break-words block">{r.name}{r.deviceId === you ? ' (you)' : ''}</PlayerLink>
                 <div className="text-xs text-mist">{r.report && ch.spec.game && ch.spec.game !== 'quiz'
                   ? progressText(ch.spec.game as RaceGame, { ...r.report, finishMs: r.report.done ? r.timeMs : null, score: r.score })
                   : `${r.correct}/${r.total} right · ${fmtTime(r.timeMs)}`}</div>

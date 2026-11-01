@@ -71,6 +71,8 @@ export interface Player {
   correct: number;
   /** Duel rating the player reported (display only). */
   rating: number;
+  /** Public player id (friend code) when they have a profile — tap to view it. */
+  pid?: string;
 }
 
 export type Phase = 'lobby' | 'countdown' | 'question' | 'reveal' | 'race' | 'end';
@@ -131,7 +133,7 @@ export interface RoomState {
 
 /* ---------------- client → server (WebSocket JSON) ---------------- */
 export type C2S =
-  | { t: 'hello'; deviceId: string; name: string; rating: number; protocol: number; dataVersion: string }
+  | { t: 'hello'; deviceId: string; name: string; rating: number; protocol: number; dataVersion: string; pid?: string }
   | { t: 'settings'; settings: RoomSettings } // host, lobby only
   | { t: 'start' } // host, lobby only
   | { t: 'answer'; round: number; outcome: number } // quiz: outcome 0..1 for the current round
@@ -199,6 +201,7 @@ export interface ChallengeSpec {
 export interface ChallengeResult {
   deviceId: string;
   name: string;
+  pid?: string; // public player id, if they have a profile
   score: number; // Σ points(outcome, ms, CHALLENGE_SECONDS)
   correct: number;
   total: number;

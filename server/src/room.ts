@@ -13,6 +13,7 @@ import {
   type C2S, type S2C, type RoomSettings, type RoomState, type Player, type Phase, type RoundAnswer, type ErrorCode,
   type RaceProgress, type ChatMsg,
 } from '../../src/lib/mp/protocol';
+import { PID_RE } from '../../src/lib/social/protocol';
 import { validSettings, validReport, scoreOf, isRace } from './validate';
 import type { Env } from './index';
 
@@ -277,9 +278,10 @@ export class Room extends DurableObject<Env> {
     const name = cleanName(typeof msg.name === 'string' ? msg.name : '');
     const rating = typeof msg.rating === 'number' && Number.isFinite(msg.rating) ? Math.round(Math.max(0, Math.min(4000, msg.rating))) : 1000;
     const now = Date.now();
-    if (existing) { existing.name = name; existing.rating = rating; }
+    const pub = typeof msg.pid === 'string' && PID_RE.test(msg.pid) ? msg.pid : undefined;
+    if (existing) { existing.name = name; existing.rating = rating; existing.pid = pub; }
     else {
-      r.seats[pid] = { id: pid, name, score: 0, correct: 0, connected: true, rating, joinedAt: now };
+      r.seats[pid] = { id: pid, name, score: 0, correct: 0, connected: true, rating, joinedAt: now, pid: pub };
       r.order.push(pid);
     }
     if (r.phase === 'race' && !r.progress[pid]) r.progress[pid] = emptyProgress(); // late joiner

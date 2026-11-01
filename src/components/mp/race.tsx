@@ -9,6 +9,7 @@ import { HotColdRaceGame } from '../../screens/HotCold';
 import { BorderlineRaceGame } from '../../screens/Borderline';
 import { Stepper, Avatar, TimerBar } from './parts';
 import { sfx } from '../../lib/sound';
+import { PlayerLink } from '../social/PlayerSheet';
 
 /* ---------------- settings ---------------- */
 
@@ -146,7 +147,7 @@ export function RaceBoard({ puzzle, title, onReport, onExit, locked, header }: {
 
 /** Countdown + compact live standings, shown above the race board. */
 export function RaceStrip({ game, left, totalMs, players, progress, you }: {
-  game: RaceGame; left: number; totalMs: number; players: Pick<Player, 'id' | 'name' | 'connected'>[]; progress: Record<string, RaceProgress | RaceReport>; you: string;
+  game: RaceGame; left: number; totalMs: number; players: Pick<Player, 'id' | 'name' | 'connected' | 'pid'>[]; progress: Record<string, RaceProgress | RaceReport>; you: string;
 }) {
   const score = (id: string) => (progress[id] && 'score' in progress[id] ? (progress[id] as RaceProgress).score : 0);
   const sorted = [...players].sort((a, b) => score(b.id) - score(a.id) || a.name.localeCompare(b.name));
@@ -162,8 +163,10 @@ export function RaceStrip({ game, left, totalMs, players, progress, you }: {
             const pr = progress[p.id];
             return (
               <motion.div key={p.id} className={`shrink-0 rounded-xl border px-2 py-1 flex items-center gap-1.5 ${p.id === you ? 'border-amber/70 bg-amber/10' : 'border-line/60 bg-white/5'} ${pr?.done ? '!border-mint/60' : ''}`}>
-                <Avatar p={p} size={20} dim={!p.connected} />
-                <span className="text-xs font-bold whitespace-nowrap">{p.id === you ? 'You' : p.name}</span>
+                <PlayerLink pid={p.pid} className="flex items-center gap-1.5">
+                  <Avatar p={p} size={20} dim={!p.connected} />
+                  <span className="text-xs font-bold whitespace-nowrap">{p.id === you ? 'You' : p.name}</span>
+                </PlayerLink>
                 <span className={`text-xs whitespace-nowrap ${pr?.done ? 'text-mint' : 'text-mist'}`}>{progressText(game, pr)}</span>
               </motion.div>
             );

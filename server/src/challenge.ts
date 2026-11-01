@@ -8,6 +8,7 @@ import {
   type Challenge, type ChallengeResult, type ChallengeSpec, type GameKind,
 } from '../../src/lib/mp/protocol';
 import { validTopic, validSources, validSize, limitFor, validReport, scoreOf, isRace } from './validate';
+import { PID_RE } from '../../src/lib/social/protocol';
 import type { Env } from './index';
 
 const MAX_RESULTS = 50;
@@ -93,6 +94,7 @@ function validResult(x: unknown, spec: ChallengeSpec): ChallengeResult | null {
   const num = (v: unknown, lo: number, hi: number) => typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
   if (typeof r.deviceId !== 'string' || !/^[A-Za-z0-9_-]{6,64}$/.test(r.deviceId)) return null;
   const name = cleanName(typeof r.name === 'string' ? r.name : '');
+  const pid = typeof r.pid === 'string' && PID_RE.test(r.pid) ? r.pid : undefined;
   const game = spec.game ?? 'quiz';
 
   if (isRace(game)) {
@@ -103,7 +105,7 @@ function validResult(x: unknown, spec: ChallengeSpec): ChallengeResult | null {
     const timeMs = Math.round(r.timeMs as number);
     const finishMs = report.done ? Math.min(timeMs, limitMs) : null;
     return {
-      deviceId: r.deviceId, name, score: scoreOf(game, report, finishMs, limitMs),
+      deviceId: r.deviceId, name, pid, score: scoreOf(game, report, finishMs, limitMs),
       correct: report.done ? 1 : 0, total: 1, timeMs, outcomes: [], report, at: Date.now(),
     };
   }
@@ -117,6 +119,7 @@ function validResult(x: unknown, spec: ChallengeSpec): ChallengeResult | null {
   return {
     deviceId: r.deviceId,
     name,
+    pid,
     score: Math.round(r.score as number),
     correct: r.correct as number,
     total: rounds,

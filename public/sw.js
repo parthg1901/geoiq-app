@@ -1,5 +1,5 @@
 /* GeoIQ service worker — offline shell, cached data/flags, cached Wikimedia photos. */
-const VERSION = 'v6';
+const VERSION = 'v7';
 const SHELL = `geoiq-shell-${VERSION}`;
 const STATIC = `geoiq-static-${VERSION}`;
 const PHOTOS = `geoiq-photos-${VERSION}`;

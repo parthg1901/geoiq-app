@@ -1,7 +1,7 @@
 {
   "name": "geoiq",
   "private": true,
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "GeoIQ — learn the world's countries, regions, rivers and history maps, and measure your geography IQ",
   "license": "GPL-3.0-or-later",
   "repository": {
@@ -21,6 +21,7 @@
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/share": "^8.0.3",

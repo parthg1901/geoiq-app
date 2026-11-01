@@ -8,6 +8,8 @@ import path from 'node:path';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'geoiq-audit-'));
 for (const m of ['geoiq', 'store']) execSync(`npx rolldown src/lib/${m}.ts --format esm --platform node -o ${dir}/${m}.mjs`, { stdio: 'ignore' });
 execSync(`npx rolldown src/data.ts --format esm --platform node -o ${dir}/data.mjs`, { stdio: 'ignore' });
+execSync(`npx rolldown src/lib/sync/merge.ts --format esm --platform node -o ${dir}/merge.mjs`, { stdio: 'ignore' });
+execSync(`npx rolldown src/lib/social/protocol.ts --format esm --platform node -o ${dir}/social.mjs`, { stdio: 'ignore' });
 globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {} }; // zustand persist in node
 const G = await import(`${dir}/geoiq.mjs`);
 const St = await import(`${dir}/store.mjs`);
@@ -92,6 +94,52 @@ check(G.toIQ(G.fromIQ(123)) === 123, 'toIQ/fromIQ round-trip');
   check(St.settleGap(base, '2026-03-11').froze === 0, 'no freeze spent when nothing was missed');
   const dst = St.bumpStreak({ ...base, last: '2026-03-28' }, 25, '2026-03-29'); // EU DST change night
   check(dst.count === 6, 'daylight-saving night still counts as consecutive days');
+}
+
+// 6. Sync merge: two phones' progress combine without losing or double-counting anything.
+{
+  const M = await import(`${dir}/merge.mjs`);
+  const today = new Date().toISOString().slice(0, 10);
+  const snap = (f) => { const s = JSON.parse(JSON.stringify(M.snapshot(St.initial()))); f?.(s); return s; };
+  const base = snap((s) => { s.xp = 500; s.coins = 100; s.counters = { rush: 3 }; s.stamps = { FRA: '2026-10-01' }; s.cards = { 'FRA:flag': { box: 2, due: 1, seen: 4, right: 3 } }; s.streak = { count: 4, best: 6, last: '2026-10-30', freezes: 1, frozen: [] }; });
+  const A = snap((s) => { Object.assign(s, JSON.parse(JSON.stringify(base))); s.xp += 50; s.coins -= 40; s.counters.rush = 5; s.stamps.DEU = '2026-10-31'; s.cards['FRA:flag'] = { box: 3, due: 9, seen: 5, right: 4 }; s.bests = { hotcold: 6, rush: 12 }; });
+  const B = snap((s) => { Object.assign(s, JSON.parse(JSON.stringify(base))); s.xp += 30; s.coins += 5; s.counters.rush = 4; s.counters.mpGames = 1; s.stamps.ITA = '2026-10-31'; s.bests = { hotcold: 4, rush: 9 }; s.mp.matches = 1; s.mp.rating = 1012; });
+  const m = M.mergeSnapshots(base, A, B);
+  check(m.xp === 580 && m.coins === 65, `XP and coins earned/spent on both phones add up (xp ${m.xp}, coins ${m.coins})`);
+  check(m.counters.rush === 6 && m.counters.mpGames === 1, 'counters combine their changes');
+  check(!!(m.stamps.FRA && m.stamps.DEU && m.stamps.ITA), 'stamps from both phones are kept');
+  check(m.cards['FRA:flag'].seen === 5, 'the more-practised memory card wins');
+  check(m.bests.hotcold === 4 && m.bests.rush === 12, 'bests: fewest guesses / highest score');
+  check(m.mp.rating === 1012 && m.mp.matches === 1, 'duel rating changes carry over');
+  check(JSON.stringify(M.mergeSnapshots(base, A, A)) === JSON.stringify(M.mergeSnapshots(base, A, base)), 'merging with an unchanged copy changes nothing');
+  const swapped = M.mergeSnapshots(base, B, A);
+  check(M.same(m, swapped), 'merge result does not depend on which phone is “local” (no endless re-uploads)');
+  const again = M.mergeSnapshots(m, m, m);
+  check(again.xp === 580, 're-syncing the merged copy does not double-count');
+  const fresh = snap((s) => { s.xp = 40; });
+  check(M.mergeSnapshots(null, fresh, B).xp === 530, 'linking without a shared base takes the larger total (no inflation)');
+  const sa = snap((s) => { s.streak = { count: 5, best: 5, last: '2026-10-31', freezes: 0, frozen: [] }; });
+  const sb = snap((s) => { s.streak = { count: 9, best: 9, last: '2026-10-20', freezes: 2, frozen: ['2026-10-19'] }; });
+  const sm = M.mergeSnapshots(null, sa, sb).streak;
+  check(sm.last === '2026-10-31' && sm.count === 5 && sm.best === 9, 'streak follows the most recent play, best is kept');
+  const da = snap((s) => { s.days = { [today]: { xp: 12, answers: 2, right: 2 } }; s.streak = { count: 3, best: 3, last: '2000-01-01', freezes: 0, frozen: [] }; });
+  const dbase = snap((s) => { s.streak = da.streak; });
+  const db = snap((s) => { s.days = { [today]: { xp: 10, answers: 1, right: 1 } }; s.streak = da.streak; });
+  const dm = M.mergeSnapshots(dbase, da, db);
+  check(dm.days[today].xp === 22 && dm.streak.last === today, 'today’s XP from both phones together can secure the streak');
+}
+
+// 7. Friends: weekly leaderboard weeks (ISO, Monday start) and one player identity across synced phones.
+{
+  const S = await import(`${dir}/social.mjs`);
+  const M = await import(`${dir}/merge.mjs`);
+  check(S.weekId('2026-11-01') === '2026-W44' && S.weekId('2026-11-02') === '2026-W45', 'the weekly board resets on Monday');
+  check(S.weekId('2026-01-01') === '2026-W01' && S.weekId('2027-01-01') === '2026-W53' && S.weekId('2027-01-04') === '2027-W01', 'ISO weeks across New Year (2026 has 53 weeks)');
+  const snap = (social) => ({ ...JSON.parse(JSON.stringify(M.snapshot(St.initial()))), social });
+  const a = { pid: 'AAAA0000', key: 'k1' }, b = { pid: 'BBBB0000', key: 'k2' };
+  check(M.mergeSnapshots(null, snap(a), snap(b)).social.pid === M.mergeSnapshots(null, snap(b), snap(a)).social.pid, 'two phones with separate player cards settle on the same one');
+  check(M.mergeSnapshots(null, snap(null), snap(b)).social?.pid === 'BBBB0000', 'a linked phone picks up the existing player card');
+  check(S.normalizePid('k7q2 mx9d') === 'K7Q2MX9D' && S.normalizePid('O1IL-0000') === '0111' + '0000' && S.normalizePid('abc') === null, 'friend codes accept any case/spacing and look-alike letters');
 }
 
 fs.rmSync(dir, { recursive: true, force: true });

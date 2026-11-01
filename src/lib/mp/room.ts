@@ -26,13 +26,13 @@ interface RoomStore {
   unread: number;
   chatOpen: boolean;
   setChatOpen: (open: boolean) => void;
-  connect: (code: string, me: { deviceId: string; name: string; rating: number }) => void;
+  connect: (code: string, me: { deviceId: string; name: string; rating: number; pid?: string }) => void;
   send: (m: C2S) => void;
   leave: () => void;
 }
 
 let ws: WebSocket | null = null;
-let me: { deviceId: string; name: string; rating: number } | null = null;
+let me: { deviceId: string; name: string; rating: number; pid?: string } | null = null;
 let attempt = 0;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let pingTimer: ReturnType<typeof setInterval> | null = null;
@@ -52,7 +52,7 @@ export const useRoom = create<RoomStore>((set, get) => {
     sock.onopen = () => {
       attempt = 0;
       set({ status: 'open', error: null });
-      sock.send(JSON.stringify({ t: 'hello', deviceId: me!.deviceId, name: me!.name, rating: me!.rating, protocol: MP_PROTOCOL, dataVersion: DATA_VERSION } satisfies C2S));
+      sock.send(JSON.stringify({ t: 'hello', deviceId: me!.deviceId, name: me!.name, rating: me!.rating, pid: me!.pid, protocol: MP_PROTOCOL, dataVersion: DATA_VERSION } satisfies C2S));
       ping();
       pingTimer = setInterval(ping, 5000);
     };

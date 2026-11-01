@@ -10,6 +10,7 @@ import { CHAT, REACTIONS, cleanChat, type ChatMsg, type Phase } from '../../lib/
 import { useGame } from '../../lib/store';
 import { onBack } from '../../lib/native';
 import { sfx } from '../../lib/sound';
+import { PlayerLink } from '../social/PlayerSheet';
 
 /** In-game phases: the header has a progress row + a timer row, so chat sits below them. */
 const BUSY: Phase[] = ['countdown', 'question', 'reveal', 'race'];
@@ -87,7 +88,7 @@ function ChatSheet({ onClose, mutedByHost }: { onClose: () => void; mutedByHost:
             return (
               <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${mine ? 'bg-amber/20 border border-amber/40' : 'bg-white/5 border border-line/60'}`}>
-                  {!mine && <div className="text-xs font-bold mb-0.5" style={{ color: nameColor(idx) }}>{m.name}</div>}
+                  {!mine && <PlayerLink pid={players[idx]?.pid} className="block text-xs font-bold mb-0.5"><span style={{ color: nameColor(idx) }}>{m.name}</span></PlayerLink>}
                   <div className="leading-snug break-words">{m.text}</div>
                 </div>
               </div>

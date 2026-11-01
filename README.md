@@ -52,6 +52,11 @@ Android app (Capacitor) and installable web app (PWA). Fully offline apart from 
 - A **Passport** you fill with ink stamps as you master countries, plus a conquest map.
 - Streak-reminder notifications on Android.
 
+**Friends & sync**
+- **Friends:** add friends with a code (or from a multiplayer room), a friends-only leaderboard (weekly XP, GeoIQ, streak, stamps, duel rating), and tap any player to see their profile and passport.
+- **Sync across phones** with a sync code, no account needed. Progress is encrypted on the phone and merged so nothing is lost when you play on two devices. A backup file works offline too.
+- **Update popup:** the Android app tells you when a new release is out (handy without Obtainium).
+
 ## How GeoIQ works
 
 Every (country, skill) question has a difficulty based on how well known the country is (Wikipedia pageviews, population and area). Your ability per skill is estimated with a **3-parameter logistic IRT model**, which accounts for lucky guesses on multiple choice. Ratings update by a stochastic-gradient step on that model's likelihood, which is **unbiased**: at your true level the expected change is zero, so the score settles on the truth. The Clue Ladder is scored per clue (a continuation-ratio model) rather than as partial credit.
@@ -95,7 +100,7 @@ npm run android       # web build → cap sync → Gradle; signed APK at dist-ap
 
 ### Multiplayer server
 
-[`server/`](server/) is a Cloudflare Worker with Durable Objects (one per live room or challenge), deployed at `play.geoiq.workers.dev`. Questions are never sent over the wire: every device builds the same list from a shared seed and the bundled data, and the server runs the clock and the scores. See [`server/README.md`](server/README.md) for local dev, the end-to-end simulator (`node server/scripts/sim.mjs`) and the test bot.
+[`server/`](server/) is a Cloudflare Worker with Durable Objects (one per live room, challenge, sync code and player profile), deployed at `play.geoiq.workers.dev`. Questions are never sent over the wire: every device builds the same list from a shared seed and the bundled data, and the server runs the clock and the scores. See [`server/README.md`](server/README.md) for local dev, the end-to-end simulator (`node server/scripts/sim.mjs`) and the test bot.
 
 ### Data pipeline
 

@@ -11,6 +11,9 @@ import { go } from '../lib/router';
 import { Page, Progress, SectionTitle } from '../components/ui';
 import { toast } from '../components/Toasts';
 import { StatusBar } from './Home';
+import SyncSettings from '../components/SyncSettings';
+import { checkForUpdate, APP_VERSION } from '../lib/update';
+import { useSync, disableSync } from '../lib/sync';
 
 const GOALS = [
   { xp: 30, label: 'Chill' },
@@ -26,6 +29,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(s.name);
   const [confirmReset, setConfirmReset] = useState(false);
+  const syncing = useSync((x) => !!x.code);
   const lvl = levelFor(s.xp);
   const { iq } = geoIQ(s.ratings);
   const tier = tierFor(iq);
@@ -159,6 +163,10 @@ export default function Profile() {
         </button>
       </div>
 
+      {/* Sync & backup */}
+      <SectionTitle>Sync & backup</SectionTitle>
+      <SyncSettings />
+
       {/* Settings */}
       <SectionTitle>Settings</SectionTitle>
       <div className="card p-4 space-y-5">
@@ -181,6 +189,7 @@ export default function Profile() {
           </button>
         </label>
         <ReminderSettings />
+        <VersionRow />
         <div className="pt-2 border-t border-line/60">
           <button className="text-rose text-sm font-semibold" onClick={() => setConfirmReset(true)}>Reset all progress…</button>
         </div>
@@ -192,16 +201,34 @@ export default function Profile() {
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="card p-6 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
               <div className="text-4xl">⚠️</div>
               <div className="display text-xl font-extrabold mt-2">Reset everything?</div>
-              <p className="text-sm text-mist mt-1">Your GeoIQ, streak, XP, stamps and achievements will be erased. This can’t be undone.</p>
+              <p className="text-sm text-mist mt-1">Your GeoIQ, streak, XP, stamps and achievements will be erased. This can’t be undone.{syncing && ' This phone also stops syncing; the cloud copy is kept.'}</p>
               <div className="grid grid-cols-2 gap-3 mt-5">
                 <button className="btn btn-ghost" onClick={() => setConfirmReset(false)}>Cancel</button>
-                <button className="btn !bg-rose text-white shadow-[0_4px_0_#a8293b]" onClick={() => { s.reset(); localStorage.removeItem('geoiq-seen-stamps'); setConfirmReset(false); go('/'); }}>Reset</button>
+                <button className="btn !bg-rose text-white shadow-[0_4px_0_#a8293b]" onClick={() => { if (syncing) void disableSync(false); s.reset(); localStorage.removeItem('geoiq-seen-stamps'); setConfirmReset(false); go('/'); }}>Reset</button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>, document.body)}
     </Page>
+  );
+}
+
+function VersionRow() {
+  const [state, setState] = useState<'idle' | 'checking' | 'latest' | 'error'>('idle');
+  const check = async () => {
+    setState('checking');
+    try { setState((await checkForUpdate(true)) ? 'idle' : 'latest'); } catch { setState('error'); }
+  };
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span><b className="display">Version</b><span className="block text-sm text-mist mono">GeoIQ {APP_VERSION}</span></span>
+      {isNative && (
+        <button className="btn btn-ghost !py-1.5 !px-3 text-sm" disabled={state === 'checking'} onClick={check}>
+          {state === 'checking' ? 'Checking…' : state === 'latest' ? 'Up to date ✓' : state === 'error' ? 'Offline — retry' : 'Check for updates'}
+        </button>
+      )}
+    </div>
   );
 }
 

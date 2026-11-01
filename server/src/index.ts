@@ -6,19 +6,24 @@
 import { MP_PROTOCOL, ROOM_ALPHABET, CHALLENGE_ALPHABET } from '../../src/lib/mp/protocol';
 import { Room } from './room';
 import { ChallengeStore } from './challenge';
+import { SyncVault, VAULT_MAX_BLOB } from './vault';
+import { PlayerStore, sha256hex } from './player';
+import { PID_ALPHABET, PID_LEN, PID_RE } from '../../src/lib/social/protocol';
 
-export { Room, ChallengeStore };
+export { Room, ChallengeStore, SyncVault, PlayerStore };
 
 export interface Env {
   ROOMS: DurableObjectNamespace;
   CHALLENGES: DurableObjectNamespace;
+  VAULTS: DurableObjectNamespace;
+  PLAYERS: DurableObjectNamespace;
 }
 
 const MAX_BODY = 32 * 1024;
 
 const CORS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Max-Age': '86400',
 };
@@ -59,6 +64,7 @@ async function readJson(req: Request): Promise<unknown | null> {
   try { return JSON.parse(text); } catch { return null; }
 }
 
+const VAULT_RE = /^[0-9a-f]{64}$/;
 const ROOM_RE = new RegExp(`^[${ROOM_ALPHABET}]{4}$`);
 const CHALLENGE_RE = new RegExp(`^GEO-[${CHALLENGE_ALPHABET}]{4}$`);
 
@@ -96,6 +102,55 @@ export default {
         if (parts.length === 4 && parts[3] === 'ws') {
           if (req.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return fail(426, 'expected a WebSocket upgrade');
           return stub.fetch(new Request('https://room/ws', req));
+        }
+        return fail(404, 'not found');
+      }
+
+      // ---------------- progress sync ----------------
+      // /api/sync/<sha256 of the sync code>: GET (?rev=N), PUT {baseRev, blob}, DELETE
+      if (parts[1] === 'sync' && parts.length === 3) {
+        const id = parts[2];
+        if (!VAULT_RE.test(id)) return fail(404, 'not found');
+        if (limited(ip, 'sync', 60)) return fail(429, 'slow down');
+        const stub = env.VAULTS.get(env.VAULTS.idFromName(id));
+        if (req.method === 'GET') return withCors(await stub.fetch(`https://vault/?rev=${encodeURIComponent(url.searchParams.get('rev') ?? '')}`));
+        if (req.method === 'DELETE') return withCors(await stub.fetch('https://vault/', { method: 'DELETE' }));
+        if (req.method === 'PUT') {
+          if (Number(req.headers.get('Content-Length') ?? 0) > VAULT_MAX_BLOB + 1000) return fail(413, 'too large');
+          const text = await req.text();
+          if (text.length > VAULT_MAX_BLOB + 1000) return fail(413, 'too large');
+          return withCors(await stub.fetch('https://vault/', { method: 'PUT', body: text }));
+        }
+        return fail(405, 'method not allowed');
+      }
+
+      // ---------------- players & friends ----------------
+      if (parts[1] === 'players') {
+        if (parts.length === 2 && req.method === 'POST') {
+          if (limited(ip, 'player-new', 10)) return fail(429, 'slow down');
+          const body = (await readJson(req)) as { key?: unknown } | null;
+          if (typeof body?.key !== 'string' || !/^[0-9a-f]{32,128}$/.test(body.key)) return fail(400, 'bad key');
+          const keyHash = await sha256hex(body.key);
+          for (let i = 0; i < 12; i++) {
+            const pid = randomCode(PID_ALPHABET, PID_LEN);
+            const r = await env.PLAYERS.get(env.PLAYERS.idFromName(pid)).fetch('https://player/_create', { method: 'POST', body: JSON.stringify({ pid, keyHash }) });
+            if (r.ok) return json({ pid });
+          }
+          return fail(503, 'could not allocate a player id');
+        }
+        const pid = (parts[2] ?? '').toUpperCase();
+        if (!PID_RE.test(pid)) return fail(404, 'no such player');
+        const stub = env.PLAYERS.get(env.PLAYERS.idFromName(pid));
+        if (parts.length === 3 && req.method === 'GET') {
+          if (limited(ip, 'player-get', 240)) return fail(429, 'slow down');
+          return withCors(await stub.fetch('https://player/card'));
+        }
+        const action = parts[3];
+        if (parts.length === 4 && req.method === 'POST' && ['me', 'board', 'add', 'respond', 'remove'].includes(action)) {
+          if (limited(ip, 'player', 120)) return fail(429, 'slow down');
+          const body = await readJson(req);
+          if (!body || typeof body !== 'object') return fail(400, 'bad request');
+          return withCors(await stub.fetch(`https://player/${action}`, { method: 'POST', body: JSON.stringify(body) }));
         }
         return fail(404, 'not found');
       }
