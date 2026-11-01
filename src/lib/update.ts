@@ -6,11 +6,11 @@
 import { create } from 'zustand';
 import { isNative } from './native';
 
-export const REPO = 'parthg1901/geoiq-app';
+export const REPO = 'parthg1901/geonaut';
 export const APP_VERSION: string = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0';
 const CHECK_EVERY_MS = 6 * 3600_000;
 const SNOOZE_MS = 24 * 3600_000;
-const LS = 'geoiq-update'; // { checkedAt, latest, snoozed: { [version]: until } }
+const LS = 'geonaut-update'; // { checkedAt, latest, snoozed: { [version]: until } }
 
 export interface Release { version: string; notes: string[]; apk: string; page: string }
 export const useUpdate = create<{ available: Release | null; dismissed: boolean }>(() => ({ available: null, dismissed: false }));

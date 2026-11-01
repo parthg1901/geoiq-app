@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { freshRatings, update, updateLadder, geoIQ, itemFor, type Format, type Ratings, type Skill } from './geoiq';
+import { freshRatings, update, updateLadder, iqScore, itemFor, type Format, type Ratings, type Skill } from './iq';
 import { todayKey, dayDiff, addDays } from './rng';
 import { COUNTRIES, BY_ID, NO_SHAPE, NO_CAPITAL_Q } from '../data';
 import type { Crossword } from './crossword';
@@ -269,13 +269,13 @@ export const useGame = create<State>()(
       },
       answer: (a) => {
         const s = get();
-        const before = geoIQ(s.ratings).iq;
+        const before = iqScore(s.ratings).iq;
         const item = itemFor(a.id, a.skill, a.dOffset);
         const kScale = a.practice ? 0.6 : 1;
         const rate = (r: Ratings[Skill], k: number) =>
           a.ladder ? updateLadder(r, item.d, a.ladder.solvedAt, a.ladder.shown, k) : update(r, item.d, a.format, a.outcome, k);
         const ratings: Ratings = { ...s.ratings, [a.skill]: rate(s.ratings[a.skill], kScale), all: rate(s.ratings.all, kScale * 0.8) };
-        const after = geoIQ(ratings).iq;
+        const after = iqScore(ratings).iq;
         // SRS (only for core skills; hint/photo feed the capital/shape-ish memory lightly)
         const key = `${a.id}:${a.skill}`;
         const cards = { ...s.cards };
@@ -305,7 +305,7 @@ export const useGame = create<State>()(
       },
     }),
     {
-      name: 'geoiq-v1',
+      name: 'geonaut-v1',
       version: 3,
       migrate: (persisted, version) => {
         const st = persisted as State;

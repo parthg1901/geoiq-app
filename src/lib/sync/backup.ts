@@ -5,10 +5,12 @@ import { todayKey } from '../rng';
 import { snapshot, mergeSnapshots, type Snapshot } from './merge';
 import { normalize, apply } from './index';
 
-interface BackupFile { app: 'geoiq'; v: 1; at: string; progress: Snapshot }
+interface BackupFile { app: 'geonaut'; v: 1; at: string; progress: Snapshot }
+/** Backups made before the rename (v1.x, when the app was called GeoIQ) still restore. */
+const LEGACY_APP = 'geoiq';
 
 export async function exportBackup() {
-  const file: BackupFile = { app: 'geoiq', v: 1, at: new Date().toISOString(), progress: snapshot(useGame.getState()) };
+  const file: BackupFile = { app: 'geonaut', v: 1, at: new Date().toISOString(), progress: snapshot(useGame.getState()) };
   const name = `geonaut-backup-${todayKey()}.json`;
   const text = JSON.stringify(file);
   if (isNative) {
@@ -26,9 +28,9 @@ export async function exportBackup() {
 
 /** Read a backup file; throws a friendly message if it isn't one. */
 export async function readBackup(f: File): Promise<{ at: string; progress: Snapshot }> {
-  let j: Partial<BackupFile>;
+  let j: Partial<Omit<BackupFile, 'app'>> & { app?: string };
   try { j = JSON.parse(await f.text()); } catch { throw new Error('That file isn’t a Geonaut backup.'); }
-  if (j?.app !== 'geoiq' || !j.progress || typeof j.progress !== 'object') throw new Error('That file isn’t a Geonaut backup.');
+  if ((j?.app !== 'geonaut' && j?.app !== LEGACY_APP) || !j.progress || typeof j.progress !== 'object') throw new Error('That file isn’t a Geonaut backup.');
   return { at: j.at ?? '', progress: normalize(j.progress) };
 }
 

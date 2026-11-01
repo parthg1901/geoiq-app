@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
+const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geonaut)' };
 const CACHE = 'scripts/.cache/credits';
 fs.mkdirSync(CACHE, { recursive: true });
 

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const CACHE = path.resolve('scripts/.cache/packs-culture');
 fs.mkdirSync(CACHE, { recursive: true });
-const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
+const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geonaut)' };
 const UDHR_RAW = 'https://raw.githubusercontent.com/eric-muller/udhr/main/data/udhr';
 
 async function get(url, as = 'json') {

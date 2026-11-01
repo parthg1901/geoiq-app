@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGame } from '../lib/store';
-import { freshRatings, fromIQ, type Ratings } from '../lib/geoiq';
+import { freshRatings, fromIQ, type Ratings } from '../lib/iq';
 import { go } from '../lib/router';
 import { Globe } from '../components/Globe';
 import { Shape } from '../components/Shape';

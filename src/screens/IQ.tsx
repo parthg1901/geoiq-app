@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useGame, mastery } from '../lib/store';
-import { geoIQ, tierFor, percentile, TIERS } from '../lib/geoiq';
+import { iqScore, tierFor, percentile, TIERS } from '../lib/iq';
 import { go } from '../lib/router';
 import { COUNTRIES, REGIONS } from '../data';
 import { REGION_META } from '../lib/path';
@@ -21,7 +21,7 @@ function heat(m: number) {
 
 export default function IQ() {
   const s = useGame();
-  const { iq, provisional, answered } = geoIQ(s.ratings);
+  const { iq, provisional, answered } = iqScore(s.ratings);
   const tier = tierFor(iq);
   const pct = percentile(iq);
   const lastTest = s.tests[s.tests.length - 1];

@@ -11,7 +11,7 @@ import { CountrySheet } from '../components/passport/CountrySheet';
 import { StatusBar } from './Home';
 import { Shape } from '../components/Shape';
 
-const SEEN_KEY = 'geoiq-seen-stamps';
+const SEEN_KEY = 'geonaut-seen-stamps';
 const readSeen = (): Set<string> => {
   try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); } catch { return new Set(); }
 };

@@ -1,8 +1,8 @@
 /* Geonaut service worker — offline shell, cached data/flags, cached Wikimedia photos. */
-const VERSION = 'v9';
-const SHELL = `geoiq-shell-${VERSION}`;
-const STATIC = `geoiq-static-${VERSION}`;
-const PHOTOS = `geoiq-photos-${VERSION}`;
+const VERSION = 'v10';
+const SHELL = `geonaut-shell-${VERSION}`;
+const STATIC = `geonaut-static-${VERSION}`;
+const PHOTOS = `geonaut-photos-${VERSION}`;
 const PHOTO_MAX = 300;
 const PRECACHE = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png'];
 
@@ -14,7 +14,7 @@ self.addEventListener('activate', (e) => {
   const keep = new Set([SHELL, STATIC, PHOTOS]);
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('geoiq-') && !keep.has(k)).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => !keep.has(k)).map((k) => caches.delete(k)))) // this origin only holds our caches
       .then(() => self.clients.claim()),
   );
 });

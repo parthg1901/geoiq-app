@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { SKILLS, SKILL_LABEL, toIQ, TIERS, tierFor, type Ratings } from '../../lib/geoiq';
+import { SKILLS, SKILL_LABEL, toIQ, TIERS, tierFor, type Ratings } from '../../lib/iq';
 
 /** Six-axis skill radar. Axes with no answers are drawn dimmed at the baseline. */
 export function Radar({ ratings, size = 300 }: { ratings: Ratings; size?: number }) {

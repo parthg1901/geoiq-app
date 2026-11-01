@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGame, levelFor, dueCards, mastery, STREAK_MIN_XP } from '../lib/store';
-import { geoIQ, tierFor } from '../lib/geoiq';
+import { iqScore, tierFor } from '../lib/iq';
 import { todayKey, addDays } from '../lib/rng';
 import { go } from '../lib/router';
 import { countryOfDay, dailyNumber } from '../lib/daily';
@@ -49,7 +49,7 @@ function FriendsChip() {
 
 export default function Home() {
   const s = useGame();
-  const { iq, provisional, answered } = geoIQ(s.ratings);
+  const { iq, provisional, answered } = iqScore(s.ratings);
   const tier = tierFor(iq);
   const today = todayKey();
   const todayXp = s.days[today]?.xp ?? 0;

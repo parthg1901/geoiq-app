@@ -13,16 +13,16 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <item name="android:windowBackground">@color/geoiq_ink</item>
-        <item name="android:statusBarColor">@color/geoiq_ink</item>
-        <item name="android:navigationBarColor">@color/geoiq_ink</item>
+        <item name="android:windowBackground">@color/geonaut_ink</item>
+        <item name="android:statusBarColor">@color/geonaut_ink</item>
+        <item name="android:navigationBarColor">@color/geonaut_ink</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
-        <item name="windowSplashScreenBackground">@color/geoiq_ink</item>
+        <item name="windowSplashScreenBackground">@color/geonaut_ink</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>

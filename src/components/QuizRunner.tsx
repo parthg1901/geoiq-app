@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti';
 import { BY_ID, ARMS, ARMS_WORD, loadPhotos, type Photo } from '../data';
 import { useGame, type AnswerResult } from '../lib/store';
 import { VARIANT_SKILL, hintsFor, type Question } from '../lib/questions';
-import { geoIQ, tierFor } from '../lib/geoiq';
+import { iqScore, tierFor } from '../lib/iq';
 import { sfx, buzz } from '../lib/sound';
 import { checkAchievements } from '../lib/achievements';
 import { toast } from './Toasts';
@@ -60,7 +60,7 @@ export function QuizRunner(cfg: QuizConfig) {
   const shakeRef = useRef<HTMLDivElement>(null);
   const shake = () => { const el = shakeRef.current; if (!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
   const [timeLeft, setTimeLeft] = useState(cfg.rush ?? 0);
-  const startIQ = useRef(geoIQ(useGame.getState().ratings).iq);
+  const startIQ = useRef(iqScore(useGame.getState().ratings).iq);
   const t0 = useRef(performance.now());
   const xpTotal = useRef(0);
   const stamps = useRef<string[]>([]);
@@ -366,7 +366,7 @@ function HintLadder({ q, locked, onAnswer }: { q: Question; locked: boolean; onA
   };
   const guess = (id: string | null) => {
     if (locked || over) return;
-    // outcome = partial credit for XP/feedback; the rating uses the per-clue ladder (see geoiq.updateLadder)
+    // outcome = partial credit for XP/feedback; the rating uses the per-clue ladder (see iq.updateLadder)
     if (id === q.id) { setOver(true); onAnswer(Math.max(0.6, (stages - shown + 1) / stages), id, { solvedAt: shown, shown }); return; }
     setWrong((w) => [...w, id ? BY_ID[id]?.name ?? '?' : '?']);
     sfx.wrong();
@@ -447,7 +447,7 @@ function PhotoQ({ q, locked, onAnswer, answerArea, picked }: {
 
 function Summary({ cfg, results, xp, bestCombo, startIQ, stamps }: { cfg: QuizConfig; results: QuizResult[]; xp: number; bestCombo: number; startIQ: number; stamps: string[] }) {
   const ratings = useGame((s) => s.ratings);
-  const { iq, provisional } = geoIQ(ratings);
+  const { iq, provisional } = iqScore(ratings);
   const right = results.filter((r) => r.outcome >= 0.6).length;
   const acc = results.length ? right / results.length : 0;
   const misses = results.filter((r) => r.outcome < 0.6);

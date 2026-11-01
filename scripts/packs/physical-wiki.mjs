@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const CACHE = path.resolve('scripts/.cache/packs-physical');
 fs.mkdirSync(CACHE, { recursive: true });
-const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
+const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geonaut)' };
 
 async function getJSON(url) {
   for (let i = 0; i < 5; i++) {

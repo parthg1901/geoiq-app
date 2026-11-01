@@ -20,8 +20,8 @@ const enc = new TextEncoder();
 const digest = async (s: string) => new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s)));
 const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 
-export const vaultId = async (code: string) => hex(await digest(`geoiq-sync:v1:id:${code}`));
-const aesKey = async (code: string) => crypto.subtle.importKey('raw', await digest(`geoiq-sync:v1:key:${code}`), 'AES-GCM', false, ['encrypt', 'decrypt']);
+export const vaultId = async (code: string) => hex(await digest(`geonaut-sync:v1:id:${code}`));
+const aesKey = async (code: string) => crypto.subtle.importKey('raw', await digest(`geonaut-sync:v1:key:${code}`), 'AES-GCM', false, ['encrypt', 'decrypt']);
 
 async function pipe(data: Uint8Array, stream: CompressionStream | DecompressionStream) {
   const out = new Response(new Blob([data as BlobPart]).stream().pipeThrough(stream));

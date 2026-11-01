@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame, levelFor } from '../lib/store';
 import { ACHIEVEMENTS } from '../lib/achievements';
-import { geoIQ, tierFor } from '../lib/geoiq';
+import { iqScore, tierFor } from '../lib/iq';
 import { todayKey, addDays } from '../lib/rng';
 import { sfx } from '../lib/sound';
 import { isNative, enableReminders } from '../lib/native';
@@ -31,7 +31,7 @@ export default function Profile() {
   const [confirmReset, setConfirmReset] = useState(false);
   const syncing = useSync((x) => !!x.code);
   const lvl = levelFor(s.xp);
-  const { iq } = geoIQ(s.ratings);
+  const { iq } = iqScore(s.ratings);
   const tier = tierFor(iq);
 
   const stats = useMemo(() => {
@@ -204,7 +204,7 @@ export default function Profile() {
               <p className="text-sm text-mist mt-1">Your IQ, streak, XP, stamps and achievements will be erased. This can’t be undone.{syncing && ' This phone also stops syncing; the cloud copy is kept.'}</p>
               <div className="grid grid-cols-2 gap-3 mt-5">
                 <button className="btn btn-ghost" onClick={() => setConfirmReset(false)}>Cancel</button>
-                <button className="btn !bg-rose text-white shadow-[0_4px_0_#a8293b]" onClick={() => { if (syncing) void disableSync(false); s.reset(); localStorage.removeItem('geoiq-seen-stamps'); setConfirmReset(false); go('/'); }}>Reset</button>
+                <button className="btn !bg-rose text-white shadow-[0_4px_0_#a8293b]" onClick={() => { if (syncing) void disableSync(false); s.reset(); localStorage.removeItem('geonaut-seen-stamps'); setConfirmReset(false); go('/'); }}>Reset</button>
               </div>
             </motion.div>
           </motion.div>

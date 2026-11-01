@@ -1,8 +1,10 @@
-# Geonaut multiplayer server → https://play.geoiq.workers.dev
+# Geonaut server (multiplayer, sync, friends) → https://api.geonaut.parthg.dev
 name = "play"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
+# The *.workers.dev address only serves apps from before v2.0.0; turn it off once nobody uses them.
 workers_dev = true
+routes = [{ pattern = "api.geonaut.parthg.dev", custom_domain = true }]
 
 [[durable_objects.bindings]]
 name = "ROOMS"

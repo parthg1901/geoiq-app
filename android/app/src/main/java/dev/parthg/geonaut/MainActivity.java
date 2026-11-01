@@ -1,4 +1,4 @@
-package com.geoiq.app;
+package dev.parthg.geonaut;
 
 import com.getcapacitor.BridgeActivity;
 

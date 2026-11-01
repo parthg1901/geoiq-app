@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useGame } from '../lib/store';
 import { useSocial, ensureProfile, publish, loadBoard, addFriend, respond, openPlayer, weekXp } from '../lib/social';
 import { formatPid, normalizePid, type PlayerCard } from '../lib/social/protocol';
-import { tierFor } from '../lib/geoiq';
+import { tierFor } from '../lib/iq';
 import { COUNTRIES } from '../data';
 import { Page, SectionTitle } from '../components/ui';
 import { Avatar } from '../components/mp/parts';

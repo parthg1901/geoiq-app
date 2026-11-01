@@ -2,7 +2,7 @@
  * Progress sync across phones with a sync code (no account). See ./merge.ts for how two copies are
  * combined and ./crypto.ts for the code → vault id / encryption key. Server: server/src/vault.ts.
  *
- * Local bookkeeping: `geoiq-sync` = { code, id, rev, w } and `geoiq-sync-base` = the snapshot both
+ * Local bookkeeping: `geonaut-sync` = { code, id, rev, w } and `geonaut-sync-base` = the snapshot both
  * this phone and the cloud agreed on at `rev` (the base of the three-way merge).
  * Every upload carries a random write id; the cloud copy keeps the last few (`w`). If an upload
  * lands but its reply is lost, the next sync recognises its own write id and doesn't count it twice.
@@ -15,12 +15,12 @@ import { isNative } from '../native';
 import { snapshot, mergeSnapshots, same, type Snapshot } from './merge';
 import { newCode, normalizeCode, vaultId, seal, open } from './crypto';
 
-const CONF_KEY = 'geoiq-sync';
-const BASE_KEY = 'geoiq-sync-base';
+const CONF_KEY = 'geonaut-sync';
+const BASE_KEY = 'geonaut-sync-base';
 interface Conf { code: string; id: string; rev: number; w: string[] }
 /** What is encrypted into the cloud copy: the progress and the ids of the latest writes. */
 interface Sealed { s: Snapshot; w: string[] }
-const PENDING_KEY = 'geoiq-sync-pending';
+const PENDING_KEY = 'geonaut-sync-pending';
 interface Pending { wid: string; snap: Snapshot }
 
 export interface SyncStatus { code: string | null; busy: boolean; lastAt: number | null; error: string | null }

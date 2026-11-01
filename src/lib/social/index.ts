@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import { useGame, levelFor, type State } from '../store';
-import { geoIQ } from '../geoiq';
+import { iqScore } from '../iq';
 import { todayKey, addDays } from '../rng';
 import { MP_URL } from '../mp/api';
 import { weekId, type PlayerCard, type MeView } from './protocol';
@@ -42,7 +42,7 @@ export function buildCard(s: State, pid: string): PlayerCard {
   const right = logs.reduce((a, d) => a + d.right, 0);
   return {
     pid, name: s.name || 'Explorer',
-    iq: geoIQ(s.ratings).iq, level: levelFor(s.xp).level, xp: s.xp,
+    iq: iqScore(s.ratings).iq, level: levelFor(s.xp).level, xp: s.xp,
     streak: s.streak.count, bestStreak: s.streak.best, lastActive: s.streak.last,
     stamps: Object.keys(s.stamps), achievements: Object.keys(s.achievements),
     duel: { rating: s.mp.rating, matches: s.mp.matches, wins: s.mp.wins },

@@ -1,5 +1,5 @@
 import { BY_ID, COUNTRIES, NO_SHAPE, NO_CAPITAL_Q, ALL_NAMES, fmtPop, fmtArea, fame, type Country, ARMS } from '../data';
-import { difficulty, type Skill, type Format } from './geoiq';
+import { difficulty, type Skill, type Format } from './iq';
 import { shuffle, pick } from './rng';
 import type { Card } from './store';
 

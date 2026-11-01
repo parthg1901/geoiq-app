@@ -121,7 +121,7 @@ export const freshRatings = (): Ratings =>
   ({ all: freshRating(), shape: freshRating(), flag: freshRating(), capital: freshRating(), map: freshRating(), hint: freshRating(), photo: freshRating() });
 
 /** Composite IQ: global θ, blended toward skill θs that have data. */
-export function geoIQ(r: Ratings) {
+export function iqScore(r: Ratings) {
   const total = SKILLS.reduce((a, s) => a + r[s].n, 0);
   // Skills you never practised stay at their starting estimate (your onboarding self-assessment),
   // capped at your overall level — so cherry-picking one mode can't inflate the score, and your

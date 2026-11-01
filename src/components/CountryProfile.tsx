@@ -5,7 +5,7 @@ import { BY_ID, ALL_NAMES, ARMS, ARMS_WORD, fmtPop, fmtArea, loadPhotos, type Ph
 import { ArmsImage } from './Answer';
 import { loadProfile, rank, metric, money, ordinal, trivia, METRIC_LABEL, type Metric, type Profile } from '../lib/profile';
 import { useGame, mastery, stampSkills } from '../lib/store';
-import { SKILL_LABEL } from '../lib/geoiq';
+import { SKILL_LABEL } from '../lib/iq';
 import { makeQuestion, eligible, type Variant } from '../lib/questions';
 import { shuffle } from '../lib/rng';
 import { go } from '../lib/router';

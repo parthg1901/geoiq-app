@@ -5,7 +5,7 @@
 //   node server/scripts/bot.mjs --create --topic world:flag      # create a room, print its code, wait for you
 //
 // Options:
-//   --url <base>          server (default https://play.geoiq.workers.dev; local: http://127.0.0.1:8787)
+//   --url <base>          server (default https://api.geonaut.parthg.dev; local: http://127.0.0.1:8787)
 //   --room <CODE>         join this room            --create        create a room instead (bot is host)
 //   --name <name>         default "Atlas Bot"       --skill <0..1>  chance of answering right (default 0.7)
 //   --device <id>         stable player id (rejoin the same seat)    stdin: "say <text>", "react <emoji>", start, lobby, quit
@@ -28,7 +28,7 @@ const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 &
 const flag = (k) => process.argv.includes(`--${k}`);
 const repoVersion = () => { try { return JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../package.json'), 'utf8')).version; } catch { return '0.0.0'; } };
 
-const BASE = arg('url', 'https://play.geoiq.workers.dev').replace(/\/$/, '');
+const BASE = arg('url', 'https://api.geonaut.parthg.dev').replace(/\/$/, '');
 const WS_BASE = BASE.replace(/^http/, 'ws');
 const NAME = arg('name', 'Atlas Bot');
 const SKILL = Math.max(0, Math.min(1, Number(arg('skill', '0.7'))));

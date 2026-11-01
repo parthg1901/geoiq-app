@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame, levelFor } from '../lib/store';
-import { geoIQ } from '../lib/geoiq';
+import { iqScore } from '../lib/iq';
 import { useSync, syncNow, enableSync, findCode, linkSync, disableSync, type Found } from '../lib/sync';
 import { formatCode } from '../lib/sync/crypto';
 import type { Snapshot } from '../lib/sync/merge';
@@ -27,7 +27,7 @@ function Summary({ p }: { p: Snapshot }) {
     <div className="grid grid-cols-4 gap-2 mt-3 text-center">
       {[
         ['Level', levelFor(p.xp).level],
-        ['IQ', geoIQ(p.ratings).iq],
+        ['IQ', iqScore(p.ratings).iq],
         ['Stamps', Object.keys(p.stamps).length],
         ['Streak', `${p.streak.count}🔥`],
       ].map(([k, v]) => (

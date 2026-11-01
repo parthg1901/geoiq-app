@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../../lib/store';
-import { tierFor } from '../../lib/geoiq';
+import { tierFor } from '../../lib/iq';
 import { todayKey, dayDiff } from '../../lib/rng';
 import { ACHIEVEMENTS } from '../../lib/achievements';
 import { COUNTRIES } from '../../data';

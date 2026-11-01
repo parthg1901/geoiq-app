@@ -66,7 +66,7 @@ export async function scheduleReminders() {
         title: 'Geonaut',
         body: message(i === 0 ? s.streak.count : 0, i),
         schedule: { at, allowWhileIdle: true },
-        smallIcon: 'ic_stat_geoiq',
+        smallIcon: 'ic_stat_geonaut',
         iconColor: '#ffb547',
       });
     }

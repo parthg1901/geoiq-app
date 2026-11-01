@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { BY_ID, fmtPop, fmtArea } from '../../data';
 import { useGame, mastery, stampSkills } from '../../lib/store';
-import { SKILL_LABEL } from '../../lib/geoiq';
+import { SKILL_LABEL } from '../../lib/iq';
 import { makeQuestion, eligible, type Variant } from '../../lib/questions';
 import { go } from '../../lib/router';
 import { onBack } from '../../lib/native';

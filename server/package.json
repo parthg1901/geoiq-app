@@ -1,5 +1,5 @@
 {
-  "name": "geoiq-server",
+  "name": "geonaut-server",
   "private": true,
   "version": "0.1.0",
   "description": "Geonaut multiplayer server: live rooms and async challenges on Cloudflare Workers + Durable Objects",

@@ -1,17 +1,17 @@
 // Regression checks for Geonaut's scoring & progress math. Run: npm run audit:math
-// Bundles the real engine (src/lib/geoiq.ts, src/lib/store.ts) and checks it by simulation.
+// Bundles the real engine (src/lib/iq.ts, src/lib/store.ts) and checks it by simulation.
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'geoiq-audit-'));
-for (const m of ['geoiq', 'store']) execSync(`npx rolldown src/lib/${m}.ts --format esm --platform node -o ${dir}/${m}.mjs`, { stdio: 'ignore' });
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'geonaut-audit-'));
+for (const m of ['iq', 'store']) execSync(`npx rolldown src/lib/${m}.ts --format esm --platform node -o ${dir}/${m}.mjs`, { stdio: 'ignore' });
 execSync(`npx rolldown src/data.ts --format esm --platform node -o ${dir}/data.mjs`, { stdio: 'ignore' });
 execSync(`npx rolldown src/lib/sync/merge.ts --format esm --platform node -o ${dir}/merge.mjs`, { stdio: 'ignore' });
 execSync(`npx rolldown src/lib/social/protocol.ts --format esm --platform node -o ${dir}/social.mjs`, { stdio: 'ignore' });
 globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {} }; // zustand persist in node
-const G = await import(`${dir}/geoiq.mjs`);
+const G = await import(`${dir}/iq.mjs`);
 const St = await import(`${dir}/store.mjs`);
 
 let failed = 0;

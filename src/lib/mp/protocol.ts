@@ -13,7 +13,7 @@
 export const MP_PROTOCOL = 2;
 
 /** Server base URL (overridable for local testing with VITE_MP_URL). */
-export const MP_DEFAULT_URL = 'https://play.geoiq.workers.dev';
+export const MP_DEFAULT_URL = 'https://api.geonaut.parthg.dev';
 
 /**
  * What the questions are about. World modes reuse the country quiz variants; packs use the content

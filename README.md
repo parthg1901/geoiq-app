@@ -67,11 +67,11 @@ The **IQ Test** is a 24-item computerized adaptive test. It's accurate to about 
 
 > "100 = average" is a calibrated estimate, not yet normed on real players.
 
-See [`src/lib/geoiq.ts`](src/lib/geoiq.ts) and [`scripts/audit-math.mjs`](scripts/audit-math.mjs).
+See [`src/lib/iq.ts`](src/lib/iq.ts) and [`scripts/audit-math.mjs`](scripts/audit-math.mjs).
 
 ## Install
 
-- **Android:** download the APK from [Releases](https://github.com/parthg1901/geoiq-app/releases), or add this repo to [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates. Releases are signed with the same key, so updates keep your progress.
+- **Android:** download the APK from [Releases](https://github.com/parthg1901/geonaut/releases), or add this repo to [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates. Releases are signed with the same key, so updates keep your progress.
 - **Web:** play at **[geonaut.parthg.dev](https://geonaut.parthg.dev)**. It's installable as a PWA and works offline. To host your own, `npm run build` and serve `dist/` from any static host (`npm run deploy:web` publishes to Cloudflare; see [`web/wrangler.toml`](web/wrangler.toml)).
 
 ## Development
@@ -94,13 +94,13 @@ Progress is stored locally in the browser or app (no accounts or backend).
 npm run android       # web build → cap sync → Gradle; signed APK at dist-apk/Geonaut.apk
 ```
 
-- **Requirements:** JDK 21 and the Android SDK, configured in `~/android/env.sh`. Local release signing reads `~/android/geoiq-release.properties` (never committed).
+- **Requirements:** JDK 21 and the Android SDK, configured in `~/android/env.sh`. Local release signing reads `~/android/geonaut-release.properties` (never committed).
 - **ARM64 Linux build hosts:** Google only ships an x86_64 `aapt2`, so point `android.aapt2FromMavenOverride` (in `~/.gradle/gradle.properties`) at a wrapper that runs it through user-mode qemu.
-- **Releases:** pushing a tag `vX.Y.Z` runs [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml). It builds a signed APK (versionCode `X·10000 + Y·100 + Z`) and attaches it to a GitHub Release. Signing comes from the repo secrets `GEOIQ_KEYSTORE_B64`, `GEOIQ_KEYSTORE_PASSWORD`, `GEOIQ_KEY_ALIAS` and `GEOIQ_KEY_PASSWORD`.
+- **Releases:** pushing a tag `vX.Y.Z` runs [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml). It builds a signed APK (versionCode `X·10000 + Y·100 + Z`) and attaches it to a GitHub Release. Signing comes from the repo secrets `GEONAUT_KEYSTORE_B64`, `GEONAUT_KEYSTORE_PASSWORD`, `GEONAUT_KEY_ALIAS` and `GEONAUT_KEY_PASSWORD`.
 
 ### Multiplayer server
 
-[`server/`](server/) is a Cloudflare Worker with Durable Objects (one per live room, challenge, sync code and player profile), deployed at `play.geoiq.workers.dev`. Questions are never sent over the wire: every device builds the same list from a shared seed and the bundled data, and the server runs the clock and the scores. See [`server/README.md`](server/README.md) for local dev, the end-to-end simulator (`node server/scripts/sim.mjs`) and the test bot.
+[`server/`](server/) is a Cloudflare Worker with Durable Objects (one per live room, challenge, sync code and player profile), deployed at `api.geonaut.parthg.dev`. Questions are never sent over the wire: every device builds the same list from a shared seed and the bundled data, and the server runs the clock and the scores. See [`server/README.md`](server/README.md) for local dev, the end-to-end simulator (`node server/scripts/sim.mjs`) and the test bot.
 
 ### Data pipeline
 
@@ -124,7 +124,7 @@ Pack files follow the contract in [`src/lib/packs.ts`](src/lib/packs.ts). After 
 ### Layout
 
 ```
-src/lib/        geoiq.ts (rating engine) · store.ts (progress, SRS, streaks) · questions.ts · packs.ts · native.ts
+src/lib/        iq.ts (rating engine) · store.ts (progress, SRS, streaks) · questions.ts · packs.ts · native.ts
 src/screens/    Home, Learn/Lesson, Play, IQ + Test, Daily, Borderline, Hot & Cold, Atlas/Country, Passport, Packs
 src/components/ QuizRunner, WorldMap, Globe, CountryProfile, pack/ (PackMap, PackQuiz)
 scripts/        data pipeline, APK build, math audit

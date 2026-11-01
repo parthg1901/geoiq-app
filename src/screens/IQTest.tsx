@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useGame, type TestResult } from '../lib/store';
-import { difficulty, pCorrect, ladderSurprise, toIQ, fromIQ, tierFor, percentile, SKILL_LABEL, SKILL_ICON, type Skill } from '../lib/geoiq';
+import { difficulty, pCorrect, ladderSurprise, toIQ, fromIQ, tierFor, percentile, SKILL_LABEL, SKILL_ICON, type Skill } from '../lib/iq';
 import { makeQuestion, eligible, type Question, type Variant } from '../lib/questions';
 import { shuffle, todayKey } from '../lib/rng';
 import { go } from '../lib/router';

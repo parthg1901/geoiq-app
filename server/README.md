@@ -1,6 +1,6 @@
 # Geonaut multiplayer server
 
-Live rooms (2–8 players, 4-letter code) and async challenges (`GEO-XXXX` codes) for Geonaut. It runs on **Cloudflare Workers + Durable Objects** and will live at `https://play.geoiq.workers.dev`.
+Live rooms (2–8 players, 4-letter code) and async challenges (`GEO-XXXX` codes) for Geonaut. It runs on **Cloudflare Workers + Durable Objects** and will live at `https://api.geonaut.parthg.dev`.
 
 - **Live rooms:** one Durable Object per room code. It uses the WebSocket Hibernation API, so idle rooms cost nothing. Game state is kept in DO storage, and phases (countdown → question → reveal → … → end for quizzes, countdown → race → end for race games) are driven by DO alarms.
 - **Challenges:** one Durable Object per code. It stores the spec and everyone's result, and deletes itself after 30 days.
@@ -89,4 +89,4 @@ cd server
 CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… npx wrangler deploy
 ```
 
-The first deploy creates the `play` worker and the SQLite-backed Durable Object classes (migration `v1`), which are available on the Workers free plan. Check it with `curl https://play.geoiq.workers.dev/api/health`.
+The first deploy creates the `play` worker and the SQLite-backed Durable Object classes (migration `v1`), which are available on the Workers free plan. Check it with `curl https://api.geonaut.parthg.dev/api/health`.
