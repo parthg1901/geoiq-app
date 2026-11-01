@@ -306,9 +306,11 @@ export const useGame = create<State>()(
     }),
     {
       name: 'geonaut-v1',
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
         const st = persisted as State;
+        // v3 → v4: the Street Eye (photo) mode was removed; drop its rating so nothing reads a stale skill.
+        if (version < 4 && st?.ratings) delete (st.ratings as Record<string, unknown>).photo;
         // v2 → v3: mastery counts only the skills a country can be asked about — award any stamps that
         // were blocked before (e.g. Vatican City and Monaco could never be stamped).
         if (version < 3 && st?.cards) {

@@ -8,12 +8,12 @@
  */
 import { BY_ID, NO_SHAPE, fame, type Country } from '../data';
 
-export type Skill = 'shape' | 'flag' | 'capital' | 'map' | 'hint' | 'photo';
-export const SKILLS: Skill[] = ['shape', 'flag', 'map', 'capital', 'hint', 'photo'];
+export type Skill = 'shape' | 'flag' | 'capital' | 'map' | 'hint';
+export const SKILLS: Skill[] = ['shape', 'flag', 'map', 'capital', 'hint'];
 export const SKILL_LABEL: Record<Skill, string> = {
-  shape: 'Shapes', flag: 'Flags', capital: 'Capitals', map: 'Map', hint: 'Clues', photo: 'Street Eye',
+  shape: 'Shapes', flag: 'Flags', capital: 'Capitals', map: 'Map', hint: 'Clues',
 };
-export const SKILL_ICON: Record<Skill, string> = { shape: '◆', flag: '⚑', capital: '★', map: '⌖', hint: '?', photo: '◉' };
+export const SKILL_ICON: Record<Skill, string> = { shape: '◆', flag: '⚑', capital: '★', map: '⌖', hint: '?' };
 
 const S = 110; // logistic scale
 const BASE = 1000; // θ of an "average" explorer
@@ -31,7 +31,6 @@ export function difficulty(c: Country, skill: Skill): number {
     case 'map': d += 20 + small * 70 + micro * 60; break;
     case 'capital': d += 50; break;
     case 'hint': d += 10; break;
-    case 'photo': d += 90; break;
   }
   return Math.round(d);
 }
@@ -118,7 +117,7 @@ export const tierFor = (iq: number) => [...TIERS].reverse().find((t) => iq >= t.
 
 export type Ratings = Record<Skill | 'all', Rating>;
 export const freshRatings = (): Ratings =>
-  ({ all: freshRating(), shape: freshRating(), flag: freshRating(), capital: freshRating(), map: freshRating(), hint: freshRating(), photo: freshRating() });
+  ({ all: freshRating(), shape: freshRating(), flag: freshRating(), capital: freshRating(), map: freshRating(), hint: freshRating() });
 
 /** Composite IQ: global θ, blended toward skill θs that have data. */
 export function iqScore(r: Ratings) {

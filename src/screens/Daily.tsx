@@ -13,7 +13,7 @@ import { BY_ID } from '../data';
 import { go } from '../lib/router';
 import { sfx } from '../lib/sound';
 
-const LABEL: Record<string, string> = { shape: 'Shape', flag: 'Flag', photo: 'Street Eye', capital: 'Capital', 'map-find': 'Map' };
+const LABEL: Record<string, string> = { shape: 'Shape', flag: 'Flag', hint: 'Clues', capital: 'Capital', 'map-find': 'Map' };
 
 function useCountdown() {
   const [now, setNow] = useState(Date.now());

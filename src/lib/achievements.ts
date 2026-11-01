@@ -42,7 +42,6 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'border', name: 'Border Runner', desc: 'Solve a Borderline route perfectly', icon: '🛤️', test: (s) => (s.counters['borderPerfect'] ?? 0) > 0 },
   { id: 'hotcold', name: 'Heat Seeker', desc: 'Find the mystery country in ≤ 4 guesses', icon: '🌡️', test: (s) => (s.bests['hotcold'] ?? 99) <= 4 },
   { id: 'lvl10', name: 'Seasoned', desc: 'Reach level 10', icon: '⭐', test: (s) => levelFor(s.xp).level >= 10 },
-  { id: 'photo25', name: 'Street Smart', desc: '25 correct Street Eye answers', icon: '📸', test: (s) => (s.counters['photoRight'] ?? 0) >= 25 },
   { id: 'pack1', name: 'Explorer at Large', desc: 'Finish your first pack round', icon: '🧭', test: (s) => (s.counters['packRounds'] ?? 0) >= 1 },
   { id: 'nameall', name: 'Total Recall', desc: 'Name every item in a pack', icon: '🧠', test: (s) => (s.counters['nameAll'] ?? 0) >= 1 },
   { id: 'packs3', name: 'Specialist', desc: 'Master 3 packs to 50%', icon: '🎓', test: (s) => Object.values(s.packs ?? {}).filter((p) => packAvg(p) >= 0.5).length >= 3 },

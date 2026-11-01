@@ -1,5 +1,5 @@
 /* Geonaut service worker — offline shell, cached data/flags, cached Wikimedia photos. */
-const VERSION = 'v10';
+const VERSION = 'v11';
 const SHELL = `geonaut-shell-${VERSION}`;
 const STATIC = `geonaut-static-${VERSION}`;
 const PHOTOS = `geonaut-photos-${VERSION}`;

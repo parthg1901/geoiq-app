@@ -2,7 +2,7 @@ import { COUNTRIES, fame, type Country } from '../data';
 import { rng, hash, todayKey, shuffle } from './rng';
 import { makeQuestion, eligible, type Question, type Variant } from './questions';
 
-export const DAILY_VARIANTS: Variant[] = ['shape', 'flag', 'photo', 'capital', 'map-find'];
+export const DAILY_VARIANTS: Variant[] = ['shape', 'flag', 'hint', 'capital', 'map-find'];
 
 /** Today's five questions — identical for every player (seeded by date). */
 export function dailyQuestions(day = todayKey()): Question[] {
@@ -15,7 +15,6 @@ export function dailyQuestions(day = todayKey()): Question[] {
     const c = shuffle(pool, r)[0];
     used.add(c.id);
     const q = makeQuestion(c.id, v, { choices: 4, r });
-    q.photo = Math.floor(r() * 100);
     return q;
   });
 }

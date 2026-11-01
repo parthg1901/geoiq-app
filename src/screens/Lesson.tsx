@@ -174,7 +174,7 @@ function Meet({ unit, color, onStart }: { unit: Unit; color: string; onStart: ()
 /** Commons captions often trail into camera notes — keep just the description. */
 const firstSentence = (t: string) => (t.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? t).trim();
 
-/** One real photo from the country — the kind of scene Street Eye asks about. */
+/** One real photo from the country — what the place actually looks like. */
 function MeetPhoto({ id }: { id: string }) {
   const [p, setP] = useState<Photo | null>(null);
   useEffect(() => { let live = true; setP(null); loadPhotos(id).then((l) => live && setP(l[0] ?? null)); return () => { live = false; }; }, [id]);

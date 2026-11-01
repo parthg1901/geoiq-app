@@ -3,7 +3,7 @@
  * device running the same app version. Nothing here may use Math.random — every choice comes from
  * the seeded rng, and all data comes from files bundled in the app.
  */
-import { COUNTRIES, fame, loadPhotos, type Country } from '../../data';
+import { COUNTRIES, fame, type Country } from '../../data';
 import { makeQuestion, eligible, type Question, type Variant } from '../questions';
 import { rng as seeded, shuffle } from '../rng';
 import { loadPack, loadPackIndex, type PackData, type PackItem, type PackMode } from '../packs';
@@ -19,14 +19,13 @@ export interface TopicMeta { topic: Topic; label: string; emoji: string; group: 
 
 /** World quiz topics and the country-quiz variants each one draws from. */
 const WORLD: Record<string, { label: string; emoji: string; variants: Variant[] }> = {
-  mix: { label: 'Grand Tour (everything)', emoji: '🧭', variants: ['shape', 'flag', 'map-find', 'capital', 'photo', 'flag-rev', 'map-name', 'arms'] },
+  mix: { label: 'Grand Tour (everything)', emoji: '🧭', variants: ['shape', 'flag', 'map-find', 'capital', 'flag-rev', 'map-name', 'arms'] },
   shape: { label: 'Country shapes', emoji: '◆', variants: ['shape'] },
   twist: { label: 'Twisted shapes (rotated)', emoji: '🌀', variants: ['shape-twist'] },
   flag: { label: 'Flags', emoji: '⚑', variants: ['flag', 'flag-rev'] },
   capital: { label: 'Capitals', emoji: '★', variants: ['capital', 'capital-rev'] },
   map: { label: 'Map: find it / name it', emoji: '⌖', variants: ['map-find', 'map-name'] },
   arms: { label: 'Coats of arms', emoji: '🛡️', variants: ['arms'] },
-  photo: { label: 'Street Eye photos', emoji: '📸', variants: ['photo'] },
 };
 
 export const WORLD_TOPICS: TopicMeta[] = Object.entries(WORLD).map(([k, v]) => ({ topic: `world:${k}`, label: v.label, emoji: v.emoji, group: 'World' }));
@@ -82,13 +81,11 @@ async function worldQuestions(mode: string, seed: number, rounds: number): Promi
     let pick: Country | undefined;
     for (const c of [...band, ...shuffle(pool, r)]) {
       if (used.has(c.id) || !eligible(c, v)) continue;
-      if (v === 'photo' && !(await loadPhotos(c.id)).length) continue;
       pick = c; break;
     }
     if (!pick) continue;
     used.add(pick.id);
     const q = makeQuestion(pick.id, v, { choices: 4, r });
-    if (v === 'photo') q.photo = Math.floor(r() * 100);
     out.push({ kind: 'world', q });
   }
   return out;

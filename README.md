@@ -34,7 +34,7 @@ Android app (Capacitor) and installable web app (PWA). Works offline for solo pl
 
 **Play**
 - **Core modes:** Shape Shifter, Flag Frenzy, Pin It (map), Capital Gains and Coat of Arms.
-- **Deduction:** the Clue Ladder (fewer clues, more points) and Street Eye (guess from real photos).
+- **Deduction:** the Clue Ladder (fewer clues, more points).
 - **Harder variants:** Twisted Shapes (rotated) and Shape Rush (60-second time attack).
 - **Specials:** a Daily Challenge (the same 5 questions for everyone, with a shareable emoji grid), Hot & Cold (find the mystery country by distance) and Borderline (walk from A to B across land borders).
 - **Multiplayer:** live rooms for 2–8 players with a 4-letter code (everyone gets the same question at once, faster correct answers score more, live scoreboard and podium, duel rating, room chat with quick reactions), and async challenges: play a round, share a `GEO-XXXX` code, and compare scores when friends play the same questions.

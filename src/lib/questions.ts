@@ -9,12 +9,11 @@ export type Variant =
   | 'arms' // name the coat of arms / national emblem / seal
   | 'capital' | 'capital-rev' // name the capital / which country has this capital
   | 'map-find' | 'map-name' // click it on the map / name the highlighted country
-  | 'hint' // clue ladder
-  | 'photo'; // street eye
+  | 'hint'; // clue ladder
 
 export const VARIANT_SKILL: Record<Variant, Skill> = {
   shape: 'shape', 'shape-twist': 'shape', flag: 'flag', 'flag-rev': 'flag', arms: 'flag', capital: 'capital', 'capital-rev': 'capital',
-  'map-find': 'map', 'map-name': 'map', hint: 'hint', photo: 'photo',
+  'map-find': 'map', 'map-name': 'map', hint: 'hint',
 };
 
 export interface Question {
@@ -23,7 +22,6 @@ export interface Question {
   choices?: string[]; // country ids (or for capital, still country ids — rendered as capitals)
   format: Format;
   rotate?: number;
-  photo?: number; // index into photos list
 }
 
 /** Pool filter so every variant only asks fair questions. */
@@ -53,7 +51,7 @@ export function distractors(id: string, n: number, v: Variant, r = Math.random):
 export function makeQuestion(id: string, v: Variant, opts: { choices?: 4 | 6 | 0; r?: () => number } = {}): Question {
   const r = opts.r ?? Math.random;
   const nChoices = opts.choices ?? 4;
-  const typedOk = v === 'shape' || v === 'shape-twist' || v === 'flag' || v === 'arms' || v === 'photo' || v === 'capital-rev' || v === 'map-name';
+  const typedOk = v === 'shape' || v === 'shape-twist' || v === 'flag' || v === 'arms' || v === 'capital-rev' || v === 'map-name';
   const q: Question = { variant: v, id, format: 'choice4' };
   if (v === 'map-find') q.format = 'map';
   else if (v === 'hint') q.format = 'partial';

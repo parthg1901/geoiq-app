@@ -1,7 +1,7 @@
 {
   "name": "geonaut",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Geonaut — learn the world's countries, regions, rivers and history maps, and measure your geography IQ",
   "license": "GPL-3.0-or-later",
   "repository": {

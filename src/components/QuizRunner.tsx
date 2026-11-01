@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { BY_ID, ARMS, ARMS_WORD, loadPhotos, type Photo } from '../data';
+import { BY_ID, ARMS, ARMS_WORD } from '../data';
 import { useGame, type AnswerResult } from '../lib/store';
 import { VARIANT_SKILL, hintsFor, type Question } from '../lib/questions';
 import { iqScore, tierFor } from '../lib/iq';
@@ -37,12 +37,6 @@ export interface QuizConfig {
   progress?: { index: number; total: number };
   /** called when the player quits via ✕ (default: finish if answered, else back to /play) */
   onQuit?: () => void;
-}
-
-function usePhotos(id: string) {
-  const [p, setP] = useState<Photo[] | null>(null);
-  useEffect(() => { let live = true; loadPhotos(id).then((x) => live && setP(x)); return () => { live = false; }; }, [id]);
-  return p;
 }
 
 export function QuizRunner(cfg: QuizConfig) {
@@ -106,7 +100,6 @@ export function QuizRunner(cfg: QuizConfig) {
       setCombo(c); setBestCombo((b) => Math.max(b, c));
       sfx.right(c); buzz(12);
       if (c > 0 && c % 10 === 0) confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 }, colors: ['#ffb547', '#ff6b5e', '#3ddc97'] });
-      if (q.variant === 'photo') bump('photoRight');
       if (q.variant === 'shape-twist') bump('twistRight');
     } else {
       setCombo(0); sfx.wrong(); buzz([30, 40, 30]); shake();
@@ -292,8 +285,6 @@ export function QuestionView({ q, locked, onAnswer, regionFocus, rush }: {
     }
     case 'hint':
       return <HintLadder q={q} locked={locked} onAnswer={onAnswer} />;
-    case 'photo':
-      return <PhotoQ q={q} locked={locked} onAnswer={onAnswer} answerArea={answerArea} picked={picked} />;
   }
 }
 
@@ -399,47 +390,6 @@ function HintLadder({ q, locked, onAnswer }: { q: Question; locked: boolean; onA
         {!locked && !over && <button className="btn btn-ghost w-full !py-2.5 text-sm" onClick={next}>{shown < stages ? 'Reveal next clue (−points)' : 'Give up'}</button>}
       </div>
     </div>
-  );
-}
-
-/* -------- Street Eye: photo -------- */
-function PhotoQ({ q, locked, onAnswer, answerArea, picked }: {
-  q: Question; locked: boolean; onAnswer: (o: number, g?: string | null) => void; answerArea: (r?: 'name') => React.ReactNode; picked: string | null;
-}) {
-  const photos = usePhotos(q.id);
-  const list = useMemo(() => {
-    const l = photos ?? [];
-    // deterministic-ish shuffle per question
-    return [...l].sort((a, b) => ((a.u.length * 31 + (q.photo ?? 0)) % 7) - ((b.u.length * 31 + (q.photo ?? 0)) % 7));
-  }, [photos, q.id, q.photo]);
-  const [i, setI] = useState(0);
-  const [loaded, setLoaded] = useState(false);
-  const p = list[i % Math.max(1, list.length)];
-  void onAnswer; void picked;
-  return (
-    <Body answer={answerArea()}>
-      <div className="text-center text-mist text-sm uppercase tracking-[.18em] font-semibold my-2">Where was this photo taken?</div>
-      <div className="kb-photo relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-3xl overflow-hidden border border-line bg-deep">
-        {!p && <div className="absolute inset-0 grid place-items-center text-mist">Loading photo…</div>}
-        {p && (
-          <motion.img key={p.u} src={p.u} alt="mystery place" onLoad={() => setLoaded(true)}
-            initial={{ scale: 1.15, opacity: 0 }} animate={{ scale: 1, opacity: loaded ? 1 : 0 }} transition={{ duration: 6, ease: 'easeOut', opacity: { duration: 0.4 } }}
-            className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
-        )}
-        {p && !loaded && <div className="absolute inset-0 grid place-items-center text-mist animate-pulse">Developing photo…</div>}
-        {!locked && list.length > 1 && (
-          <div className="absolute right-3 bottom-3">
-            <button className="chip !bg-black/60 !text-sm !py-1.5 !px-3" onClick={() => { setLoaded(false); setI((x) => x + 1); sfx.hint(); }}>Another angle ↻</button>
-          </div>
-        )}
-      </div>
-      {locked && p && (
-        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="mt-2 px-1">
-          <p className="text-[15px] leading-snug text-paper/90 break-words">{p.c || 'Photo'}</p>
-          <p className="text-[13px] text-mist mt-0.5 break-words">📷 {p.a || 'Unknown'}{p.l ? ` · ${p.l}` : ''} · Wikimedia Commons</p>
-        </motion.div>
-      )}
-    </Body>
   );
 }
 

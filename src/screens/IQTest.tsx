@@ -11,7 +11,7 @@ import { QuizRunner, type QuizResult } from '../components/QuizRunner';
 import { CountUp, Progress } from '../components/ui';
 import { sfx } from '../lib/sound';
 
-const TEST_SKILLS: Skill[] = ['shape', 'flag', 'map', 'capital', 'hint', 'photo'];
+const TEST_SKILLS: Skill[] = ['shape', 'flag', 'map', 'capital', 'hint'];
 const PER_SKILL = 4;
 const TOTAL = TEST_SKILLS.length * PER_SKILL;
 
@@ -22,7 +22,6 @@ function variantFor(skill: Skill): Variant {
     case 'map': return 'map-find';
     case 'capital': return Math.random() < 0.6 ? 'capital' : 'capital-rev';
     case 'hint': return 'hint';
-    case 'photo': return 'photo';
   }
 }
 

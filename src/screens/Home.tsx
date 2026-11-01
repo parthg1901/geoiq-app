@@ -194,7 +194,7 @@ export default function Home() {
           { to: '/play/rush', t: 'Shape Rush', d: '60s time attack', e: '⚡', c: '#ffb547' },
           { to: '/hotcold', t: 'Hot & Cold', d: 'Find the mystery country', e: '🌡️', c: '#ff6b5e' },
           { to: '/borderline', t: 'Borderline', d: 'Walk across borders', e: '🛤️', c: '#3ddc97' },
-          { to: '/play/photo', t: 'Street Eye', d: 'Guess from photos', e: '📸', c: '#53b8ff' },
+          { to: '/play/hint', t: 'Clue Ladder', d: 'Fewer clues, more points', e: '🕵️', c: '#53b8ff' },
           { to: '/crossword', t: 'Crosswords', d: 'Daily grid or your own topics', e: '🧩', c: '#b48cff' },
           { to: '/packs', t: 'Explore packs', d: 'States, rivers, history, languages', e: '🗺️', c: '#3ddc97' },
         ].map((m) => (
