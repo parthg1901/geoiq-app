@@ -35,11 +35,13 @@ export default function Friends() {
   useEffect(() => {
     if (!social) return;
     void refresh();
-    // Keep requests and the board fresh while the page is open (and when the app comes back).
-    const poll = () => { if (document.visibilityState === 'visible') void publish().then(() => loadBoard()).catch(() => {}); };
-    const t = setInterval(poll, 30_000);
-    document.addEventListener('visibilitychange', poll);
-    return () => { clearInterval(t); document.removeEventListener('visibilitychange', poll); };
+    // While open, only check for new friend requests each minute (one request). The board costs
+    // 1 + friends requests, so it reloads only when you come back to the app or tap Refresh.
+    const poll = () => { if (document.visibilityState === 'visible') void publish().catch(() => {}); };
+    const back = () => { if (document.visibilityState === 'visible') void loadBoard().catch(() => {}); }; // initSocial republishes on resume
+    const t = setInterval(poll, 60_000);
+    document.addEventListener('visibilitychange', back);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', back); };
   }, [social?.pid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const create = async () => {
