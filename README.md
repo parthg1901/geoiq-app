@@ -2,7 +2,9 @@
 
 Learn the world the way geography YouTubers know it: every country by its **shape**, **flag**, **place on the map**, **capital**, **clues** and **real photos**. Then go further, to states and provinces, rivers, seas, mountains and the world map through history. Your geography **IQ** tracks how good you really are: an IQ-style score where 100 is average and 15 points is one standard deviation.
 
-Android app (Capacitor) and installable web app (PWA). Fully offline apart from photos.
+**▶ Play in your browser: [geonaut.parthg.dev](https://geonaut.parthg.dev)** · **📱 Android: [latest APK](https://github.com/parthg1901/geonaut/releases/latest)**
+
+Android app (Capacitor) and installable web app (PWA). Works offline for solo play; multiplayer, friends and sync need a connection.
 
 <p>
   <img src="docs/screenshots/home.jpg" width="200" alt="Home: IQ score, streak and daily check-in">
