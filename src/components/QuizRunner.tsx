@@ -55,7 +55,10 @@ export function QuizRunner(cfg: QuizConfig) {
   const [last, setLast] = useState<{ outcome: number; res: AnswerResult } | null>(null);
   const [combo, setCombo] = useState(0);
   const [bestCombo, setBestCombo] = useState(0);
-  const [shake, setShake] = useState(0);
+  // Replay the shake animation by toggling the class — re-keying would remount the question and wipe
+  // its state (e.g. the map's wrong taps and revealed answer behind the reveal sheet).
+  const shakeRef = useRef<HTMLDivElement>(null);
+  const shake = () => { const el = shakeRef.current; if (!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
   const [timeLeft, setTimeLeft] = useState(cfg.rush ?? 0);
   const startIQ = useRef(geoIQ(useGame.getState().ratings).iq);
   const t0 = useRef(performance.now());
@@ -106,7 +109,7 @@ export function QuizRunner(cfg: QuizConfig) {
       if (q.variant === 'photo') bump('photoRight');
       if (q.variant === 'shape-twist') bump('twistRight');
     } else {
-      setCombo(0); sfx.wrong(); buzz([30, 40, 30]); setShake((x) => x + 1);
+      setCombo(0); sfx.wrong(); buzz([30, 40, 30]); shake();
     }
     if (res.stamp) { stamps.current.push(q.id); setTimeout(() => sfx.stamp(), 300); }
     if (res.levelUp) { setTimeout(() => { sfx.level(); toast({ icon: '⬆️', title: 'Level up!', body: 'New level reached — keep going.' }); }, 400); }
@@ -168,7 +171,7 @@ export function QuizRunner(cfg: QuizConfig) {
         {cfg.rush && <span className="display font-bold text-mint">{results.filter((r) => r.outcome >= 0.6).length} ✓</span>}
       </div>
 
-      <div key={shake} className={`flex-1 flex flex-col ${shake ? 'shake' : ''}`}>
+      <div ref={shakeRef} className="flex-1 flex flex-col">
         <QuestionView key={idx + ':' + q.id + q.variant} q={q} locked={phase !== 'ask'} onAnswer={record} regionFocus={cfg.regionFocus} rush={!!cfg.rush} />
       </div>
 

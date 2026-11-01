@@ -113,3 +113,7 @@ body::after { bottom: 0; height: var(--sab); z-index: 5; } /* above page content
 .kb-open .kb-prompt { min-height: 0 !important; padding-top: 0; padding-bottom: 0; }
 .kb-open .kb-media { max-height: 26dvh !important; width: auto !important; }
 .kb-open .kb-photo { aspect-ratio: auto !important; height: 28dvh !important; }
+
+/* Language/script samples: the system UI font (Android ships Noto for every script) so Arabic, Devanagari,
+   Thai, Georgian… render and shape correctly; Latin samples keep their diacritics legible. */
+.sample-text { font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Devanagari', 'Noto Sans Thai', 'Noto Sans CJK SC', 'Noto Sans Ethiopic', sans-serif; font-feature-settings: normal; }

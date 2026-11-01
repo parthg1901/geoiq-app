@@ -45,8 +45,8 @@ export default function PlayHub() {
       </div>
 
       <SectionTitle sub={<button className="text-sky" onClick={() => go('/packs')}>All packs →</button>}>Explore more</SectionTitle>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {(['regions', 'physical', 'history'] as const).map((g) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {(['regions', 'physical', 'history', 'culture'] as const).map((g) => (
           <button key={g} onClick={() => go('/packs')} className="card p-4 text-left flex sm:flex-col items-center sm:items-start gap-3 hover:border-amber/60 transition-colors">
             <span className="text-3xl">{GROUP_META[g].emoji}</span>
             <span><span className="display font-bold block">{GROUP_META[g].title}</span><span className="text-sm text-mist">{GROUP_META[g].blurb}</span></span>

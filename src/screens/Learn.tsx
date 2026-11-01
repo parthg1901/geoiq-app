@@ -177,7 +177,7 @@ function MoreToLearn() {
   return (
     <section className="mt-10">
       <h2 className="display text-2xl font-extrabold">More to learn</h2>
-      <p className="text-mist text-sm mt-1">States and provinces, rivers, seas, mountains and history maps — each pack has flashcards, then quizzes.</p>
+      <p className="text-mist text-sm mt-1">States and provinces, rivers, seas, mountains, history maps, languages and scripts — each pack has flashcards, then quizzes.</p>
       {groups.map((g) => (
         <div key={g} className="mt-5">
           <div className="display font-bold flex items-center gap-2">{GROUP_META[g].emoji} {GROUP_META[g].title}</div>

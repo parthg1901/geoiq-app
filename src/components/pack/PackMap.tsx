@@ -8,7 +8,9 @@ import { select } from 'd3-selection';
 import 'd3-transition';
 import { feature } from 'topojson-client';
 import type { Feature, FeatureCollection, Geometry } from 'geojson';
-import type { PackData, PackProjection } from '../../lib/packs';
+import type { PackData, PackItem, PackProjection } from '../../lib/packs';
+import { BY_ID } from '../../data';
+import { WorldMap, type MapHandle } from '../WorldMap';
 
 type F = Feature<Geometry> & { id: string };
 const W = 960, BASE_H = 600;
@@ -80,6 +82,13 @@ export interface PackMapHandle { zoomTo: (ids: string[] | null, pad?: number) =>
 
 export interface PackMapProps {
   pack: PackData;
+  /** map: 'countries' packs — colours/labels per country (applied after item-level `fills`). */
+  countryFills?: Record<string, string>;
+  countryLabels?: Record<string, string>;
+  /** map: 'countries' packs — a tap on a country (ISO3). Item-level `onPick` is not used for these packs. */
+  onPickCountry?: (countryId: string) => void;
+  /** countries-packs: frame these countries directly (overrides `focus`). */
+  countryFocus?: string[] | null;
   fills?: Record<string, string>;
   defaultFill?: string;
   onPick?: (id: string) => void;
@@ -93,8 +102,67 @@ export interface PackMapProps {
   className?: string;
 }
 
+/** True for packs whose items are sets of today's countries (drawn on the standard world map). */
+export const isCountriesPack = (pack: PackData) => pack.meta.map === 'countries';
+
+/** Ids of items that can be shown on this pack's map (geometry, or countries for countries-packs). */
+const mapIdCache = new WeakMap<PackData, Set<string>>();
+export function mapIds(pack: PackData): Set<string> {
+  let v = mapIdCache.get(pack);
+  if (!v) {
+    v = isCountriesPack(pack)
+      ? new Set(pack.items.filter((it) => (it.regions ?? []).some((c) => BY_ID[c])).map((it) => it.id))
+      : new Set(packFeatures(pack).items.map((f) => f.id));
+    mapIdCache.set(pack, v);
+  }
+  return v;
+}
+
+/** Countries (ISO3, known to the app) that an item covers. */
+export const regionsOf = (it: PackItem | undefined) => (it?.regions ?? []).filter((c) => BY_ID[c]);
+
 /** Interactive SVG map for any content pack: polygons fill, rivers stroke, peaks are markers. */
-export const PackMap = forwardRef<PackMapHandle, PackMapProps>(function PackMap(
+export const PackMap = forwardRef<PackMapHandle, PackMapProps>(function PackMap(props, ref) {
+  return isCountriesPack(props.pack) ? <CountriesPackMap {...props} ref={ref} /> : <OwnPackMap {...props} ref={ref} />;
+});
+
+/**
+ * Countries-mode map: the standard world map, with item-level props translated to their countries.
+ * Items can overlap (English & French both include Canada): later fills win, then `countryFills`.
+ */
+const CountriesPackMap = forwardRef<PackMapHandle, PackMapProps>(function CountriesPackMap(
+  { pack, fills = {}, countryFills, countryLabels, onPickCountry, countryFocus, highlight, pulse = [], focus, labels, interactive = true, defaultFill, className = '' },
+  ref,
+) {
+  const byId = useMemo(() => Object.fromEntries(pack.items.map((i) => [i.id, i])), [pack]);
+  const inner = useRef<MapHandle>(null);
+  const toCountries = (ids: string[] | null | undefined) => (ids ? [...new Set(ids.flatMap((id) => regionsOf(byId[id])))] : null);
+  useImperativeHandle(ref, () => ({ zoomTo: (ids, pad) => inner.current?.zoomTo(toCountries(ids), pad) }));
+  const cfills = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const [id, col] of Object.entries(fills)) for (const c of regionsOf(byId[id])) out[c] = col;
+    if (highlight && !fills[highlight]) for (const c of regionsOf(byId[highlight])) out[c] ??= pack.meta.color;
+    return { ...out, ...countryFills };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fills, countryFills, highlight, byId]);
+  const cpulse = useMemo(() => toCountries(pulse) ?? [], [pulse.join(','), byId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cfocus = useMemo(() => toCountries(focus), [focus?.join(','), byId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Item labels sit on the item's largest country.
+  const clabels = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const [id, text] of Object.entries(labels ?? {})) {
+      const big = regionsOf(byId[id]).sort((a, b) => (BY_ID[b].area ?? 0) - (BY_ID[a].area ?? 0))[0];
+      if (big) out[big] = text;
+    }
+    return { ...out, ...countryLabels };
+  }, [labels, countryLabels, byId]);
+  return (
+    <WorldMap ref={inner} className={className} fills={cfills} defaultFill={defaultFill ?? '#22355f'} labels={clabels}
+      onPick={onPickCountry} pulse={cpulse} focus={countryFocus ?? cfocus} interactive={interactive} />
+  );
+});
+
+const OwnPackMap = forwardRef<PackMapHandle, PackMapProps>(function OwnPackMap(
   { pack, fills = {}, defaultFill, onPick, highlight, pulse = [], focus, labels, interactive = true, only, className = '' },
   ref,
 ) {
@@ -268,9 +336,21 @@ const centCache = new WeakMap<PackData, Record<string, [number, number]>>();
 export function itemCentroids(pack: PackData): Record<string, [number, number]> {
   const hit = centCache.get(pack);
   if (hit) return hit;
+  const out: Record<string, [number, number]> = {};
+  if (isCountriesPack(pack)) {
+    // Population-weighted-ish centre: area-weighted mean of the item's countries' centres.
+    for (const it of pack.items) {
+      const cs = regionsOf(it).map((c) => BY_ID[c]);
+      if (!cs.length) continue;
+      const w = cs.map((c) => Math.sqrt(c.area || 1));
+      const tot = w.reduce((a, b) => a + b, 0);
+      out[it.id] = [cs.reduce((a, c, i) => a + c.latlng[1] * w[i], 0) / tot, cs.reduce((a, c, i) => a + c.latlng[0] * w[i], 0) / tot];
+    }
+    centCache.set(pack, out);
+    return out;
+  }
   const { items } = packFeatures(pack);
   const p = geoPath();
-  const out: Record<string, [number, number]> = {};
   for (const f of items) {
     if (isPoint(f.geometry)) out[f.id] = pointCoord(f.geometry);
     else { const c = p.centroid(f); if (isFinite(c[0])) out[f.id] = c as [number, number]; }

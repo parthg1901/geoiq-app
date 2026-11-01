@@ -8,7 +8,7 @@ import { PackMap } from './PackMap';
 const fmtNum = (n: number) => n.toLocaleString();
 
 /** Everything we know about one pack item: picture, numbers, facts, blurb. */
-export function ItemFacts({ pack, it }: { pack: PackData; it: PackItem }) {
+export function ItemFacts({ pack, it, hideSample = false }: { pack: PackData; it: PackItem; hideSample?: boolean }) {
   const rows: [string, string][] = [];
   if (it.capital) rows.push(['Capital', it.capital]);
   if (it.rank) rows.push([it.rank.label, `${fmtNum(it.rank.value)} ${it.rank.unit}`]);
@@ -36,6 +36,9 @@ export function ItemFacts({ pack, it }: { pack: PackData; it: PackItem }) {
           {it.kind && <div className="text-sm text-mist capitalize">{it.kind}</div>}
         </div>
       </div>
+      {/* Languages & scripts: the text and how to recognise it come first — that's what you learn here. */}
+      {it.sample?.text && !hideSample && <SampleText it={it} className="mt-3 text-lg" />}
+      {it.tells && it.tells.length > 0 && <Tells tells={it.tells} />}
       {rows.length > 0 && (
         <div className="grid grid-cols-2 gap-2 mt-3">
           {rows.map(([k, v]) => (
@@ -50,6 +53,32 @@ export function ItemFacts({ pack, it }: { pack: PackData; it: PackItem }) {
       {it.wiki && (
         <a className="inline-block mt-2 text-sky font-semibold" target="_blank" rel="noreferrer" href={`https://en.wikipedia.org/wiki/${encodeURIComponent(it.wiki.replace(/ /g, '_'))}`}>Read more on Wikipedia →</a>
       )}
+    </div>
+  );
+}
+
+/** A text sample (e.g. UDHR Article 1) set in the system font so every script renders and shapes correctly. */
+/** hideSource: during a question the source can give the answer away ("Berber" → Tifinagh). */
+export function SampleText({ it, className = '', big = false, hideSource = false }: { it: PackItem; className?: string; big?: boolean; hideSource?: boolean }) {
+  if (!it.sample?.text) return null;
+  return (
+    <figure className={`rounded-2xl bg-paper/5 border border-line/60 px-4 py-3 ${className}`}>
+      <blockquote dir={it.sample.dir ?? 'auto'} lang={it.sample.lang} className={`sample-text leading-relaxed text-paper break-words ${big ? 'text-[1.35rem] sm:text-2xl' : ''}`}>
+        {it.sample.text}
+      </blockquote>
+      {it.sample.source && <figcaption className="text-xs text-mist mt-2">{hideSource ? it.sample.source.replace(/\s*\(.*\)\s*$/, '') : it.sample.source}</figcaption>}
+    </figure>
+  );
+}
+
+/** "How to spot it": the telltale letters / features of a language or script. */
+export function Tells({ tells, className = 'mt-3' }: { tells: string[]; className?: string }) {
+  return (
+    <div className={`rounded-2xl border border-amber/30 bg-amber/5 px-4 py-3 ${className}`}>
+      <div className="text-xs uppercase tracking-wide font-bold text-amber">How to spot it</div>
+      <ul className="mt-1.5 space-y-1">
+        {tells.map((t) => <li key={t} className="flex gap-2 leading-snug"><span className="text-amber">•</span><span className="break-words">{t}</span></li>)}
+      </ul>
     </div>
   );
 }

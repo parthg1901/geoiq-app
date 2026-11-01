@@ -1,3 +1,4 @@
+import { regionFrame } from '../../lib/path';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -8,10 +9,11 @@ import { onBack } from '../../lib/native';
 import { checkAchievements } from '../../lib/achievements';
 import { toast } from '../Toasts';
 import { CountUp, Progress } from '../ui';
-import { PackMap, itemCentroids } from './PackMap';
-import { ItemFacts, ItemSheet } from './ItemSheet';
+import { PackMap, itemCentroids, isCountriesPack, regionsOf } from './PackMap';
+import { BY_ID } from '../../data';
+import { ItemFacts, ItemSheet, SampleText } from './ItemSheet';
 import { PackTypeAnswer } from './PackAnswer';
-import { buildSession, MODE_META, type PackQuestion } from './questions';
+import { buildSession, modeMeta, sampleWord, type PackQuestion } from './questions';
 
 interface Result { q: PackQuestion; outcome: number }
 
@@ -25,7 +27,10 @@ export function PackQuiz({ pack, mode, typed = false, onExit }: { pack: PackData
   const [last, setLast] = useState<{ outcome: number; xp: number } | null>(null);
   const [combo, setCombo] = useState(0);
   const [bestCombo, setBestCombo] = useState(0);
-  const [shake, setShake] = useState(0);
+  // Replay the shake animation by toggling the class — remounting would reset the question's state
+  // (e.g. the find map's wrong taps and the revealed answer).
+  const shakeRef = useRef<HTMLDivElement>(null);
+  const shake = () => { const el = shakeRef.current; if (!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
   const xpTotal = useRef(0);
   const t0 = useRef(performance.now());
   const byId = useMemo(() => Object.fromEntries(pack.items.map((i) => [i.id, i])), [pack]);
@@ -51,7 +56,7 @@ export function PackQuiz({ pack, mode, typed = false, onExit }: { pack: PackData
     if (outcome >= 0.6) {
       const c = combo + 1; setCombo(c); setBestCombo((b) => Math.max(b, c)); sfx.right(c); buzz(12);
       if (c % 10 === 0) confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
-    } else { setCombo(0); sfx.wrong(); buzz([30, 40, 30]); setShake((x) => x + 1); }
+    } else { setCombo(0); sfx.wrong(); buzz([30, 40, 30]); shake(); }
     if (res.levelUp) setTimeout(() => { sfx.level(); toast({ icon: '⬆️', title: 'Level up!' }); }, 400);
     setResults((r) => [...r, { q, outcome }]);
     setLast({ outcome, xp: res.xp });
@@ -80,7 +85,7 @@ export function PackQuiz({ pack, mode, typed = false, onExit }: { pack: PackData
       </div>
     );
   }
-  if (phase === 'done') return <Summary pack={pack} results={results} xp={xpTotal.current} bestCombo={bestCombo} onExit={onExit} onAgain={restart} title={MODE_META[mode].title} />;
+  if (phase === 'done') return <Summary pack={pack} results={results} xp={xpTotal.current} bestCombo={bestCombo} onExit={onExit} onAgain={restart} title={modeMeta(pack, mode).title} />;
 
   return (
     <div className="min-h-dvh flex flex-col relative">
@@ -90,10 +95,10 @@ export function PackQuiz({ pack, mode, typed = false, onExit }: { pack: PackData
         <span className="mono text-sm text-mist w-12 text-right">{idx + 1}/{qs.length}</span>
       </div>
       <div className="mx-auto w-full max-w-2xl px-4 h-8 flex items-center justify-between">
-        <span className="text-xs uppercase tracking-[.18em] text-mist font-semibold">{pack.meta.title} · {MODE_META[mode].title}</span>
+        <span className="text-xs uppercase tracking-[.18em] text-mist font-semibold">{pack.meta.title} · {modeMeta(pack, mode).title}</span>
         {combo >= 2 && <span className="display font-extrabold text-amber"><span className="flame">🔥</span> {combo} combo</span>}
       </div>
-      <div key={shake} className={`flex-1 flex flex-col ${shake ? 'shake' : ''}`}>
+      <div ref={shakeRef} className="flex-1 flex flex-col">
         <Ask key={idx + q.id} pack={pack} q={q} locked={phase !== 'ask'} onAnswer={record} byId={byId} />
       </div>
       <AnimatePresence>
@@ -123,7 +128,7 @@ export function PackQuiz({ pack, mode, typed = false, onExit }: { pack: PackData
                   <PackMap pack={pack} interactive={false} highlight={q.id} fills={{ [q.id]: pack.meta.color }} focus={[q.id]} className="absolute inset-0" />
                 </div>
               )}
-              <ItemFacts pack={pack} it={byId[q.id]} />
+              <ItemFacts pack={pack} it={byId[q.id]} hideSample={q.mode === 'sample'} />
               <button className={`btn w-full mt-3 ${last.outcome >= 0.6 ? 'btn-mint' : 'btn-primary'}`} onClick={next}>
                 {idx + 1 >= qs.length ? 'See results' : 'Continue'} →
               </button>
@@ -155,6 +160,8 @@ export function Ask({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: Pa
   ) : null;
 
   const kicker = (t: string) => <div className="text-center text-mist text-sm uppercase tracking-[.16em] font-semibold my-3">{t}</div>;
+
+  if (q.mode === 'find' && isCountriesPack(pack)) return <FindCountries pack={pack} q={q} locked={locked} onAnswer={onAnswer} byId={byId} />;
 
   if (q.mode === 'find') {
     const maxTries = 3;
@@ -194,7 +201,7 @@ export function Ask({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: Pa
           <PackMap pack={pack} interactive fills={{ [q.id]: picked ? (picked === q.id ? 'var(--color-mint)' : 'var(--color-rose)') : 'var(--color-amber)' }}
             highlight={q.id} pulse={[q.id]} focus={neighbourhood(pack, q.id)} className="absolute inset-0" />
         </div>
-        {kicker(`Name the highlighted ${it.kind ?? 'place'}`)}
+        {kicker(isCountriesPack(pack) ? `Which ${sampleWord(pack)} is ${sampleWord(pack) === 'script' ? 'used' : 'official'} in the countries lit up?` : `Name the highlighted ${it.kind ?? 'place'}`)}
         <div className="pt-1">{answer}</div>
       </div>
     );
@@ -204,7 +211,7 @@ export function Ask({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: Pa
     const label = it.rank!.label.toLowerCase();
     return (
       <div className="flex-1 flex flex-col mx-auto w-full max-w-2xl px-4 pb-6">
-        {kicker(`Which has the greater ${label}?`)}
+        {kicker(/speaker|user|people/.test(label) ? `Which has more ${label}?` : `Which has the greater ${label}?`)}
         <div className="grid grid-cols-2 gap-3 flex-1 max-h-[60dvh]">
           {q.pair.map((id) => {
             const st = !picked ? 'idle' : id === q.id ? 'right' : id === picked ? 'wrong' : 'dim';
@@ -221,6 +228,20 @@ export function Ask({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: Pa
             );
           })}
         </div>
+      </div>
+    );
+  }
+
+  if (q.mode === 'sample') {
+    return (
+      <div className="flex-1 flex flex-col mx-auto w-full max-w-2xl px-4 pb-6">
+        <div className="flex-1 flex flex-col justify-center min-h-[30dvh] py-2">
+          {kicker(`Which ${sampleWord(pack)} is this?`)}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <SampleText it={it} big hideSource className="kb-media !bg-panel2/70" />
+          </motion.div>
+        </div>
+        <div className="pt-3">{answer}</div>
       </div>
     );
   }
@@ -247,8 +268,56 @@ export function Ask({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: Pa
   );
 }
 
+/**
+ * Countries-packs: "tap a country where it's official". Any of the item's countries is right; up to
+ * three tries with decreasing credit; afterwards every country it covers lights up.
+ */
+function FindCountries({ pack, q, locked, onAnswer, byId }: { pack: PackData; q: PackQuestion; locked: boolean; onAnswer: (o: number) => void; byId: Record<string, PackData['items'][number]> }) {
+  const it = byId[q.id];
+  const regions = regionsOf(it);
+  const maxTries = 3;
+  const [wrong, setWrong] = useState<string[]>([]);
+  const [hit, setHit] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const onPick = (c: string) => {
+    if (locked || done || wrong.includes(c)) return;
+    if (regions.includes(c)) { setHit(c); setDone(true); onAnswer([1, 0.55, 0.25][wrong.length]); return; }
+    const w = [...wrong, c]; setWrong(w); sfx.wrong(); buzz(20);
+    if (w.length >= maxTries) { setDone(true); onAnswer(0); }
+  };
+  const countryFills: Record<string, string> = {};
+  if (done) for (const c of regions) countryFills[c] = hit ? 'var(--color-mint)' : 'var(--color-amber)';
+  for (const w of wrong) countryFills[w] = 'var(--color-rose)';
+  if (hit) countryFills[hit] = 'var(--color-mint)';
+  const countryLabels = Object.fromEntries(wrong.map((w) => [w, BY_ID[w]?.name ?? '']));
+  if (hit) countryLabels[hit] = BY_ID[hit]?.name ?? '';
+  const script = sampleWord(pack) === 'script';
+  // Like the country quiz: on phones, if every country it covers is on one continent, frame that
+  // continent (with a hint) instead of a tiny whole-world map.
+  const [narrow] = useState(() => window.innerWidth < 700);
+  const continents = [...new Set(regions.map((c) => BY_ID[c]?.region).filter(Boolean))];
+  const continent = narrow && continents.length === 1 ? continents[0] : null;
+  const frame = done ? null : continent ? regionFrame(continent) : null;
+  return (
+    <div className="flex-1 flex flex-col mx-auto w-full max-w-5xl px-2 sm:px-4 pb-4">
+      <div className="text-center my-2">
+        <div className="text-mist text-xs uppercase tracking-[.18em] font-semibold">{script ? 'Tap a country that uses' : "Tap a country where it's official"}</div>
+        <div className="display text-3xl font-extrabold break-words">{it.name}</div>
+        <div className="text-sm text-mist mt-1">
+          {regions.length > 1 ? `Any of ${regions.length} countries counts · ` : ''}{maxTries - wrong.length} {maxTries - wrong.length === 1 ? 'try' : 'tries'} left · {continent ? `somewhere in ${continent} · ` : ''}pinch to zoom
+        </div>
+      </div>
+      <div className="relative flex-1 min-h-[55dvh] rounded-3xl overflow-hidden border border-line">
+        <PackMap pack={pack} onPickCountry={onPick} countryFills={countryFills} countryLabels={countryLabels}
+          focus={done ? [q.id] : null} countryFocus={frame} pulse={done ? [q.id] : []} className="absolute inset-0" />
+      </div>
+    </div>
+  );
+}
+
 /** The item plus a few nearest items, for framing "name it" questions with context. */
 function neighbourhood(pack: PackData, id: string, n = 4) {
+  if (isCountriesPack(pack)) return [id]; // its own countries already frame it
   const c = itemCentroids(pack);
   const me = c[id];
   if (!me) return [id];

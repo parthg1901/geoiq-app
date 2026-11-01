@@ -11,7 +11,7 @@ export interface CwSource {
   key: string;
   title: string;
   emoji: string;
-  group: 'World' | 'Physical' | 'Regions' | 'History';
+  group: 'World' | 'Physical' | 'Regions' | 'History' | 'Culture';
   /** Pack id when the words come from a content pack. */
   pack?: string;
 }
@@ -38,6 +38,8 @@ export const CW_SOURCES: CwSource[] = [
   { key: 'h1914', title: '1914 · Eve of WWI', emoji: '⚔️', group: 'History', pack: 'h1914' },
   { key: 'h1945', title: '1945 · WWII ends', emoji: '🕊️', group: 'History', pack: 'h1945' },
   { key: 'h1815', title: '1815 · After Napoleon', emoji: '🎩', group: 'History', pack: 'h1815' },
+  { key: 'languages', title: 'Languages', emoji: '🗣️', group: 'Culture', pack: 'languages' },
+  { key: 'scripts', title: 'Scripts & alphabets', emoji: '🔤', group: 'Culture', pack: 'scripts' },
 ];
 export const CW_SOURCE_BY_KEY = Object.fromEntries(CW_SOURCES.map((s) => [s.key, s]));
 /** What "Random" mixes together. */
@@ -131,7 +133,14 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** Words of the answer, lower-cased (≥4 letters), to keep them out of its own clue. */
 const answerWords = (name: string) => new Set(name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z]+/).filter((w) => w.length >= 4));
 const overlaps = (text: string, words: Set<string>) => text.toLowerCase().split(/[^a-z]+/).some((w) => w.length >= 4 && [...words].some((a) => w.startsWith(a) || a.startsWith(w)));
-const NEUTRAL: Record<string, string> = { physical: 'feature', regions: 'region', history: 'state' };
+const NEUTRAL: Record<string, string> = { physical: 'feature', regions: 'region', history: 'state', culture: 'language' };
+/** "Portugal" vs PORTUGUESE, "Germany" vs GERMAN: names sharing a ≥5-letter start give the answer away. */
+const sharesStem = (a: string, b: string) => {
+  const x = toAnswer(a), y = toAnswer(b);
+  let i = 0; while (i < x.length && i < y.length && x[i] === y[i]) i++;
+  return i >= Math.min(5, x.length, y.length);
+};
+const listNames = (xs: string[]) => (xs.length > 3 ? `${xs.slice(0, 3).join(', ')} and others` : join(xs));
 
 function packClue(pack: PackData, it: PackItem, rng: () => number, display: string): CwClue {
   const names = [display, it.name, ...(it.alt ?? [])];
@@ -157,6 +166,21 @@ function packClue(pack: PackData, it: PackItem, rng: () => number, display: stri
       it.population ? cap(`${country} ${kindWord} of about ${fmt(it.population)} people`.trim()) : null,
       fact(it, 'Established') ? cap(`${country} ${kindWord} established in ${fact(it, 'Established')}`.trim()) : null,
     ];
+  } else if (group === 'culture') {
+    // Languages & scripts: where it's official (minus countries that share its name) and its telltale features.
+    const word = /script/i.test(pack.meta.id) ? 'Writing system' : 'Language';
+    const countries = (it.regions ?? []).map((c) => BY_ID[c]).filter(Boolean).sort((a, b) => fame(b) - fame(a));
+    const safe = countries.filter((c) => !sharesStem(c.name, display) && !(c.demonym && sharesStem(c.demonym, display))).map((c) => c.name);
+    const tell = it.tells?.[0];
+    const speakers = it.rank && /speak/i.test(it.rank.label) ? `${fmt(it.rank.value)} ${it.rank.unit}`.trim() : null;
+    opts = [
+      safe.length ? `${word} ${/script/i.test(pack.meta.id) ? 'used' : 'official'} in ${listNames(safe)}` : null,
+      safe.length > 4 ? `${word} official in ${countries.length} countries, including ${listNames(safe.slice(0, 2))}` : null,
+      tell ? `${word} you can spot by: ${tell}` : null,
+      speakers && safe.length ? `${word} of ${speakers}, official in ${listNames(safe.slice(0, 2))}` : null,
+      fact(it, 'Script', 'Family') && safe.length ? `${word} of ${listNames(safe.slice(0, 2))} (${[rawFact(it, 'Family'), rawFact(it, 'Script')].filter(Boolean).join(', ')})` : null,
+    ];
+    if (it.sample?.text && rng() < 0.15) opts.push(`${word} of this text: “${it.sample.text.split(/\s+/).slice(0, 6).join(' ')}…”`);
   } else if (group === 'history') {
     const year = pack.meta.title.slice(0, 4);
     opts = [

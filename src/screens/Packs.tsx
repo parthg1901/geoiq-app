@@ -18,13 +18,13 @@ export default function Packs() {
   const [packs, setPacks] = useState<PackMeta[] | null>(null);
   const state = useGame((s) => s.packs);
   useEffect(() => { loadPackIndex().then(setPacks); }, []);
-  const groups = (['regions', 'physical', 'history'] as PackGroup[]).map((g) => ({ g, list: (packs ?? []).filter((p) => p.group === g) })).filter((x) => x.list.length);
+  const groups = (['regions', 'physical', 'history', 'culture'] as PackGroup[]).map((g) => ({ g, list: (packs ?? []).filter((p) => p.group === g) })).filter((x) => x.list.length);
 
   return (
     <Page>
       <StatusBar />
       <h1 className="display text-3xl font-extrabold mt-3">Explore</h1>
-      <p className="text-mist">States and provinces, rivers and peaks, and the world map through history. Packs earn XP and keep your streak alive.</p>
+      <p className="text-mist">States and provinces, rivers and peaks, the world map through history, and the world's languages and alphabets. Packs earn XP and keep your streak alive.</p>
       {!packs && <div className="text-mist mt-8 animate-pulse">Loading packs…</div>}
       {packs && !packs.length && <div className="card p-5 mt-6 text-mist">No packs installed yet.</div>}
       {groups.map(({ g, list }, gi) => (

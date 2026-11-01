@@ -2,7 +2,7 @@ import type { PackData, PackItem, PackMode } from '../../lib/packs';
 import type { PackState } from '../../lib/store';
 import { packMastery } from '../../lib/store';
 import { shuffle } from '../../lib/rng';
-import { itemCentroids, packFeatures } from './PackMap';
+import { itemCentroids, mapIds, isCountriesPack, regionsOf } from './PackMap';
 
 export interface PackQuestion {
   mode: PackMode;
@@ -20,7 +20,20 @@ export const MODE_META: Record<PackMode, { title: string; emoji: string; desc: s
   flag: { title: 'Flags', emoji: '⚑', desc: 'Whose flag is this?' },
   arms: { title: 'Coat of arms', emoji: '🛡️', desc: 'Whose coat of arms?' },
   higher: { title: 'Higher or lower', emoji: '⇅', desc: 'Pick the bigger one' },
+  sample: { title: 'Read it', emoji: '📝', desc: 'Which language is this?' },
 };
+
+/** What a 'sample' question asks about in this pack: "language" or "script". */
+export const sampleWord = (pack: PackData) => (/script/i.test(pack.meta.id) || mainKind(pack) === 'script' || /writing system|script/i.test(mainKind(pack)) ? 'script' : 'language');
+
+/** Mode copy, worded for the pack (e.g. "Which script is this?"; "Tap where it's spoken"). */
+export function modeMeta(pack: PackData, mode: PackMode) {
+  const m = MODE_META[mode];
+  if (mode === 'sample') return { ...m, desc: `Which ${sampleWord(pack)} is this?` };
+  if (isCountriesPack(pack) && mode === 'find') return { ...m, title: 'Where is it?', desc: sampleWord(pack) === 'script' ? 'Tap a country that uses it' : "Tap a country where it's official" };
+  if (isCountriesPack(pack) && mode === 'name') return { ...m, desc: 'Name it from the countries lit up' };
+  return m;
+}
 
 /** Whether an item can be asked in a given mode. */
 export function eligible(pack: PackData, it: PackItem, mode: PackMode, geomIds: Set<string>) {
@@ -30,14 +43,43 @@ export function eligible(pack: PackData, it: PackItem, mode: PackMode, geomIds: 
     case 'flag': return !!it.flag;
     case 'arms': return !!it.arms;
     case 'higher': return !!it.rank && it.rank.value > 0;
+    case 'sample': return !!it.sample?.text;
     default: return geomIds.has(it.id);
   }
 }
 
 const cent = itemCentroids;
 
+/**
+ * Countries-packs (languages, scripts): the most confusable alternatives share facts (same script,
+ * same family, same region…) or are spoken in some of the same/nearby countries.
+ */
+function similarItems(pack: PackData, id: string, pool: PackItem[]): PackItem[] {
+  const me = pack.items.find((x) => x.id === id)!;
+  const myFacts = new Set((me.facts ?? []).map(([k, v]) => `${k}=${v}`));
+  const myRegions = new Set(regionsOf(me));
+  const c = cent(pack), mc = c[id];
+  const score = (x: PackItem) => {
+    const shared = (x.facts ?? []).filter(([k, v]) => myFacts.has(`${k}=${v}`)).length;
+    const overlap = regionsOf(x).filter((r) => myRegions.has(r)).length;
+    const near = mc && c[x.id] ? -Math.hypot(c[x.id][0] - mc[0], c[x.id][1] - mc[1]) / 60 : 0;
+    return shared * 2 + Math.min(2, overlap) + (x.kind === me.kind ? 0.5 : 0) + near;
+  };
+  return pool.filter((x) => x.id !== id).map((x) => ({ x, s: score(x) })).sort((a, b) => b.s - a.s || a.x.id.localeCompare(b.x.id)).map((v) => v.x);
+}
+
 /** Distractors: mostly geographic neighbours (genuinely confusable), plus a same-kind wildcard. */
 export function distractors(pack: PackData, id: string, n: number, pool: PackItem[], r: () => number = Math.random): string[] {
+  if (isCountriesPack(pack)) {
+    const similar = similarItems(pack, id, pool);
+    const out: string[] = [];
+    // Mostly from the most similar handful, one wildcard so it's not always the same trio.
+    for (const x of [...shuffle(similar.slice(0, Math.max(5, n + 2)), r).slice(0, n - 1), ...shuffle(similar.slice(0, 15), r), ...shuffle(similar, r)]) {
+      if (out.length >= n) break;
+      if (!out.includes(x.id)) out.push(x.id);
+    }
+    return out;
+  }
   const c = cent(pack);
   const me = c[id];
   const kind = pack.items.find((x) => x.id === id)?.kind;
@@ -57,7 +99,7 @@ const dist = (a: [number, number], b: [number, number]) => Math.hypot(a[0] - b[0
 
 /** Build a session: due cards first, then items near your level in this pack, shuffled. */
 export function buildSession(pack: PackData, mode: PackMode, ps: PackState | undefined, n = 10, typed = false): PackQuestion[] {
-  const geomIds = new Set(packFeatures(pack).items.map((f) => f.id));
+  const geomIds = mapIds(pack);
   const pool = pack.items.filter((it) => eligible(pack, it, mode, geomIds));
   if (!pool.length) return [];
   const level = 0.2 + packMastery(ps, pack.items.map((i) => i.id)) * 0.8; // target difficulty

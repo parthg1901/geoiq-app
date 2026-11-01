@@ -1,0 +1,35 @@
+[
+ {
+  "id": "languages",
+  "group": "culture",
+  "title": "Languages",
+  "subtitle": "106 languages from Afrikaans to Zulu",
+  "emoji": "🗣️",
+  "color": "#ff8f6b",
+  "count": 106,
+  "modes": [
+   "sample",
+   "find",
+   "name",
+   "higher"
+  ],
+  "order": 1,
+  "map": "countries"
+ },
+ {
+  "id": "scripts",
+  "group": "culture",
+  "title": "Scripts & alphabets",
+  "subtitle": "22 writing systems, from Cyrillic to Hangul",
+  "emoji": "🔤",
+  "color": "#7ad7c4",
+  "count": 22,
+  "modes": [
+   "sample",
+   "find",
+   "name"
+  ],
+  "order": 2,
+  "map": "countries"
+ }
+]

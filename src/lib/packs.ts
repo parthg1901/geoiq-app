@@ -4,14 +4,14 @@
  *
  * Data contract (written by scripts/packs/*.mjs, read by the app):
  *
- *   public/data/packs/index-{regions|physical|history}.json   → PackMeta[]  (one file per group)
+ *   public/data/packs/index-{regions|physical|history|culture}.json   → PackMeta[]  (one file per group)
  *   public/data/packs/{packId}.json                            → PackData
  *
  * Pack progress is stored separately from the world GeoIQ (see useGame().packs), so packs add XP,
  * streak days and achievements but never distort the country-based GeoIQ score.
  */
 
-export type PackGroup = 'regions' | 'physical' | 'history';
+export type PackGroup = 'regions' | 'physical' | 'history' | 'culture';
 
 export interface PackMeta {
   id: string; // e.g. "us-states", "rivers", "h1914"
@@ -25,6 +25,13 @@ export interface PackMeta {
   modes: PackMode[];
   /** Optional ordering hint within its group (lower first). */
   order?: number;
+  /**
+   * How items appear on the map. 'own' (default): each item has its own geometry in `topo`.
+   * 'countries': items are sets of today's countries (`PackItem.regions`, ISO3) drawn on the standard
+   * world map — e.g. a language spoken in several countries. Items may overlap (English & French in
+   * Canada): a tap on a country counts for every item that includes it.
+   */
+  map?: 'own' | 'countries';
 }
 
 /**
@@ -35,8 +42,11 @@ export interface PackMeta {
  * flag     – flag image → name                 (items with `flag`)
  * arms     – coat of arms image → name         (items with `arms`)
  * higher   – "which is higher/longer/bigger?"  (items with numeric `rank.value`)
+ * sample   – a text sample → name               (items with `sample`), e.g. "which language is this?"
+ * For map: 'countries' packs, find = "tap a country where it's spoken/used" (any of `regions` is right)
+ * and name = all of the item's countries highlighted → name it.
  */
-export type PackMode = 'shape' | 'find' | 'name' | 'capital' | 'flag' | 'arms' | 'higher';
+export type PackMode = 'shape' | 'find' | 'name' | 'capital' | 'flag' | 'arms' | 'higher' | 'sample';
 
 export interface PackItem {
   id: string; // unique within the pack, URL-safe (e.g. "US-CA", "nile", "1914-austria-hungary")
@@ -56,6 +66,12 @@ export interface PackItem {
   wiki?: string; // Wikipedia article title for "read more"
   /** Difficulty 0 (famous) … 1 (obscure); drives question ordering. */
   difficulty?: number;
+  /** map: 'countries' packs — ISO3 codes (as in src/data countries) where this item applies. */
+  regions?: string[];
+  /** A text sample to identify (Languages: UDHR Article 1; Scripts: a phrase in that script). */
+  sample?: { text: string; dir?: 'ltr' | 'rtl'; lang?: string; source?: string };
+  /** Telltale features shown after answering, e.g. ["ő and ű (double acute accents)", "words end in -ság/-ség"]. */
+  tells?: string[];
 }
 
 export interface PackProjection {
@@ -69,8 +85,9 @@ export interface PackProjection {
 export interface PackData {
   meta: PackMeta;
   projection: PackProjection;
-  /** TopoJSON with an object named "items"; each geometry's `id` = PackItem.id. Polygons, lines or points. */
-  topo: unknown;
+  /** TopoJSON with an object named "items"; each geometry's `id` = PackItem.id. Polygons, lines or points.
+   *  Omitted for map: 'countries' packs (they use the standard world map). */
+  topo?: unknown;
   /** Optional non-interactive context (neighbouring land, world land) — TopoJSON with object "base". */
   base?: unknown;
   items: PackItem[];
@@ -79,7 +96,7 @@ export interface PackData {
   attribution: string;
 }
 
-const GROUPS: PackGroup[] = ['regions', 'physical', 'history'];
+const GROUPS: PackGroup[] = ['regions', 'physical', 'history', 'culture'];
 
 let indexP: Promise<PackMeta[]> | null = null;
 /** All available packs (missing group files are simply skipped). */
@@ -96,4 +113,5 @@ export const GROUP_META: Record<PackGroup, { title: string; blurb: string; emoji
   regions: { title: 'Regions', blurb: 'States and provinces inside big countries', emoji: '🗺️' },
   physical: { title: 'Physical world', blurb: 'Rivers, seas, mountains and peaks', emoji: '🏔️' },
   history: { title: 'Time machine', blurb: 'The world map as it once was', emoji: '⏳' },
+  culture: { title: 'Languages & scripts', blurb: 'Read the signs: which language, which alphabet', emoji: '🗣️' },
 };

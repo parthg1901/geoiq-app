@@ -12,7 +12,7 @@ import { CrosswordPlay, fmtTime } from '../components/crossword/Play';
 import { StatusBar } from './Home';
 
 type Slot = 'daily' | 'custom';
-const GROUPS = ['World', 'Physical', 'Regions', 'History'] as const;
+const GROUPS = ['World', 'Physical', 'Regions', 'History', 'Culture'] as const;
 
 /** Build a crossword and store it in a slot. Runs after a paint so the "building" animation shows. */
 async function build(slot: Slot, sources: string[], size: SizeKey, seed?: number): Promise<boolean> {

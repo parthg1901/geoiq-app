@@ -155,6 +155,7 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
           return (
             <path
               key={id}
+              data-id={id}
               d={d}
               stroke={highlight === id ? '#fff' : 'rgba(7,13,28,.9)'}
               strokeWidth={highlight === id ? 2 : 0.5}

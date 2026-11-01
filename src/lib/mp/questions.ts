@@ -7,8 +7,8 @@ import { COUNTRIES, fame, loadPhotos, type Country } from '../../data';
 import { makeQuestion, eligible, type Question, type Variant } from '../questions';
 import { rng as seeded, shuffle } from '../rng';
 import { loadPack, loadPackIndex, type PackData, type PackItem, type PackMode } from '../packs';
-import { eligible as packEligible, distractors as packDistractors, MODE_META, type PackQuestion } from '../../components/pack/questions';
-import { packFeatures } from '../../components/pack/PackMap';
+import { eligible as packEligible, distractors as packDistractors, modeMeta, type PackQuestion } from '../../components/pack/questions';
+import { mapIds } from '../../components/pack/PackMap';
 import type { Topic } from './protocol';
 
 export type MpQuestion =
@@ -31,7 +31,7 @@ const WORLD: Record<string, { label: string; emoji: string; variants: Variant[] 
 
 export const WORLD_TOPICS: TopicMeta[] = Object.entries(WORLD).map(([k, v]) => ({ topic: `world:${k}`, label: v.label, emoji: v.emoji, group: 'World' }));
 
-const GROUP_LABEL: Record<string, string> = { regions: 'Regions', physical: 'Physical world', history: 'Time machine' };
+const GROUP_LABEL: Record<string, string> = { regions: 'Regions', physical: 'Physical world', history: 'Time machine', culture: 'Languages & scripts' };
 let packTopicsP: Promise<TopicMeta[]> | null = null;
 /** Every pick-able topic: world modes, then each pack × mode. */
 export const loadTopics = () =>
@@ -39,7 +39,7 @@ export const loadTopics = () =>
     ...WORLD_TOPICS,
     ...index.flatMap((m) => m.modes.map((mode) => ({
       topic: `pack:${m.id}:${mode}`,
-      label: `${m.title} · ${MODE_META[mode].title}`,
+      label: `${m.title} · ${modeMeta({ meta: m, items: [] } as unknown as PackData, mode).title}`,
       emoji: m.emoji,
       group: GROUP_LABEL[m.group] ?? m.group,
     }))),
@@ -98,7 +98,7 @@ async function worldQuestions(mode: string, seed: number, rounds: number): Promi
 
 function packQuestions(pack: PackData, mode: PackMode, seed: number, rounds: number): MpQuestion[] {
   const r = seeded(seed);
-  const geomIds = new Set(packFeatures(pack).items.map((f) => f.id));
+  const geomIds = mapIds(pack);
   const pool = pack.items.filter((it) => packEligible(pack, it, mode, geomIds)).sort((a, b) => a.id.localeCompare(b.id));
   if (!pool.length) return [];
   // Same famous→tricky ramp as the world picker, using the pack's difficulty.

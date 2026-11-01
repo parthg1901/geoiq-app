@@ -43,6 +43,7 @@ Android app (Capacitor) and installable web app (PWA). Fully offline apart from 
 - **Regions:** US states, Indian states and union territories, Canadian provinces, Australian, Brazilian, Mexican and German states, Chinese provinces and Russian federal subjects.
 - **Physical world:** 79 rivers, 70 lakes, 84 seas and oceans, 75 mountain ranges and deserts, and 55 famous peaks.
 - **Time machine:** the world map in 1815, 1880, 1914, 1938, 1945 and 1960.
+- **Languages & scripts:** 106 languages and 22 writing systems. Identify them from a real sentence (UDHR Article 1), learn their telltale letters, and find where they're official.
 - **Modes:** each pack has flashcards, shapes, find on map, name the highlighted one, capitals, flags and arms, higher or lower, and a Sporcle-style **Name them all**.
 
 **Progress**
@@ -109,6 +110,7 @@ node scripts/fetch-arms.mjs && sh scripts/compress-arms.sh          # country co
 node scripts/packs/build-regions.mjs && node scripts/packs/regions-images.mjs   # state/province packs
 node scripts/packs/build-physical.mjs   # rivers, lakes, seas, landforms, peaks
 node scripts/packs/build-history.mjs    # 1815–1960 world maps
+node scripts/packs/build-culture.mjs    # languages & scripts (UDHR samples via eric-muller/udhr)
 node scripts/image-credits.mjs          # docs/IMAGE_CREDITS.md
 ```
 
@@ -133,6 +135,7 @@ GeoIQ's code is licensed under the **GNU GPL v3.0 or later**; see [LICENSE](LICE
 | Country facts, flags | [mledoze/countries](https://github.com/mledoze/countries) (`world-countries`) | ODbL 1.0 |
 | World borders | [Natural Earth](https://www.naturalearthdata.com/) via [world-atlas](https://github.com/topojson/world-atlas) | Public domain |
 | States, rivers, seas, landforms, peaks | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
+| Language samples | Universal Declaration of Human Rights, Article 1 (UN OHCHR translations) via [UDHR in XML](https://github.com/eric-muller/udhr) | Free to reproduce with credit |
 | Historical borders (1815–1960) | [aourednik/historical-basemaps](https://github.com/aourednik/historical-basemaps) | GPL-3.0 (approximate, for learning) |
 | Facts (capitals, GDP, HDI, elevations, lengths…) | [Wikidata](https://www.wikidata.org/) | CC0 |
 | Descriptions, profiles | [Wikipedia](https://en.wikipedia.org/) | CC BY-SA 4.0 |
