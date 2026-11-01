@@ -129,7 +129,7 @@ const byNum = Object.fromEntries(countries.filter((c) => c.ccn3).map((c) => [c.c
  * "France", Bonaire inside "Netherlands"). For learning they're separate places: split those polygons
  * out into their own (non-country) features so tapping French Guiana isn't "France".
  */
-const OVERSEAS = { FRA: ['GUF', 'GLP', 'MTQ', 'REU', 'MYT'], NLD: ['BES'] };
+const OVERSEAS = { FRA: ['GUF', 'GLP', 'MTQ', 'REU', 'MYT'], NLD: ['BES'], NZL: ['TKL'] };
 const byCca3 = Object.fromEntries(countries.map((c) => [c.cca3, c]));
 function splitOverseas(t) {
   const feats = t.objects.countries.geometries.map((g) => topojson.feature(t, g));

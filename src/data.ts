@@ -55,7 +55,7 @@ export const TERRITORIES: Record<string, { of?: string; kind: string }> = {
   HKG: { of: 'CHN', kind: 'special administrative region' }, MAC: { of: 'CHN', kind: 'special administrative region' },
   NFK: { of: 'AUS', kind: 'external territory' }, CXR: { of: 'AUS', kind: 'external territory' }, CCK: { of: 'AUS', kind: 'external territory' },
   HMD: { of: 'AUS', kind: 'external territory' }, COK: { of: 'NZL', kind: 'self-governing state in free association' },
-  NIU: { of: 'NZL', kind: 'self-governing state in free association' }, ALA: { of: 'FIN', kind: 'autonomous region' },
+  NIU: { of: 'NZL', kind: 'self-governing state in free association' }, TKL: { of: 'NZL', kind: 'dependent territory' }, ALA: { of: 'FIN', kind: 'autonomous region' },
   ESH: { kind: 'disputed territory (mostly administered by Morocco)' }, ATA: { kind: 'continent governed by the Antarctic Treaty' },
 };
 export function territoryInfo(id: string, mapName?: string) {
