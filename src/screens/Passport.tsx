@@ -152,7 +152,7 @@ export default function Passport() {
         <>
           <div className="card mt-4 p-2 overflow-hidden">
             <div className="aspect-[1.92] rounded-2xl overflow-hidden">
-              <WorldMap fills={fills} defaultFill="#24365f" onPick={(id) => setOpen(id)} />
+              <WorldMap fills={fills} defaultFill="#24365f" onPick={(id) => setOpen(id)} territoryInfo />
             </div>
             <div className="flex flex-wrap gap-3 px-2 py-2 text-xs text-mist">
               <Legend c="#24365f" t="Unexplored" />

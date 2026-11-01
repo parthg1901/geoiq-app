@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { geoAzimuthalEqualArea, geoPath, geoCentroid, geoArea, geoDistance } from 'd3-geo';
 import * as topojson from 'topojson-client';
 import { presimplify, simplify } from 'topojson-simplify';
+import { topology } from 'topojson-server';
 import countries from 'world-countries';
 
 const { pop, wiki } = JSON.parse(fs.readFileSync('scripts/.cache/combined.json', 'utf8'));
@@ -122,24 +123,60 @@ for (const c of sel) {
 fs.writeFileSync('public/data/shapes.json', JSON.stringify(shapes));
 
 // ---- world map topojson keyed by cca3
-const topo = JSON.parse(fs.readFileSync('node_modules/world-atlas/countries-50m.json', 'utf8'));
 const byNum = Object.fromEntries(countries.filter((c) => c.ccn3).map((c) => [c.ccn3, c.cca3]));
-for (const g of topo.objects.countries.geometries) {
+/**
+ * Natural Earth draws some overseas regions as part of their country's shape (French Guiana inside
+ * "France", Bonaire inside "Netherlands"). For learning they're separate places: split those polygons
+ * out into their own (non-country) features so tapping French Guiana isn't "France".
+ */
+const OVERSEAS = { FRA: ['GUF', 'GLP', 'MTQ', 'REU', 'MYT'], NLD: ['BES'] };
+const byCca3 = Object.fromEntries(countries.map((c) => [c.cca3, c]));
+function splitOverseas(t) {
+  const feats = t.objects.countries.geometries.map((g) => topojson.feature(t, g));
+  const out = [];
+  for (const f of feats) {
+    const terr = OVERSEAS[f.id];
+    if (!terr || !f.geometry) { out.push(f); continue; }
+    const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+    const keep = [];
+    const moved = Object.fromEntries(terr.map((id) => [id, []]));
+    for (const poly of polys) {
+      const c = geoCentroid({ type: 'Polygon', coordinates: poly });
+      // nearest listed territory within ~1,000 km of its reference point (Saba is ~830 km from Bonaire);
+      // home territory is always thousands of km away, so it stays with the country
+      let best = null, bestD = 0.16;
+      for (const id of terr) {
+        const [lat, lng] = byCca3[id].latlng;
+        const d = geoDistance(c, [lng, lat]);
+        if (d < bestD) { bestD = d; best = id; }
+      }
+      (best ? moved[best] : keep).push(poly);
+    }
+    out.push({ ...f, geometry: { type: 'MultiPolygon', coordinates: keep } });
+    for (const [id, ps] of Object.entries(moved)) {
+      if (ps.length) out.push({ type: 'Feature', id, properties: { n: byCca3[id].name.common, of: f.id }, geometry: { type: 'MultiPolygon', coordinates: ps } });
+    }
+  }
+  return topology({ countries: { type: 'FeatureCollection', features: out } });
+}
+const raw50 = JSON.parse(fs.readFileSync('node_modules/world-atlas/countries-50m.json', 'utf8'));
+for (const g of raw50.objects.countries.geometries) {
   const id = byNum[g.id] || (g.properties.name === 'Kosovo' ? 'UNK' : null);
   g.properties = { n: g.properties.name };
   g.id = id || `X-${g.properties.n}`;
 }
+const topo = splitOverseas(raw50);
 // Drop most low-importance 50m vertices (Visvalingam): crisp at game zoom levels, far cheaper to draw on phones.
 const pre = presimplify(topo);
 const simple = simplify(pre, 0.008); // min triangle area (sq. degrees) a vertex must carry to be kept
 for (const a of simple.arcs) for (const pt of a) pt.length = 2; // drop the weight coordinate
 fs.writeFileSync('public/data/world-50m.json', JSON.stringify(topojson.quantize(simple, 1e5)));
-const t110 = JSON.parse(fs.readFileSync('node_modules/world-atlas/countries-110m.json', 'utf8'));
-for (const g of t110.objects.countries.geometries) {
+const raw110 = JSON.parse(fs.readFileSync('node_modules/world-atlas/countries-110m.json', 'utf8'));
+for (const g of raw110.objects.countries.geometries) {
   g.id = byNum[g.id] || (g.properties.name === 'Kosovo' ? 'UNK' : `X-${g.properties.name}`);
   g.properties = {};
 }
-fs.writeFileSync('public/data/world-110m.json', JSON.stringify(t110));
+fs.writeFileSync('public/data/world-110m.json', JSON.stringify(topojson.quantize(splitOverseas(raw110), 1e5)));
 
 // Captions were stored cut at 220 chars: end them on a sentence (or word) boundary instead.
 function tidyCaption(t) {

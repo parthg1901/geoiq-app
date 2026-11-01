@@ -5,7 +5,8 @@ import { select } from 'd3-selection';
 import 'd3-transition';
 import { feature } from 'topojson-client';
 import type { Feature, Geometry } from 'geojson';
-import { BY_ID, COUNTRIES, TINY, loadWorld50, loadWorld110 } from '../data';
+import { BY_ID, COUNTRIES, TINY, loadWorld50, loadWorld110, territoryInfo as territoryInfoFor } from '../data';
+import { toast } from './Toasts';
 
 type F = Feature<Geometry, { n?: string }> & { id: string };
 const W = 960, BASE_H = 500;
@@ -32,6 +33,8 @@ export interface WorldMapProps {
   fills?: Record<string, string>;
   defaultFill?: string;
   onPick?: (id: string) => void;
+  /** Browsing maps: tapping a non-country place (French Guiana, Greenland…) says what it is. */
+  territoryInfo?: boolean;
   pickable?: (id: string) => boolean;
   highlight?: string | null;
   pulse?: string[];
@@ -44,7 +47,7 @@ export interface WorldMapProps {
 }
 
 export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
-  { fills = {}, defaultFill = 'var(--color-land)', onPick, pickable, highlight, pulse = [], focus, interactive = true, detail = '50', className = '', showTiny = true, labels },
+  { fills = {}, defaultFill = 'var(--color-land)', onPick, pickable, highlight, pulse = [], focus, interactive = true, detail = '50', className = '', showTiny = true, labels, territoryInfo = false },
   ref,
 ) {
   const world = useWorld(detail);
@@ -149,9 +152,10 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
   const canPick = (id: string) => !!onPick && !!BY_ID[id] && (!pickable || pickable(id));
   const pulseKey = pulse.join(',');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const countryLayer = useMemo(() => paths.map(({ id, d }) => {
+  const countryLayer = useMemo(() => paths.map(({ id, d, f }) => {
           const fill = fills[id] ?? (BY_ID[id] ? defaultFill : '#1a2848');
           const pick = canPick(id);
+          const terr = territoryInfo && !BY_ID[id];
           return (
             <path
               key={id}
@@ -160,14 +164,17 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
               stroke={highlight === id ? '#fff' : 'rgba(7,13,28,.9)'}
               strokeWidth={highlight === id ? 2 : 0.5}
               vectorEffect="non-scaling-stroke"
-              style={{ fill: hover === id && pick ? '#ffd28a' : fill, cursor: pick ? 'pointer' : 'default', transition: 'fill .25s' }}
+              style={{ fill: hover === id && pick ? '#ffd28a' : fill, cursor: pick || terr ? 'pointer' : 'default', transition: 'fill .25s' }}
               className={pulse.includes(id) ? 'glow-pulse' : ''}
               onPointerEnter={() => pick && setHover(id)}
               onPointerLeave={() => setHover((h) => (h === id ? null : h))}
-              onClick={() => pick && onPick!(id)}
+              onClick={() => {
+                if (pick) onPick!(id);
+                else if (terr) { const t = territoryInfoFor(id, f.properties?.n); toast({ icon: '📍', title: t.name, body: t.text }); }
+              }}
             />
           );
-        }), [paths, fills, defaultFill, hover, highlight, pulseKey, onPick, pickable]);
+        }), [paths, fills, defaultFill, hover, highlight, pulseKey, onPick, pickable, territoryInfo]);
 
   return (
     <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className={`w-full h-full touch-none select-none ${className}`} preserveAspectRatio="xMidYMid meet">

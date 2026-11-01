@@ -180,7 +180,7 @@ export function CountryProfile({ id, onClose }: { id: string; onClose?: () => vo
       <div className="card overflow-hidden">
         <div className="relative h-72 sm:h-96">
           <WorldMap className="absolute inset-0" focus={[id, ...c.borders.filter((b) => BY_ID[b])].slice(0, 8)} fills={{ [id]: color, ...Object.fromEntries(c.borders.map((b) => [b, '#3b5b96'])) }}
-            highlight={id} labels={{ [id]: c.name, ...Object.fromEntries(c.borders.filter((b) => BY_ID[b]).map((b) => [b, BY_ID[b].name])) }} onPick={(x) => x !== id && openCountry(x)} />
+            highlight={id} labels={{ [id]: c.name, ...Object.fromEntries(c.borders.filter((b) => BY_ID[b]).map((b) => [b, BY_ID[b].name])) }} onPick={(x) => x !== id && openCountry(x)}  territoryInfo />
         </div>
         <div className="p-4">
           <div className="text-sm text-mist mb-2">{c.borders.length ? `Shares land borders with ${c.borders.length} ${c.borders.length === 1 ? 'country' : 'countries'} — tap one to visit` : 'No land borders.'}</div>

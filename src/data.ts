@@ -33,6 +33,37 @@ export const COUNTRIES = raw.countries as unknown as Country[];
 export const BY_ID: Record<string, Country> = Object.fromEntries(COUNTRIES.map((c) => [c.id, c]));
 /** Names for every ISO code incl. territories (used for borders lists). */
 export const ALL_NAMES = raw.names as Record<string, string>;
+/**
+ * Places on the world map that aren't one of the 197 countries, with who they belong to — shown when
+ * tapped on browsing maps. Overseas regions split out of France/Netherlands carry `of` in the map data.
+ */
+export const TERRITORIES: Record<string, { of?: string; kind: string }> = {
+  GUF: { of: 'FRA', kind: 'overseas region' }, GLP: { of: 'FRA', kind: 'overseas region' }, MTQ: { of: 'FRA', kind: 'overseas region' },
+  REU: { of: 'FRA', kind: 'overseas region' }, MYT: { of: 'FRA', kind: 'overseas region' }, NCL: { of: 'FRA', kind: 'overseas territory' },
+  PYF: { of: 'FRA', kind: 'overseas collectivity' }, SPM: { of: 'FRA', kind: 'overseas collectivity' }, WLF: { of: 'FRA', kind: 'overseas collectivity' },
+  BLM: { of: 'FRA', kind: 'overseas collectivity' }, MAF: { of: 'FRA', kind: 'overseas collectivity' }, ATF: { of: 'FRA', kind: 'overseas territory' },
+  BES: { of: 'NLD', kind: 'special municipalities' }, ABW: { of: 'NLD', kind: 'constituent country of the Kingdom' },
+  CUW: { of: 'NLD', kind: 'constituent country of the Kingdom' }, SXM: { of: 'NLD', kind: 'constituent country of the Kingdom' },
+  GRL: { of: 'DNK', kind: 'autonomous territory' }, FRO: { of: 'DNK', kind: 'autonomous territory' },
+  PRI: { of: 'USA', kind: 'territory' }, GUM: { of: 'USA', kind: 'territory' }, VIR: { of: 'USA', kind: 'territory' },
+  ASM: { of: 'USA', kind: 'territory' }, MNP: { of: 'USA', kind: 'territory' },
+  FLK: { of: 'GBR', kind: 'overseas territory' }, GIB: { of: 'GBR', kind: 'overseas territory' }, BMU: { of: 'GBR', kind: 'overseas territory' },
+  CYM: { of: 'GBR', kind: 'overseas territory' }, TCA: { of: 'GBR', kind: 'overseas territory' }, VGB: { of: 'GBR', kind: 'overseas territory' },
+  AIA: { of: 'GBR', kind: 'overseas territory' }, MSR: { of: 'GBR', kind: 'overseas territory' }, SHN: { of: 'GBR', kind: 'overseas territory' },
+  SGS: { of: 'GBR', kind: 'overseas territory' }, IOT: { of: 'GBR', kind: 'overseas territory' }, PCN: { of: 'GBR', kind: 'overseas territory' },
+  IMN: { of: 'GBR', kind: 'Crown dependency' }, JEY: { of: 'GBR', kind: 'Crown dependency' }, GGY: { of: 'GBR', kind: 'Crown dependency' },
+  HKG: { of: 'CHN', kind: 'special administrative region' }, MAC: { of: 'CHN', kind: 'special administrative region' },
+  NFK: { of: 'AUS', kind: 'external territory' }, CXR: { of: 'AUS', kind: 'external territory' }, CCK: { of: 'AUS', kind: 'external territory' },
+  HMD: { of: 'AUS', kind: 'external territory' }, COK: { of: 'NZL', kind: 'self-governing state in free association' },
+  NIU: { of: 'NZL', kind: 'self-governing state in free association' }, ALA: { of: 'FIN', kind: 'autonomous region' },
+  ESH: { kind: 'disputed territory (mostly administered by Morocco)' }, ATA: { kind: 'continent governed by the Antarctic Treaty' },
+};
+export function territoryInfo(id: string, mapName?: string) {
+  const t = TERRITORIES[id];
+  const name = ALL_NAMES[id] ?? mapName ?? id.replace(/^X-/, '');
+  const of = t?.of ? (BY_ID[t.of]?.name ?? ALL_NAMES[t.of]) : null;
+  return { name, text: t ? `${t.kind[0].toUpperCase()}${t.kind.slice(1)}${of ? ` of ${of}` : ''} · not one of the 197 countries` : 'A territory, not one of the 197 countries' };
+}
 export const REGIONS = ['Europe', 'Asia', 'Africa', 'Americas', 'Oceania'] as const;
 export type Region = (typeof REGIONS)[number];
 
