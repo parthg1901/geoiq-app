@@ -2,8 +2,8 @@
 name = "play"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
-# The *.workers.dev address only serves apps from before v2.0.0; turn it off once nobody uses them.
-workers_dev = true
+# Only reachable through the custom domain (the *.workers.dev address is off).
+workers_dev = false
 routes = [{ pattern = "api.geonaut.parthg.dev", custom_domain = true }]
 
 [[durable_objects.bindings]]

@@ -2,6 +2,7 @@
 # Deploy: npm run deploy:web (builds, then uploads dist/).
 name = "geonaut-web"
 compatibility_date = "2026-10-01"
+workers_dev = false
 routes = [{ pattern = "geonaut.parthg.dev", custom_domain = true }]
 
 [assets]
