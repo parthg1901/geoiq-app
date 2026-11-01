@@ -1,4 +1,4 @@
-// Regression checks for GeoIQ's scoring & progress math. Run: npm run audit:math
+// Regression checks for Geonaut's scoring & progress math. Run: npm run audit:math
 // Bundles the real engine (src/lib/geoiq.ts, src/lib/store.ts) and checks it by simulation.
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';

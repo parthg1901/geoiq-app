@@ -1,5 +1,5 @@
 /**
- * GeoIQ multiplayer protocol — shared by the app (src/lib/mp/*) and the server (server/src/*).
+ * Geonaut multiplayer protocol — shared by the app (src/lib/mp/*) and the server (server/src/*).
  *
  * Questions are never sent over the wire. Every client builds the identical question list from
  * (topic, seed, rounds) with the deterministic generator in src/lib/mp/questions.ts, using the data

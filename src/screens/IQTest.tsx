@@ -84,10 +84,10 @@ export default function IQTest() {
   return (
     <QuizRunner
       key={steps.length}
-      title="GeoIQ Test"
+      title="IQ Test"
       questions={[current!]}
       progress={{ index: steps.length, total: TOTAL }}
-      nextLabel={steps.length + 1 >= TOTAL ? 'See my GeoIQ' : 'Next question'}
+      nextLabel={steps.length + 1 >= TOTAL ? 'See my IQ' : 'Next question'}
       onQuit={() => go('/iq')}
       hideSummary
       modeKey="test"
@@ -102,7 +102,7 @@ function Intro({ onStart }: { onStart: () => void }) {
     <div className="relative z-10 mx-auto max-w-md px-5 py-6 min-h-dvh flex flex-col">
       <button aria-label="Back" onClick={() => go('/iq')} className="w-10 h-10 rounded-full grid place-items-center bg-white/5 border border-line">✕</button>
       <motion.div initial={{ scale: 0.6, opacity: 0, rotate: -10 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} transition={{ type: 'spring' }} className="text-7xl text-center mt-6">🧠</motion.div>
-      <h1 className="display text-4xl font-extrabold text-center mt-3">The GeoIQ Test</h1>
+      <h1 className="display text-4xl font-extrabold text-center mt-3">The IQ Test</h1>
       <p className="text-mist text-center mt-2">An adaptive exam: every answer changes the next question, homing in on your true level.</p>
       <div className="grid grid-cols-3 gap-2 mt-6">
         {[['24', 'questions'], ['~6', 'minutes'], ['6', 'skills']].map(([v, k]) => (
@@ -169,7 +169,7 @@ function Result({ steps, theta }: { steps: Step[]; theta: number }) {
   }, [iq, skills, correct, steps.length, tier.color]);
 
   const share = async () => {
-    const text = `My GeoIQ is ${iq} ${tier.emoji} ${tier.name} — sharper than ${pct}% of explorers. ${correct}/${steps.length} on the adaptive GeoIQ Test. Can you beat it? 🌍`;
+    const text = `My geography IQ is ${iq} ${tier.emoji} ${tier.name} — sharper than ${pct}% of explorers. ${correct}/${steps.length} on the adaptive Geonaut IQ Test. Can you beat it? 🌍`;
     try {
       if (navigator.share) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); setCopied(true); }
@@ -183,7 +183,7 @@ function Result({ steps, theta }: { steps: Step[]; theta: number }) {
   return (
     <div className="relative z-10 mx-auto max-w-md px-5 py-8 min-h-dvh flex flex-col">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-        <div className="text-xs uppercase tracking-[.25em] text-mist font-bold">Your GeoIQ</div>
+        <div className="text-xs uppercase tracking-[.25em] text-mist font-bold">Your IQ</div>
         <div className="relative inline-block">
           <div className="absolute inset-0 rounded-full opacity-40" style={{ background: `radial-gradient(circle, ${tier.color} 0%, transparent 68%)` }} />
           <div className="relative display font-extrabold leading-none tracking-tight mt-2" style={{ fontSize: 'clamp(6rem, 34vw, 9rem)', color: tier.color, textShadow: `0 0 60px ${tier.color}88` }}>

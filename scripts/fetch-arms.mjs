@@ -6,7 +6,7 @@ import path from 'node:path';
 import countries from 'world-countries';
 
 const CACHE = path.resolve('scripts/.cache/arms');
-const UA = { 'User-Agent': 'GeoIQ-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
+const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
 const sel = countries.filter((x) => x.unMember || ['VAT', 'PSE', 'UNK', 'TWN'].includes(x.cca3));
 const ISO = new Set(sel.map((c) => c.cca3));
 

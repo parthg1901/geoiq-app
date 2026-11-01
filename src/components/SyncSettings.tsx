@@ -27,7 +27,7 @@ function Summary({ p }: { p: Snapshot }) {
     <div className="grid grid-cols-4 gap-2 mt-3 text-center">
       {[
         ['Level', levelFor(p.xp).level],
-        ['GeoIQ', geoIQ(p.ratings).iq],
+        ['IQ', geoIQ(p.ratings).iq],
         ['Stamps', Object.keys(p.stamps).length],
         ['Streak', `${p.streak.count}🔥`],
       ].map(([k, v]) => (
@@ -63,9 +63,9 @@ export default function SyncSettings() {
   });
   const shareCode = async () => {
     if (!code) return;
-    const text = `My GeoIQ sync code: ${formatCode(code)}`;
+    const text = `My Geonaut sync code: ${formatCode(code)}`;
     try { await navigator.clipboard.writeText(formatCode(code)); toast({ icon: '📋', title: 'Code copied' }); }
-    catch { await navigator.share?.({ title: 'GeoIQ sync code', text }).catch(() => {}); }
+    catch { await navigator.share?.({ title: 'Geonaut sync code', text }).catch(() => {}); }
   };
   const pickFile = async (f: File | undefined) => {
     if (!f) return;

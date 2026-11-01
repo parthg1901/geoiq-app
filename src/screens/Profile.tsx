@@ -81,7 +81,7 @@ export default function Profile() {
                 {s.name || 'Explorer'} <span className="text-sm text-mist">✎</span>
               </button>
             )}
-            <div className="text-sm text-mist">{tier.name} · GeoIQ <b className="text-paper mono">{iq}</b> · since {s.createdAt}</div>
+            <div className="text-sm text-mist">{tier.name} · IQ <b className="text-paper mono">{iq}</b> · since {s.createdAt}</div>
           </div>
         </div>
         <div className="relative mt-4">
@@ -201,7 +201,7 @@ export default function Profile() {
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="card p-6 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
               <div className="text-4xl">⚠️</div>
               <div className="display text-xl font-extrabold mt-2">Reset everything?</div>
-              <p className="text-sm text-mist mt-1">Your GeoIQ, streak, XP, stamps and achievements will be erased. This can’t be undone.{syncing && ' This phone also stops syncing; the cloud copy is kept.'}</p>
+              <p className="text-sm text-mist mt-1">Your IQ, streak, XP, stamps and achievements will be erased. This can’t be undone.{syncing && ' This phone also stops syncing; the cloud copy is kept.'}</p>
               <div className="grid grid-cols-2 gap-3 mt-5">
                 <button className="btn btn-ghost" onClick={() => setConfirmReset(false)}>Cancel</button>
                 <button className="btn !bg-rose text-white shadow-[0_4px_0_#a8293b]" onClick={() => { if (syncing) void disableSync(false); s.reset(); localStorage.removeItem('geoiq-seen-stamps'); setConfirmReset(false); go('/'); }}>Reset</button>
@@ -222,7 +222,7 @@ function VersionRow() {
   };
   return (
     <div className="flex items-center justify-between gap-3">
-      <span><b className="display">Version</b><span className="block text-sm text-mist mono">GeoIQ {APP_VERSION}</span></span>
+      <span><b className="display">Version</b><span className="block text-sm text-mist mono">Geonaut {APP_VERSION}</span></span>
       {isNative && (
         <button className="btn btn-ghost !py-1.5 !px-3 text-sm" disabled={state === 'checking'} onClick={check}>
           {state === 'checking' ? 'Checking…' : state === 'latest' ? 'Up to date ✓' : state === 'error' ? 'Offline — retry' : 'Check for updates'}
@@ -259,7 +259,7 @@ function ReminderSettings() {
             className="bg-ink/70 border-2 border-line focus:border-amber outline-none rounded-xl px-3 py-1.5 mono text-paper" />
         </label>
       )}
-      {denied && <div className="text-sm text-rose">Notifications are blocked. Enable them for GeoIQ in Android Settings → Apps → GeoIQ → Notifications.</div>}
+      {denied && <div className="text-sm text-rose">Notifications are blocked. Enable them for Geonaut in Android Settings → Apps → Geonaut → Notifications.</div>}
     </div>
   );
 }

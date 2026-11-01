@@ -65,7 +65,7 @@ function Sheet({ pid }: { pid: string }) {
 
   const stats: [string, React.ReactNode, React.ReactNode?][] = card ? [
     ['Level', card.level, mine?.level],
-    ['GeoIQ', card.iq, mine?.iq],
+    ['IQ', card.iq, mine?.iq],
     ['Streak', <>{card.streak}🔥</>, mine && <>{mine.streak}🔥</>],
     ['Stamps', `${card.stamps.length}/${COUNTRIES.length}`, mine?.stamps.length],
     ['This week', `${weekXp(card).toLocaleString()} XP`, mine && weekXp(mine).toLocaleString()],
@@ -85,7 +85,7 @@ function Sheet({ pid }: { pid: string }) {
             <div className="w-16 h-16 rounded-2xl grid place-items-center text-3xl border-2 shrink-0" style={{ borderColor: tier!.color, background: tier!.color + '22' }}>{tier!.emoji}</div>
             <div className="min-w-0 flex-1">
               <div className="display text-2xl font-extrabold leading-tight break-words">{card.name}{isMe && <span className="text-mist text-base"> (you)</span>}</div>
-              <div className="text-sm" style={{ color: tier!.color }}>{tier!.name} · GeoIQ <b className="mono">{card.iq}</b></div>
+              <div className="text-sm" style={{ color: tier!.color }}>{tier!.name} · IQ <b className="mono">{card.iq}</b></div>
               <div className="text-xs text-mist mt-0.5">{lastSeen(card.lastActive)} · since {card.since}</div>
             </div>
             <button aria-label="Close" className="text-mist text-2xl self-start -mt-1" onClick={closePlayer}>×</button>

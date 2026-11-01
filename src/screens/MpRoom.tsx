@@ -92,7 +92,7 @@ function ErrorScreen({ code, message }: { code: string; message: string }) {
   const copy: Record<string, [string, string, string]> = {
     notfound: ['🔎', 'Room not found', 'This room doesn’t exist any more — check the code with your host.'],
     full: ['🚪', 'Room is full', `Rooms hold up to ${LIMITS.maxPlayers} players.`],
-    version: ['⬆️', 'Update GeoIQ to play in this room', message || 'Everyone in a room needs the same version of GeoIQ.'],
+    version: ['⬆️', 'Update Geonaut to play in this room', message || 'Everyone in a room needs the same version of Geonaut.'],
     kicked: ['👋', 'You were removed', 'The host removed you from this room.'],
     started: ['⏱️', 'Game already started', 'Wait for this game to finish, then ask the host for the next one.'],
   };
@@ -119,7 +119,7 @@ function Lobby({ st, you, onLeave }: { st: RoomState; you: string; onLeave: () =
   const set = (p: Partial<RoomState['settings']>) => send({ t: 'settings', settings: { ...st.settings, ...p } });
   const connected = st.players.filter((p) => p.connected);
   const share = async () => {
-    const text = `Join my GeoIQ room ${st.code} — open GeoIQ → Multiplayer → Join and enter ${st.code} 🌍`;
+    const text = `Join my Geonaut room ${st.code} — open Geonaut → Multiplayer → Join and enter ${st.code} 🌍`;
     try {
       if (navigator.share) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); toast({ icon: '📋', title: 'Invite copied', body: 'Paste it to your friends.' }); }

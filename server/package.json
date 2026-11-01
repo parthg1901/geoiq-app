@@ -2,7 +2,7 @@
   "name": "geoiq-server",
   "private": true,
   "version": "0.1.0",
-  "description": "GeoIQ multiplayer server: live rooms and async challenges on Cloudflare Workers + Durable Objects",
+  "description": "Geonaut multiplayer server: live rooms and async challenges on Cloudflare Workers + Durable Objects",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {

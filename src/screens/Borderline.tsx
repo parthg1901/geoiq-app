@@ -110,7 +110,7 @@ function Game({ route, kind, onAgain, race }: { route: Route; kind: Kind; onAgai
     const list = [...guesses, id];
     setGuesses(list);
     if (onShortest(route, id)) {
-      // Not fed into GeoIQ: only correct route picks are observable here, and one-sided data would
+      // Not fed into the IQ: only correct route picks are observable here, and one-sided data would
       // only ever push the Map rating up.
       sfx.right(list.length);
     } else if (detour(route, id) <= 2) sfx.hint();

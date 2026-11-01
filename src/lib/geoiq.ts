@@ -1,10 +1,10 @@
 /**
- * GeoIQ rating engine.
+ * IQ rating engine (the app's geography IQ score).
  *
  * Every question is an item with a difficulty `d` on an Elo-like scale. The player has an ability
  * `θ` per skill plus a global θ. We use a 3-parameter-logistic (IRT) model so that multiple-choice
  * guessing is accounted for:  P(correct) = g + (1-g) / (1 + e^{-(θ-d)/S}).
- * GeoIQ maps θ onto an IQ-style scale: 100 = average explorer, 15 points = one standard deviation.
+ * IQ maps θ onto an IQ-style scale: 100 = average explorer, 15 points = one standard deviation.
  */
 import { BY_ID, NO_SHAPE, fame, type Country } from '../data';
 
@@ -17,7 +17,7 @@ export const SKILL_ICON: Record<Skill, string> = { shape: '◆', flag: '⚑', ca
 
 const S = 110; // logistic scale
 const BASE = 1000; // θ of an "average" explorer
-const SD = 160; // θ points per 15 GeoIQ points
+const SD = 160; // θ points per 15 IQ points
 
 /** Prior difficulty of a (country, skill) item. */
 export function difficulty(c: Country, skill: Skill): number {
@@ -74,7 +74,7 @@ export const CLUE_STEP = 110;
  * Clue Ladder update. Every clue is its own yes/no trial at a slightly easier difficulty
  * (d − CLUE_STEP·(k−1)): clues you didn't solve on count as misses, the one you solved on as a hit.
  * Summing these (a continuation-ratio model) is unbiased — scoring "eventually solved" as partial
- * credit instead inflated the Clues rating by ~30–40 GeoIQ points in simulation.
+ * credit instead inflated the Clues rating by ~30–40 IQ points in simulation.
  */
 export function updateLadder(r: Rating, d: number, solvedAt: number, shown: number, kScale = 1): Rating {
   // Up to six trials per question: a smaller per-clue step, capped at one ordinary answer's worth,
@@ -84,7 +84,7 @@ export function updateLadder(r: Rating, d: number, solvedAt: number, shown: numb
   return { theta: r.theta + step, n: r.n + 1 };
 }
 /** Σ over the clues seen of (hit − P(hit)). solvedAt = clue number solved on (1-based), 0 = never. */
-/** The Clue Ladder's "surprise" on the same −1…1 footing as one right/wrong answer (used by the GeoIQ Test). */
+/** The Clue Ladder's "surprise" on the same −1…1 footing as one right/wrong answer (used by the IQ Test). */
 export const ladderSurprise = (theta: number, d: number, solvedAt: number, shown: number) =>
   Math.max(-1, Math.min(1, 0.3 * ladderDelta(theta, d, solvedAt, shown)));
 export function ladderDelta(theta: number, d: number, solvedAt: number, shown: number) {
@@ -96,7 +96,7 @@ export function ladderDelta(theta: number, d: number, solvedAt: number, shown: n
 export const toIQ = (theta: number) => Math.round(100 + (15 * (theta - BASE)) / SD);
 export const fromIQ = (iq: number) => BASE + ((iq - 100) * SD) / 15;
 
-/** Normal CDF → percentile of explorers below this GeoIQ. */
+/** Normal CDF → percentile of explorers below this IQ. */
 export function percentile(iq: number) {
   const z = (iq - 100) / 15;
   const t = 1 / (1 + 0.2316419 * Math.abs(z));
@@ -120,7 +120,7 @@ export type Ratings = Record<Skill | 'all', Rating>;
 export const freshRatings = (): Ratings =>
   ({ all: freshRating(), shape: freshRating(), flag: freshRating(), capital: freshRating(), map: freshRating(), hint: freshRating(), photo: freshRating() });
 
-/** Composite GeoIQ: global θ, blended toward skill θs that have data. */
+/** Composite IQ: global θ, blended toward skill θs that have data. */
 export function geoIQ(r: Ratings) {
   const total = SKILLS.reduce((a, s) => a + r[s].n, 0);
   // Skills you never practised stay at their starting estimate (your onboarding self-assessment),

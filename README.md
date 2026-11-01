@@ -1,13 +1,13 @@
-# GeoIQ
+# Geonaut
 
-Learn the world the way geography YouTubers know it: every country by its **shape**, **flag**, **place on the map**, **capital**, **clues** and **real photos**. Then go further, to states and provinces, rivers, seas, mountains and the world map through history. Your **GeoIQ** tracks how good you really are: an IQ-style score where 100 is average and 15 points is one standard deviation.
+Learn the world the way geography YouTubers know it: every country by its **shape**, **flag**, **place on the map**, **capital**, **clues** and **real photos**. Then go further, to states and provinces, rivers, seas, mountains and the world map through history. Your geography **IQ** tracks how good you really are: an IQ-style score where 100 is average and 15 points is one standard deviation.
 
 Android app (Capacitor) and installable web app (PWA). Fully offline apart from photos.
 
 <p>
-  <img src="docs/screenshots/home.jpg" width="200" alt="Home: GeoIQ score, streak and daily check-in">
+  <img src="docs/screenshots/home.jpg" width="200" alt="Home: IQ score, streak and daily check-in">
   <img src="docs/screenshots/shape.jpg" width="200" alt="Shape quiz">
-  <img src="docs/screenshots/iq.jpg" width="200" alt="GeoIQ dashboard">
+  <img src="docs/screenshots/iq.jpg" width="200" alt="IQ dashboard">
   <img src="docs/screenshots/lesson.jpg" width="200" alt="Lesson card">
 </p>
 <p>
@@ -47,21 +47,21 @@ Android app (Capacitor) and installable web app (PWA). Fully offline apart from 
 - **Modes:** each pack has flashcards, shapes, find on map, name the highlighted one, capitals, flags and arms, higher or lower, and a Sporcle-style **Name them all**.
 
 **Progress**
-- **GeoIQ** with tiers (Tourist → Atlas), a skill radar, a history chart and a 24-question adaptive **GeoIQ Test**.
+- A geography **IQ** score with tiers (Tourist → Atlas), a skill radar, a history chart and a 24-question adaptive **IQ Test**.
 - Streaks with freezes, a daily XP goal, a daily check-in spin, levels, coins and achievements.
 - A **Passport** you fill with ink stamps as you master countries, plus a conquest map.
 - Streak-reminder notifications on Android.
 
 **Friends & sync**
-- **Friends:** add friends with a code (or from a multiplayer room), a friends-only leaderboard (weekly XP, GeoIQ, streak, stamps, duel rating), and tap any player to see their profile and passport.
+- **Friends:** add friends with a code (or from a multiplayer room), a friends-only leaderboard (weekly XP, IQ, streak, stamps, duel rating), and tap any player to see their profile and passport.
 - **Sync across phones** with a sync code, no account needed. Progress is encrypted on the phone and merged so nothing is lost when you play on two devices. A backup file works offline too.
 - **Update popup:** the Android app tells you when a new release is out (handy without Obtainium).
 
-## How GeoIQ works
+## How the IQ score works
 
 Every (country, skill) question has a difficulty based on how well known the country is (Wikipedia pageviews, population and area). Your ability per skill is estimated with a **3-parameter logistic IRT model**, which accounts for lucky guesses on multiple choice. Ratings update by a stochastic-gradient step on that model's likelihood, which is **unbiased**: at your true level the expected change is zero, so the score settles on the truth. The Clue Ladder is scored per clue (a continuation-ratio model) rather than as partial credit.
 
-The **GeoIQ Test** is a 24-item computerized adaptive test. It's accurate to about ±5 points (1 SD) in simulation.
+The **IQ Test** is a 24-item computerized adaptive test. It's accurate to about ±5 points (1 SD) in simulation.
 
 `npm run audit:math` re-checks all of this by simulation, along with streak, freeze and spaced-repetition logic (27 checks).
 
@@ -72,7 +72,7 @@ See [`src/lib/geoiq.ts`](src/lib/geoiq.ts) and [`scripts/audit-math.mjs`](script
 ## Install
 
 - **Android:** download the APK from [Releases](https://github.com/parthg1901/geoiq-app/releases), or add this repo to [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates. Releases are signed with the same key, so updates keep your progress.
-- **Web:** `npm run build` and host `dist/` on any static host. On HTTPS it's installable as a PWA and works offline.
+- **Web:** play at **[geonaut.parthg.dev](https://geonaut.parthg.dev)**. It's installable as a PWA and works offline. To host your own, `npm run build` and serve `dist/` from any static host (`npm run deploy:web` publishes to Cloudflare; see [`web/wrangler.toml`](web/wrangler.toml)).
 
 ## Development
 
@@ -91,7 +91,7 @@ Progress is stored locally in the browser or app (no accounts or backend).
 ### Android
 
 ```bash
-npm run android       # web build → cap sync → Gradle; signed APK at dist-apk/GeoIQ.apk
+npm run android       # web build → cap sync → Gradle; signed APK at dist-apk/Geonaut.apk
 ```
 
 - **Requirements:** JDK 21 and the Android SDK, configured in `~/android/env.sh`. Local release signing reads `~/android/geoiq-release.properties` (never committed).
@@ -125,7 +125,7 @@ Pack files follow the contract in [`src/lib/packs.ts`](src/lib/packs.ts). After 
 
 ```
 src/lib/        geoiq.ts (rating engine) · store.ts (progress, SRS, streaks) · questions.ts · packs.ts · native.ts
-src/screens/    Home, Learn/Lesson, Play, GeoIQ + Test, Daily, Borderline, Hot & Cold, Atlas/Country, Passport, Packs
+src/screens/    Home, Learn/Lesson, Play, IQ + Test, Daily, Borderline, Hot & Cold, Atlas/Country, Passport, Packs
 src/components/ QuizRunner, WorldMap, Globe, CountryProfile, pack/ (PackMap, PackQuiz)
 scripts/        data pipeline, APK build, math audit
 android/        Capacitor Android project
@@ -133,7 +133,7 @@ android/        Capacitor Android project
 
 ## Data sources and licences
 
-GeoIQ's code is licensed under the **GNU GPL v3.0 or later**; see [LICENSE](LICENSE). Bundled data keeps its original licence:
+Geonaut's code is licensed under the **GNU GPL v3.0 or later**; see [LICENSE](LICENSE). Bundled data keeps its original licence:
 
 | Data | Source | Licence |
 |---|---|---|

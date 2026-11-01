@@ -59,7 +59,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
-          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/GeoIQ-${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/Geonaut-${GITHUB_REF_NAME}.apk"
 
       - name: Publish release
         env:
@@ -68,4 +68,4 @@ jobs:
         run: |
           notes="docs/releases/${GITHUB_REF_NAME}.md"
           if [ -f "$notes" ]; then set -- --notes-file "$notes"; else set -- --generate-notes; fi
-          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/GeoIQ-${GITHUB_REF_NAME}.apk" --title "GeoIQ $GITHUB_REF_NAME" "$@"
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/Geonaut-${GITHUB_REF_NAME}.apk" --title "Geonaut $GITHUB_REF_NAME" "$@"

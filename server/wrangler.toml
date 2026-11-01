@@ -1,4 +1,4 @@
-# GeoIQ multiplayer server → https://play.geoiq.workers.dev
+# Geonaut multiplayer server → https://play.geoiq.workers.dev
 name = "play"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"

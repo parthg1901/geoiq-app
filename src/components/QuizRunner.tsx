@@ -471,7 +471,7 @@ function Summary({ cfg, results, xp, bestCombo, startIQ, stamps }: { cfg: QuizCo
         {[
           { k: 'XP earned', v: <>+<CountUp to={xp} /></>, c: 'text-amber' },
           { k: 'Best combo', v: <>{bestCombo}🔥</>, c: 'text-coral' },
-          { k: 'GeoIQ', v: <><CountUp from={startIQ} to={iq} />{iq !== startIQ && <span className={`text-sm ml-1 ${iq > startIQ ? 'text-mint' : 'text-rose'}`}>{iq > startIQ ? '▲' : '▼'}{Math.abs(iq - startIQ)}</span>}</>, c: '' },
+          { k: 'IQ', v: <><CountUp from={startIQ} to={iq} />{iq !== startIQ && <span className={`text-sm ml-1 ${iq > startIQ ? 'text-mint' : 'text-rose'}`}>{iq > startIQ ? '▲' : '▼'}{Math.abs(iq - startIQ)}</span>}</>, c: '' },
         ].map((x, i) => (
           <motion.div key={x.k} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 + i * 0.1 }} className="card p-3 text-center">
             <div className={`display text-2xl font-extrabold ${x.c}`}>{x.v}</div>

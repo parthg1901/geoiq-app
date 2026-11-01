@@ -41,7 +41,7 @@ export async function seal(code: string, value: unknown): Promise<string> {
 }
 /** Throws if the blob wasn't sealed with this code (wrong code or tampered data). */
 export async function open<T>(code: string, blob: string): Promise<T> {
-  if (!blob.startsWith('g1.')) throw new Error('unknown sync format — update GeoIQ');
+  if (!blob.startsWith('g1.')) throw new Error('unknown sync format — update Geonaut');
   const raw = fromB64(blob.slice(3));
   const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.subarray(0, 12) }, await aesKey(code), raw.subarray(12));
   const json = await pipe(new Uint8Array(plain), new DecompressionStream('gzip'));

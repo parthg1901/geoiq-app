@@ -260,9 +260,9 @@ export class Room extends DurableObject<Env> {
     };
     if (this.pidOf(ws)) return; // one hello per socket
     if (typeof msg.deviceId !== 'string' || !/^[A-Za-z0-9_-]{6,64}$/.test(msg.deviceId)) return fail('bad', 'Invalid device id.');
-    if (msg.protocol !== MP_PROTOCOL) return fail('version', 'Please update GeoIQ to play in this room.');
+    if (msg.protocol !== MP_PROTOCOL) return fail('version', 'Please update Geonaut to play in this room.');
     if (msg.dataVersion !== r.dataVersion) {
-      return fail('version', `This room needs GeoIQ ${r.dataVersion} (you have ${String(msg.dataVersion).slice(0, 20)}). Update so everyone gets the same questions.`);
+      return fail('version', `This room needs Geonaut ${r.dataVersion} (you have ${String(msg.dataVersion).slice(0, 20)}). Update so everyone gets the same questions.`);
     }
     const pid = msg.deviceId;
     if (r.blocked.includes(pid)) return fail('kicked', 'The host removed you from this room.');

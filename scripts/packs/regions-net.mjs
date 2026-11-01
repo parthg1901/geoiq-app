@@ -4,7 +4,7 @@ import path from 'node:path';
 
 export const CACHE = path.resolve('scripts/.cache/packs-regions');
 fs.mkdirSync(CACHE, { recursive: true });
-const UA = { 'User-Agent': 'GeoIQ-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
+const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const keyFile = (key, ext = 'json') => path.join(CACHE, key.replace(/[^a-z0-9_.-]/gi, '_').slice(0, 180) + '.' + ext);

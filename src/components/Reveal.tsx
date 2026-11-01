@@ -30,7 +30,7 @@ export function Reveal({ id, correct, partial, xp, iqDelta, stamp, onNext, nextL
                 {correct ? (partial ? 'Got it!' : pickOne(['Nailed it!', 'Correct!', 'Sharp eye!', 'Brilliant!'])) : 'Not quite'}
               </span>
               {xp > 0 && <span className="chip !text-amber !border-amber/40">+{xp} XP</span>}
-              {iqDelta !== 0 && <span className={`chip mono ${iqDelta > 0 ? '!text-mint' : '!text-rose'}`}>GeoIQ {iqDelta > 0 ? '+' : ''}{iqDelta}</span>}
+              {iqDelta !== 0 && <span className={`chip mono ${iqDelta > 0 ? '!text-mint' : '!text-rose'}`}>IQ {iqDelta > 0 ? '+' : ''}{iqDelta}</span>}
               {stamp && <span className="chip !bg-violet/20 !border-violet text-violet">🛂 New passport stamp!</span>}
             </div>
             <div className="flex items-center gap-2 mt-1">

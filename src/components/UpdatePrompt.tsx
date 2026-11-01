@@ -16,7 +16,7 @@ export default function UpdatePrompt() {
           <motion.div initial={{ scale: 0.92, y: 10 }} animate={{ scale: 1, y: 0 }} className="card p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <div className="text-4xl text-center">🎁</div>
             <div className="display text-2xl font-extrabold text-center mt-1">Update available</div>
-            <div className="text-center text-mist text-sm mt-0.5">GeoIQ <b className="text-amber mono">{rel.version}</b> · you have <span className="mono">{APP_VERSION}</span></div>
+            <div className="text-center text-mist text-sm mt-0.5">Geonaut <b className="text-amber mono">{rel.version}</b> · you have <span className="mono">{APP_VERSION}</span></div>
             {rel.notes.length > 0 && (
               <ul className="mt-4 space-y-1.5 text-sm max-h-48 overflow-y-auto">
                 {rel.notes.map((n, i) => <li key={i} className="flex gap-2"><span className="text-amber">•</span><span className="leading-snug">{n}</span></li>)}

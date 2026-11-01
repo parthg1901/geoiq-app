@@ -67,7 +67,7 @@ export default function MpChallenge({ id }: { id?: string }) {
     try {
       const ch = await getChallenge(c);
       if (ch.results.some((r) => r.deviceId === deviceId)) setView({ k: 'results', ch });
-      else if (ch.spec.dataVersion !== DATA_VERSION) setView({ k: 'error', title: 'Update GeoIQ to play this challenge', body: `It was made on GeoIQ ${ch.spec.dataVersion} and you have ${DATA_VERSION}. The questions only match on the same version.` });
+      else if (ch.spec.dataVersion !== DATA_VERSION) setView({ k: 'error', title: 'Update Geonaut to play this challenge', body: `It was made on Geonaut ${ch.spec.dataVersion} and you have ${DATA_VERSION}. The questions only match on the same version.` });
       else setView({ k: 'intro', ch });
     } catch (e) {
       const nf = e instanceof MpError && e.kind === 'notfound';
@@ -337,7 +337,7 @@ function Results({ ch, fresh, you, onRefresh }: { ch: Challenge; fresh: boolean;
   const me = sorted[mine];
   useEffect(() => { if (fresh && mine === 0) { sfx.win(); confetti({ particleCount: 140, spread: 90, origin: { y: 0.35 } }); } }, [fresh, mine]);
   const share = async () => {
-    const text = `🎯 GeoIQ challenge: ${challengeLabel(ch.spec)}${me ? ` — I scored ${me.score.toLocaleString()}` : ''}. Beat me! Code ${ch.code} (GeoIQ → Multiplayer → Challenges)`;
+    const text = `🎯 Geonaut challenge: ${challengeLabel(ch.spec)}${me ? ` — I scored ${me.score.toLocaleString()}` : ''}. Beat me! Code ${ch.code} (Geonaut → Multiplayer → Challenges)`;
     try {
       if (navigator.share) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); toast({ icon: '📋', title: 'Challenge copied', body: 'Paste it to your friends.' }); }

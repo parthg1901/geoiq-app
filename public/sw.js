@@ -1,5 +1,5 @@
-/* GeoIQ service worker — offline shell, cached data/flags, cached Wikimedia photos. */
-const VERSION = 'v8';
+/* Geonaut service worker — offline shell, cached data/flags, cached Wikimedia photos. */
+const VERSION = 'v9';
 const SHELL = `geoiq-shell-${VERSION}`;
 const STATIC = `geoiq-static-${VERSION}`;
 const PHOTOS = `geoiq-photos-${VERSION}`;

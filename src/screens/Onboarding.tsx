@@ -35,7 +35,7 @@ export default function Onboarding() {
         {step === 0 && (
           <motion.div key="0" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 flex flex-col items-center text-center">
             <div className="mt-6"><Globe size={260} /></div>
-            <h1 className="display text-5xl font-extrabold mt-6 tracking-tight">Geo<span className="text-amber">IQ</span></h1>
+            <h1 className="display text-5xl font-extrabold mt-6 tracking-tight">Geo<span className="text-amber">naut</span></h1>
             <p className="text-mist text-lg mt-3">Learn every country by its <b className="text-paper">shape</b>, <b className="text-paper">flag</b>, <b className="text-paper">place</b> and <b className="text-paper">clues</b> — and find out exactly how good you are.</p>
             <button className="btn btn-primary w-full mt-auto text-lg" onClick={() => setStep(1)}>Start exploring</button>
           </motion.div>
@@ -47,7 +47,7 @@ export default function Onboarding() {
               {[
                 ['◆', 'Train', 'Shapes, flags, maps, capitals, photo clues — short adaptive rounds.'],
                 ['🧠', 'Remember', 'Spaced repetition brings back what you’re about to forget.'],
-                ['📈', 'Measure', 'Every answer updates your GeoIQ — an IQ-style score. 100 is average.'],
+                ['📈', 'Measure', 'Every answer updates your geography IQ. 100 is average.'],
                 ['🔥', 'Keep it up', 'Streaks, daily challenges, a passport to fill, and a few surprises.'],
               ].map(([e, t, d], i) => (
                 <motion.div key={t} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.12 }} className="card p-4 flex gap-4 items-center">
@@ -69,7 +69,7 @@ export default function Onboarding() {
             <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Explorer name" maxLength={20}
               className="mt-6 bg-ink/70 border-2 border-line focus:border-amber outline-none rounded-2xl px-4 py-4 text-xl display" />
             <h3 className="display text-xl font-bold mt-8">Where are you starting from?</h3>
-            <p className="text-sm text-mist">Just a starting point — your GeoIQ calibrates itself as you play.</p>
+            <p className="text-sm text-mist">Just a starting point — your IQ calibrates itself as you play.</p>
             <div className="space-y-2 mt-4">
               {LEVELS.map((l) => (
                 <button key={l.label} onClick={() => finish(l.iq)} className="card w-full p-4 flex items-center gap-4 text-left hover:border-amber transition-colors">

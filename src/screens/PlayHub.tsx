@@ -18,7 +18,7 @@ export default function PlayHub() {
     <Page>
       <StatusBar />
       <h1 className="display text-3xl font-extrabold mt-3">Play</h1>
-      <p className="text-mist">Every answer sharpens your GeoIQ. Questions adapt to your level.</p>
+      <p className="text-mist">Every answer sharpens your IQ. Questions adapt to your level.</p>
 
       <div className="card p-3 mt-4 space-y-3">
         <div className="flex gap-2 overflow-x-auto scrollbar-none">
@@ -27,7 +27,7 @@ export default function PlayHub() {
           ))}
         </div>
         <label className="flex items-center justify-between gap-3 text-sm cursor-pointer select-none">
-          <span><b className="display">Type answers</b> <span className="text-mist">— no multiple choice, bigger GeoIQ gains</span></span>
+          <span><b className="display">Type answers</b> <span className="text-mist">— no multiple choice, bigger IQ gains</span></span>
           <button onClick={() => setTyped(!typed)} className={`w-12 h-7 rounded-full p-1 transition-colors ${typed ? 'bg-mint' : 'bg-white/10'}`}>
             <motion.span layout className="block w-5 h-5 rounded-full bg-white" style={{ marginLeft: typed ? 20 : 0 }} />
           </button>
@@ -36,7 +36,7 @@ export default function PlayHub() {
 
       <SectionTitle>Specials</SectionTitle>
       <div className="grid grid-cols-2 gap-3">
-        <Special onClick={() => go('/test')} e="🧠" t="GeoIQ Test" d="24 adaptive questions. Official score." c="#ffb547" />
+        <Special onClick={() => go('/test')} e="🧠" t="IQ Test" d="24 adaptive questions. Official score." c="#ffb547" />
         <Special onClick={() => go('/daily')} e="☀️" t="Daily Challenge" d="Same 5 for everyone" c="#53b8ff" />
         <Special onClick={() => go('/hotcold')} e="🌡️" t="Hot & Cold" d={`Find the mystery country by distance${bests.hotcold ? ` · best ${bests.hotcold}` : ''}`} c="#ff6b5e" />
         <Special onClick={() => go('/borderline')} e="🛤️" t="Borderline" d="Cross borders from A to B" c="#3ddc97" />

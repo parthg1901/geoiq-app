@@ -7,8 +7,8 @@
  *   public/data/packs/index-{regions|physical|history|culture}.json   → PackMeta[]  (one file per group)
  *   public/data/packs/{packId}.json                            → PackData
  *
- * Pack progress is stored separately from the world GeoIQ (see useGame().packs), so packs add XP,
- * streak days and achievements but never distort the country-based GeoIQ score.
+ * Pack progress is stored separately from the world IQ (see useGame().packs), so packs add XP,
+ * streak days and achievements but never distort the country-based IQ score.
  */
 
 export type PackGroup = 'regions' | 'physical' | 'history' | 'culture';

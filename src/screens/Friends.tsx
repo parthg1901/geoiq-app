@@ -13,7 +13,7 @@ import { StatusBar } from './Home';
 
 const BOARDS: { key: string; label: string; value: (c: PlayerCard) => number; show: (c: PlayerCard) => React.ReactNode; sub?: string }[] = [
   { key: 'week', label: 'This week', value: weekXp, show: (c) => <>{weekXp(c).toLocaleString()} <span className="text-xs text-mist">XP</span></>, sub: 'XP since Monday · resets every week' },
-  { key: 'iq', label: 'GeoIQ', value: (c) => c.iq, show: (c) => <>{tierFor(c.iq).emoji} {c.iq}</> },
+  { key: 'iq', label: 'IQ', value: (c) => c.iq, show: (c) => <>{tierFor(c.iq).emoji} {c.iq}</> },
   { key: 'streak', label: 'Streak', value: (c) => c.streak, show: (c) => <>{c.streak}🔥</> },
   { key: 'stamps', label: 'Stamps', value: (c) => c.stamps.length, show: (c) => <>{c.stamps.length}<span className="text-xs text-mist">/{COUNTRIES.length}</span></> },
   { key: 'duel', label: 'Duels', value: (c) => c.duel.rating, show: (c) => <>{c.duel.rating}</>, sub: 'Multiplayer duel rating' },
@@ -59,8 +59,8 @@ export default function Friends() {
   };
   const share = async () => {
     if (!social) return;
-    const text = `Add me on GeoIQ! My friend code: ${formatPid(social.pid)} (Friends → Add by code)`;
-    if (navigator.share) await navigator.share({ title: 'GeoIQ friend code', text }).catch(() => {});
+    const text = `Add me on Geonaut! My friend code: ${formatPid(social.pid)} (Friends → Add by code)`;
+    if (navigator.share) await navigator.share({ title: 'Geonaut friend code', text }).catch(() => {});
     else { await navigator.clipboard.writeText(formatPid(social.pid)).catch(() => {}); toast({ icon: '📋', title: 'Code copied' }); }
   };
 
@@ -75,7 +75,7 @@ export default function Friends() {
           <div className="text-5xl">👥</div>
           <div className="display text-2xl font-extrabold mt-2">Friends & leaderboard</div>
           <p className="text-mist mt-2 leading-snug">Add friends with a code, race them on a weekly XP leaderboard and peek at each other’s passports.</p>
-          <p className="text-sm text-mist mt-3 leading-snug">Your player card shows your name and game stats (level, GeoIQ, streak, stamps, achievements) to friends and people you play with. Nothing else.</p>
+          <p className="text-sm text-mist mt-3 leading-snug">Your player card shows your name and game stats (level, IQ, streak, stamps, achievements) to friends and people you play with. Nothing else.</p>
           <button className="btn btn-primary w-full mt-5" disabled={busy} onClick={create}>{busy ? 'Creating…' : 'Create my player card'}</button>
           {msg && <div className="text-sm text-rose mt-3">{msg}</div>}
         </motion.div>

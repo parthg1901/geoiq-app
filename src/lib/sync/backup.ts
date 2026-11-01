@@ -9,12 +9,12 @@ interface BackupFile { app: 'geoiq'; v: 1; at: string; progress: Snapshot }
 
 export async function exportBackup() {
   const file: BackupFile = { app: 'geoiq', v: 1, at: new Date().toISOString(), progress: snapshot(useGame.getState()) };
-  const name = `geoiq-backup-${todayKey()}.json`;
+  const name = `geonaut-backup-${todayKey()}.json`;
   const text = JSON.stringify(file);
   if (isNative) {
     const [{ Filesystem, Directory, Encoding }, { Share }] = await Promise.all([import('@capacitor/filesystem'), import('@capacitor/share')]);
     const { uri } = await Filesystem.writeFile({ path: name, data: text, directory: Directory.Cache, encoding: Encoding.UTF8 });
-    await Share.share({ title: 'GeoIQ backup', files: [uri] });
+    await Share.share({ title: 'Geonaut backup', files: [uri] });
     return;
   }
   const a = document.createElement('a');
@@ -27,8 +27,8 @@ export async function exportBackup() {
 /** Read a backup file; throws a friendly message if it isn't one. */
 export async function readBackup(f: File): Promise<{ at: string; progress: Snapshot }> {
   let j: Partial<BackupFile>;
-  try { j = JSON.parse(await f.text()); } catch { throw new Error('That file isn’t a GeoIQ backup.'); }
-  if (j?.app !== 'geoiq' || !j.progress || typeof j.progress !== 'object') throw new Error('That file isn’t a GeoIQ backup.');
+  try { j = JSON.parse(await f.text()); } catch { throw new Error('That file isn’t a Geonaut backup.'); }
+  if (j?.app !== 'geoiq' || !j.progress || typeof j.progress !== 'object') throw new Error('That file isn’t a Geonaut backup.');
   return { at: j.at ?? '', progress: normalize(j.progress) };
 }
 

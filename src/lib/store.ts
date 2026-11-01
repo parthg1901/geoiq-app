@@ -20,7 +20,7 @@ export interface AnswerInput {
   srs?: boolean;
 }
 export interface AnswerResult { xp: number; iqBefore: number; iqAfter: number; stamp: boolean; levelUp: boolean }
-/** Progress in one content pack (regions / physical / history). Separate from the country GeoIQ. */
+/** Progress in one content pack (regions / physical / history). Separate from the country IQ. */
 /** An in-progress (or just finished) crossword. Flat strings are row-major over the grid. */
 export interface SavedCrossword {
   key: string; // 'daily:2026-10-31' or 'custom'
@@ -83,7 +83,7 @@ export interface State {
   reset: () => void;
 }
 
-/** Multiplayer identity and duel record (separate from GeoIQ). */
+/** Multiplayer identity and duel record (separate from IQ). */
 export interface MpChallengeRef { code: string; topic: string; createdAt: number; role: 'creator' | 'player' }
 export interface MpGameOutcome { key: string; delta: number; won: boolean; xp: number }
 export interface MpState { deviceId: string; name: string; rating: number; matches: number; wins: number; challenges: MpChallengeRef[]; lastGame: string | null; lastResult?: MpGameOutcome; /** room chat pop-ups while playing (default on) */ chatBubbles?: boolean }

@@ -1,4 +1,4 @@
-/** REST calls to the GeoIQ multiplayer server, with timeouts and friendly errors. */
+/** REST calls to the Geonaut multiplayer server, with timeouts and friendly errors. */
 import { MP_DEFAULT_URL, type Challenge, type ChallengeResult, type CreateChallenge, type Phase, type RoomSettings } from './protocol';
 import { DATA_VERSION } from './version';
 
@@ -43,7 +43,7 @@ export const createRoom = () => req<{ code: string }>('/api/rooms', { method: 'P
 export async function getRoom(code: string): Promise<RoomInfo> {
   const r = await req<RoomInfo>(`/api/rooms/${encodeURIComponent(code)}`);
   if (r.dataVersion && r.dataVersion !== DATA_VERSION) {
-    throw new MpError('version', `This room is on GeoIQ ${r.dataVersion} and you have ${DATA_VERSION}. Everyone needs the same version — update GeoIQ to play together.`);
+    throw new MpError('version', `This room is on Geonaut ${r.dataVersion} and you have ${DATA_VERSION}. Everyone needs the same version — update Geonaut to play together.`);
   }
   return r;
 }

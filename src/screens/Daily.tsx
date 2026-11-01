@@ -86,7 +86,7 @@ function Result({ results }: { results: QuizResult[] | null }) {
   const cd = useCountdown();
   const [copied, setCopied] = useState(false);
   if (!r) return null;
-  const text = `GeoIQ Daily #${dailyNumber(day)} ${r.grid} ${r.score}/5 ⏱ ${r.time}s`;
+  const text = `Geonaut Daily #${dailyNumber(day)} ${r.grid} ${r.score}/5 ⏱ ${r.time}s`;
   const share = async () => {
     const url = window.location.origin;
     try {

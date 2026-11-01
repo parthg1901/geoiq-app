@@ -1,0 +1,8 @@
+# Geonaut web app → https://geonaut.parthg.dev (static assets only; no Worker code).
+# Deploy: npm run deploy:web (builds, then uploads dist/).
+name = "geonaut-web"
+compatibility_date = "2026-10-01"
+routes = [{ pattern = "geonaut.parthg.dev", custom_domain = true }]
+
+[assets]
+directory = "../dist"

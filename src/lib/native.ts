@@ -38,7 +38,7 @@ const DAYS_AHEAD = 7;
 function message(streak: number, dayOffset: number) {
   const lines = streak > 0 && dayOffset === 0
     ? [`🔥 Your ${streak}-day streak ends at midnight — one quick round saves it.`, `🔥 ${streak} days strong. Don't let it slip today!`]
-    : ['🌍 2 minutes of GeoIQ? A few shapes and flags keep your brain sharp.', '🧭 Your daily challenge is waiting — same 5 questions for everyone.', '🗺️ A new Country of the Day just dropped. Come take a look!', '⚡ Quick Shape Rush before bed?'];
+    : ['🌍 2 minutes of Geonaut? A few shapes and flags keep your brain sharp.', '🧭 Your daily challenge is waiting — same 5 questions for everyone.', '🗺️ A new Country of the Day just dropped. Come take a look!', '⚡ Quick Shape Rush before bed?'];
   return lines[(new Date().getDate() + dayOffset) % lines.length];
 }
 
@@ -63,7 +63,7 @@ export async function scheduleReminders() {
       if (i === 0 && secured) continue;
       notifications.push({
         id: BASE_ID + i,
-        title: 'GeoIQ',
+        title: 'Geonaut',
         body: message(i === 0 ? s.streak.count : 0, i),
         schedule: { at, allowWhileIdle: true },
         smallIcon: 'ic_stat_geoiq',

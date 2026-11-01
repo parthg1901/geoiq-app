@@ -50,7 +50,7 @@ export default function IQ() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card relative overflow-hidden mt-2 p-6 text-center">
         <div className="absolute left-1/2 top-0 -translate-x-1/2 w-80 h-80 rounded-full opacity-25 -translate-y-1/3" style={{ background: `radial-gradient(circle, ${tier.color} 0%, transparent 68%)` }} />
         <div className="relative">
-          <div className="text-xs uppercase tracking-[.25em] text-mist font-bold">GeoIQ</div>
+          <div className="text-xs uppercase tracking-[.25em] text-mist font-bold">IQ</div>
           <div className="display font-extrabold leading-none tracking-tight mt-2" style={{ fontSize: 'clamp(5rem, 28vw, 8.5rem)', color: tier.color, textShadow: `0 0 60px ${tier.color}66` }}>
             <CountUp from={Math.max(60, iq - 30)} to={iq} duration={1.4} />
           </div>
@@ -62,7 +62,7 @@ export default function IQ() {
           </div>
           {provisional && <Progress value={answered / 30} className="mt-3 max-w-xs mx-auto" color={tier.color} h={6} />}
           <div className="flex justify-center gap-2 mt-5">
-            <button className="btn btn-primary" onClick={() => go('/test')}>🧠 {s.tests.length ? 'Retake the test' : 'Take the GeoIQ Test'}</button>
+            <button className="btn btn-primary" onClick={() => go('/test')}>🧠 {s.tests.length ? 'Retake the test' : 'Take the IQ Test'}</button>
           </div>
           {lastTest && <div className="text-sm text-mist mt-2">Last test: <b className="mono text-paper">{lastTest.iq}</b> on {lastTest.date}</div>}
         </div>
@@ -106,10 +106,10 @@ export default function IQ() {
         )}
       </div>
 
-      <SectionTitle>How GeoIQ works</SectionTitle>
+      <SectionTitle>How your IQ works</SectionTitle>
       <div className="card p-5 space-y-3 text-sm leading-relaxed">
         <p><b className="display text-amber">Every question has a difficulty.</b> It's estimated from how well-known a country is (Wikipedia traffic, population, size) and the skill — a tiny island's silhouette is harder than Brazil's flag.</p>
-        <p><b className="display text-amber">Your answers move your ability.</b> GeoIQ uses a 3-parameter item response model (the maths behind standardised tests): beating a hard item lifts you a lot, missing an easy one costs you.</p>
+        <p><b className="display text-amber">Your answers move your ability.</b> Your IQ uses a 3-parameter item response model (the maths behind standardised tests): beating a hard item lifts you a lot, missing an easy one costs you.</p>
         <p><b className="display text-amber">Guessing is corrected.</b> A lucky pick among 4 choices counts for less than a typed answer or a map click, so typing really is the fastest way up.</p>
         <p><b className="display text-amber">The scale.</b> 100 is an average explorer and 15 points is one standard deviation, like an IQ score. The adaptive test pins your level down fastest.</p>
         <div className="flex flex-wrap gap-1.5 pt-1">

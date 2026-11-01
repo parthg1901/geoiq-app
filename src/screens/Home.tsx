@@ -22,17 +22,17 @@ export function StatusBar() {
   const lit = todayXp >= STREAK_MIN_XP;
   return (
     <div className="flex items-center gap-1.5 pt-4 pb-2">
-      <button onClick={() => go('/')} className="display text-2xl font-extrabold tracking-tight mr-auto flex items-center gap-1.5">
-        <span className="relative inline-grid place-items-center w-8 h-8 rounded-xl bg-amber text-ink text-lg rotate-[-8deg] shadow-[0_4px_0_#b9761a]">G</span>
-        {/* wordmark only where it fits next to the chips */}
-        <span className="hidden min-[400px]:inline">Geo<span className="text-amber">IQ</span></span>
+      <button onClick={() => go('/')} className="display text-xl min-[440px]:text-2xl font-extrabold tracking-tight mr-auto flex items-center gap-1.5 min-w-0 overflow-hidden">
+        <span className="relative inline-grid place-items-center w-8 h-8 shrink-0 rounded-xl bg-amber text-ink text-lg rotate-[-8deg] shadow-[0_4px_0_#b9761a]">G</span>
+        {/* wordmark only where it fits; if big numbers crowd the chips it's clipped rather than pushing them off-screen */}
+        <span className="hidden min-[400px]:inline truncate">Geo<span className="text-amber">naut</span></span>
       </button>
-      <span className={`chip !text-sm ${lit ? '!text-amber !border-amber/50' : 'text-mist'}`} title="Day streak">
+      <span className={`chip !text-sm shrink-0 ${lit ? '!text-amber !border-amber/50' : 'text-mist'}`} title="Day streak">
         <span className={lit ? 'flame' : 'grayscale opacity-60'}>🔥</span><b className="mono">{streak.count}</b>
       </span>
-      <span className="chip !text-sm" title="Coins">🪙 <b className="mono">{coins}</b></span>
+      <span className="chip !text-sm shrink-0" title="Coins">🪙 <b className="mono">{coins >= 10000 ? `${(coins / 1000).toFixed(coins >= 100000 ? 0 : 1)}k` : coins}</b></span>
       <FriendsChip />
-      <button onClick={() => go('/me')} className="chip !text-sm !border-violet/50 text-violet" title="Level">Lv <b className="mono">{lvl.level}</b></button>
+      <button onClick={() => go('/me')} className="chip !text-sm shrink-0 !border-violet/50 text-violet" title="Level">Lv <b className="mono">{lvl.level}</b></button>
     </div>
   );
 }
@@ -41,7 +41,7 @@ export function StatusBar() {
 function FriendsChip() {
   const waiting = useSocial((s) => s.me?.requests.length ?? 0);
   return (
-    <button onClick={() => go('/friends')} className="chip !text-sm !px-2.5 relative" title="Friends" aria-label="Friends">
+    <button onClick={() => go('/friends')} className="chip !text-sm !px-2.5 relative shrink-0" title="Friends" aria-label="Friends">
       👥{waiting > 0 && <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose text-white text-[10px] font-bold grid place-items-center">{waiting}</span>}
     </button>
   );
@@ -75,11 +75,11 @@ export default function Home() {
     <Page>
       <StatusBar />
 
-      {/* Hero: GeoIQ + globe */}
+      {/* Hero: IQ + globe */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card relative overflow-hidden mt-2 p-5 pr-2 flex items-center gap-2">
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full opacity-30" style={{ background: `radial-gradient(circle, ${tier.color} 0%, transparent 68%)` }} />
         <div className="relative flex-1 min-w-0">
-          <div className="text-xs uppercase tracking-[.22em] text-mist font-bold">Your GeoIQ</div>
+          <div className="text-xs uppercase tracking-[.22em] text-mist font-bold">Your IQ</div>
           <button onClick={() => go('/iq')} className="flex items-baseline gap-2 mt-1">
             <span className="display text-7xl font-extrabold leading-none tracking-tight" style={{ color: tier.color, textShadow: `0 0 40px ${tier.color}55` }}>{iq}</span>
             {iq !== prevIQ && <span className={`mono text-sm font-bold ${iq > prevIQ ? 'text-mint' : 'text-rose'}`}>{iq > prevIQ ? '▲' : '▼'}{Math.abs(iq - prevIQ)}</span>}

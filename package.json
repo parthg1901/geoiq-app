@@ -1,8 +1,8 @@
 {
   "name": "geoiq",
   "private": true,
-  "version": "1.5.1",
-  "description": "GeoIQ — learn the world's countries, regions, rivers and history maps, and measure your geography IQ",
+  "version": "1.6.0",
+  "description": "Geonaut — learn the world's countries, regions, rivers and history maps, and measure your geography IQ",
   "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
@@ -15,7 +15,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "android": "sh scripts/build-apk.sh",
-    "audit:math": "node scripts/audit-math.mjs"
+    "audit:math": "node scripts/audit-math.mjs",
+    "deploy:web": "npm run build && cd server && npx wrangler deploy -c ../web/wrangler.toml"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

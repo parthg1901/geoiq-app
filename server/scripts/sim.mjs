@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// End-to-end simulator for the GeoIQ multiplayer server.
+// End-to-end simulator for the Geonaut multiplayer server.
 // Usage: npm run dev (in server/) then: node server/scripts/sim.mjs [--url http://127.0.0.1:8787]
 // Plays real games over WebSockets with simulated latency and asserts the server's behaviour.
 

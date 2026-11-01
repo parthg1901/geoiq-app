@@ -1,5 +1,5 @@
 /**
- * GeoIQ multiplayer server (Cloudflare Worker).
+ * Geonaut multiplayer server (Cloudflare Worker).
  * HTTP API + WebSocket routing; live rooms and async challenges each live in their own Durable Object.
  * Protocol: ../../src/lib/mp/protocol.ts
  */

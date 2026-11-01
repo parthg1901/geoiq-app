@@ -13,7 +13,7 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../.
 const HIST = path.join(ROOT, 'scripts/.cache/hist');
 const WIKI_CACHE = path.join(ROOT, 'scripts/.cache/packs-history');
 const OUT = path.join(ROOT, 'public/data/packs');
-const UA = { 'User-Agent': 'GeoIQ-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
+const UA = { 'User-Agent': 'Geonaut-build/1.0 (+https://github.com/parthg1901/geoiq-app)' };
 const R = 6371;
 fs.mkdirSync(HIST, { recursive: true });
 fs.mkdirSync(WIKI_CACHE, { recursive: true });

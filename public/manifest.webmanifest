@@ -1,7 +1,7 @@
 {
-  "name": "GeoIQ — Train your world brain",
-  "short_name": "GeoIQ",
-  "description": "Learn every country by shape, flag, photo and clue — and measure your GeoIQ.",
+  "name": "Geonaut — Train your world brain",
+  "short_name": "Geonaut",
+  "description": "Learn every country by shape, flag, photo and clue — and measure your geography IQ.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

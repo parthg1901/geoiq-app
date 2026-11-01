@@ -1,0 +1,6 @@
+# Cloudflare static-asset headers (web deploy). The service worker must always be revalidated;
+# Vite's hashed bundles never change, so they can be cached forever.
+/sw.js
+  Cache-Control: no-cache
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -22,7 +22,7 @@ export function CrosswordDone({ saved, reward, onExit, onNew }: {
   const isDaily = saved.key.startsWith('daily:');
   const clean = saved.reveals === 0;
   const share = async () => {
-    const title = isDaily ? `GeoIQ Crossword #${dailyNumber(saved.key.slice(6))}` : `GeoIQ ${saved.title}`;
+    const title = isDaily ? `Geonaut Crossword #${dailyNumber(saved.key.slice(6))}` : `Geonaut ${saved.title}`;
     const text = `${title} ✅ ${fmt(saved.elapsed)} · ${clean ? 'no help 🧠' : `${saved.reveals} reveal${saved.reveals === 1 ? '' : 's'}`}`;
     try {
       if (navigator.share) await navigator.share({ text });

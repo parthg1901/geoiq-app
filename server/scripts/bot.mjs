@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// GeoIQ bot player — joins (or creates) a live room and plays like a human of a given skill.
+// Geonaut bot player — joins (or creates) a live room and plays like a human of a given skill.
 //
 //   node server/scripts/bot.mjs --room ABCD                      # join your room
 //   node server/scripts/bot.mjs --create --topic world:flag      # create a room, print its code, wait for you

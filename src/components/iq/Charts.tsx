@@ -38,12 +38,12 @@ export function Radar({ ratings, size = 300 }: { ratings: Ratings; size?: number
   );
 }
 
-/** Smooth GeoIQ history line with gradient area and test markers. */
+/** Smooth IQ history line with gradient area and test markers. */
 export function HistoryChart({ history, tests }: { history: { date: string; iq: number }[]; tests: { date: string; iq: number }[] }) {
   const W = 340, H = 170, P = { l: 30, r: 12, t: 14, b: 24 };
   const pts = history.slice(-30);
   if (pts.length < 2) {
-    return <div className="h-[170px] grid place-items-center text-sm text-mist text-center px-6">Play on a couple of different days to see your GeoIQ trend line grow here.</div>;
+    return <div className="h-[170px] grid place-items-center text-sm text-mist text-center px-6">Play on a couple of different days to see your IQ trend line grow here.</div>;
   }
   const iqs = [...pts.map((p) => p.iq), ...tests.map((t) => t.iq)];
   const lo = Math.floor((Math.min(...iqs, 95) - 5) / 5) * 5, hi = Math.ceil((Math.max(...iqs, 105) + 5) / 5) * 5;
@@ -60,7 +60,7 @@ export function HistoryChart({ history, tests }: { history: { date: string; iq: 
   const ticks = [lo, Math.round((lo + hi) / 2), hi];
   const idxOf = (date: string) => pts.findIndex((p) => p.date === date);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="GeoIQ over time">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="IQ over time">
       <defs>
         <linearGradient id="iq-area" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#ffb547" stopOpacity=".35" />
